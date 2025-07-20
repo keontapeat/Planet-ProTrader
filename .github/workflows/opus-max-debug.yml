@@ -1,0 +1,45 @@
+name: 🚀 Opus Max Cloud Debugger
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  opus-max-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🔥 Checkout Code for Opus Max
+      uses: actions/checkout@v4
+      
+    - name: 🧠 Setup Python for AI Analysis  
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: ⚡ Install Dependencies
+      run: |
+        pip install anthropic requests
+        
+    - name: 🤖 Opus Max Analysis
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: |
+        python .github/scripts/opus-max-analyzer.py
+        
+    - name: 📊 Post Analysis to PR Comments
+      uses: actions/github-script@v6
+      if: github.event_name == 'pull_request'
+      with:
+        script: |
+          const fs = require('fs');
+          if (fs.existsSync('opus-analysis.md')) {
+            const analysis = fs.readFileSync('opus-analysis.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🤖 **Opus Max Analysis Results:**\n\n${analysis}`
+            });
+          }
