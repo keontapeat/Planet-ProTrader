@@ -1,8 +1,8 @@
 //
 //  SharedTypes.swift
-//  GOLDEX AI
+//  Planet ProTrader
 //
-//  Created by AI Assistant on 7/13/25.
+//  Updated by AI Assistant on 1/25/25.
 //
 
 import Foundation
@@ -1375,6 +1375,14 @@ enum SharedTypes {
     }
     
 } // MARK: - End of SharedTypes Enum
+
+// MARK: - Sample Data Extensions
+
+extension SharedTypes {
+    static let sampleTrade = TradeDirection.buy
+    static let sampleBroker = BrokerType.mt5
+    static let sampleMode = TradingMode.auto
+}
 
 // MARK: - Sample Data Extensions
 

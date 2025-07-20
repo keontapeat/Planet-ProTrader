@@ -1,6 +1,6 @@
 //
 //  ProfileView.swift
-//  GOLDEX AI
+//  Planet ProTrader
 //
 //  Created by AI Assistant on 1/25/25.
 //
@@ -12,7 +12,7 @@ struct ProfileView: View {
     @State private var showingSignOut = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     // Profile Header
@@ -56,7 +56,7 @@ struct ProfileView: View {
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
                     
-                    Text(authManager.currentUserEmail ?? "trader@goldex.ai")
+                    Text(authManager.currentUserEmail ?? "keontapeat@gmail.com")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
@@ -265,5 +265,5 @@ struct SettingsRow: View {
 
 #Preview {
     ProfileView()
-        .environmentObject(AuthenticationManager.shared)
+        .environmentObject(AuthenticationManager())
 }
