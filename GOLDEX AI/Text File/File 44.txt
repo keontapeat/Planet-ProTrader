@@ -1,0 +1,51 @@
+──────────────────────────────────────────────────────────────────────────────
+WINE-8 INSTALLED, BUT NEW “ipc timeout” CRASH → ONE FRESH PREFIX
+──────────────────────────────────────────────────────────────────────────────
+Why this is the last hurdle
+• Wine 8 is now active (good) but your *old* prefix still has bits from Wine
+  6 that break MT5 services (LWinUSB etc.).  
+• Easiest path: create a **clean 64-bit prefix**, install vcrun2015 once,
+  then run the bot.  Takes <2 min.
+
+COPY / PASTE THE $ LINES *EXACTLY* (one block is fine)
+────────────────────────────────────────────
+$ export OLD_WINEPREFIX=$HOME/.wine
+$ mv "$OLD_WINEPREFIX" "$OLD_WINEPREFIX.bak.$(date +%s)"   # backup old
+$ export WINEPREFIX=$HOME/.wine             # new blank prefix
+$ WINEARCH=win64 wineboot -u                # create prefix (30 s)
+
+# install VC++ runtime in the fresh prefix
+$ winetricks -q win10
+$ winetricks -q vcrun2015
+
+# quick sanity check
+$ DISPLAY=:1 wine "C:\\opt\\goldex-bot\\winevenv\\Scripts\\python.exe" - <<'PY'
+import MetaTrader5 as mt5, os, sys; from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv('/opt/goldex-bot/.env'))
+ok = mt5.initialize(login=int(os.getenv('DEMO_LOGIN',0)),
+                    password=os.getenv('DEMO_PASSWORD',''),
+                    server=os.getenv('DEMO_SERVER',''))
+print("✅ Connected — Balance:", mt5.account_info().balance) if ok else \
+      sys.exit(f"❌ init failed: {mt5.last_error()}")
+mt5.shutdown()
+PY
+
+# when ✅ appears, launch the bot in tmux
+$ tmux new -s goldex -d "export DISPLAY=:1 && wine C:\\opt\\goldex-bot\\winevenv\\Scripts\\python.exe C:\\opt\\goldex-bot\\goldex_bot.py"
+$ echo '🚀  GoldexBot now live inside tmux session "goldex".'
+
+Tip: reclaim space later
+────────────────────────
+When everything works, delete the old 6-GB prefix:
+  $ rm -rf "$OLD_WINEPREFIX.bak.*"
+
+Log watch / management
+──────────────────────
+$ tmux attach -t goldex   # view live
+Ctrl-b  d                 # detach
+$ tmux kill-session -t goldex   # stop bot
+
+You should now be 100 % operational—Wine 8 clean prefix + VC runtime +
+MetaTrader5 all playing nicely.  Paste any new error only if it appears
+AFTER this fresh-prefix test.
+──────────────────────────────────────────────────────────────────────────────

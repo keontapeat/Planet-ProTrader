@@ -1,0 +1,27 @@
+──────────────────────────────────────────────────────────────────────────────
+YOU TYPED THE PROMPT LITERALLY 😊
+──────────────────────────────────────────────────────────────────────────────
+In bash you should enter only the command, **not** the “(venv)$” prompt part.
+
+Do this:
+
+(venv) root@localhost:/opt/goldex-bot# python goldexv9.py
+
+If you get “❌ Please set your demo account credentials…”, re-open the file
+with nano and be sure you actually replaced the three `None` values.
+
+Quick recap
+───────────
+1. Activate venv (you already did)  
+2. Run without the prompt text:
+
+python goldexv9.py
+
+3. See MT5 connection logs.  If it connects, start tmux:
+
+tmux new -s goldex
+python goldexv9.py
+Ctrl-b d            ← detach
+
+That’s all.  Removing the `(venv)$` part will solve the bash error. 🚀
+──────────────────────────────────────────────────────────────────────────────

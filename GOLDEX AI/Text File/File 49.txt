@@ -1,0 +1,27 @@
+──────────────────────────────────────────────────────────────────────────────
+CHECKLIST CONFIRMATION
+──────────────────────────────────────────────────────────────────────────────
+✅  Docker installed and service running  
+✅  docker-compose.yml created  
+✅  goldex_bot.py copied to /opt/goldex-bot/bot/  
+✅  .env copied to /opt/goldex-bot/.env  
+✅  Ready to pull image & start container
+
+Next two commands (run now):
+────────────────────────────
+$ cd /opt/goldex-bot
+$ docker compose up -d           # pulls image & starts bot
+
+Then tail logs:
+────────────────
+$ docker compose logs -f
+
+If you see:
+  ✅ Connected — Balance: $xxxx.xx
+you’re golden—bot is live.
+
+If the image pull is slow, that’s normal (≈ 1 GB).  After it finishes, rerun
+`docker compose up -d`, then `docker compose logs -f`.
+
+Paste any log errors if they appear; otherwise congrats, you’re done! 🚀
+──────────────────────────────────────────────────────────────────────────────

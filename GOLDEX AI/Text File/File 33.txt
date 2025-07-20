@@ -1,0 +1,85 @@
+──────────────────────────────────────────────────────────────────────────────
+WHY “pip install MetaTrader5” STILL FAILS  ─  QUICK FIX PLAYBOOK
+──────────────────────────────────────────────────────────────────────────────
+Your latest log shows:
+
+• You ARE inside Python 3.10 (good).  
+• Pip says “No matching distribution found” (weird, because PyPI *does* have
+  a wheel for Linux x86-64 + CPython 3.10).  
+This almost always boils down to one of three things:
+
+  1. Wrong CPU arch (e.g., ARM VPS).  
+  2. Pip using an *old* or *custom* index mirror.  
+  3. Pip can’t see the wheel tags because its own “supported-tags” list is
+     broken/out-of-date.
+
+Let’s rule them out and force-install the wheel.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+A. VERIFY BASICS (takes 15 sec)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+uname -m            # should print: x86_64
+python -V           # inside venv → Python 3.10.x
+python -m pip -V    # make sure pip >= 23.x (yours shows 25.1.1 – acceptable)
+
+If either of the first two don’t match, drop me a note. If they do, continue.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+B. CLEAN-SLATE PIP & RETRY (official PyPI, no cache)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+source /opt/goldex-bot/venv/bin/activate
+
+# 1. Hard-upgrade pip & setuptools from PyPI, ignore apt versions:
+python -m pip install --upgrade --no-cache-dir "pip>=24" setuptools wheel
+
+# 2. Clear any cached MetaTrader5 fragments:
+python -m pip cache purge
+
+# 3. Fresh install directly from PyPI:
+python -m pip install --no-cache-dir MetaTrader5 pandas python-dotenv
+
+If this succeeds → you’re done.  
+If it *still* says “No matching distribution”, go to step C.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+C. DOWNLOAD THE WHEEL MANUALLY & INSTALL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Grab the exact wheel (works for CPython 3.10, Linux x86-64):
+
+wget -O MetaTrader5.whl \
+  https://files.pythonhosted.org/packages/0d/4a/4a8da29e75b05cf4d8ebbd436c7de807b017e7fc99e16f0427f7a6bee8d3/MetaTrader5-5.0.37-cp310-cp310-manylinux_2_34_x86_64.whl
+
+2. Install it:
+
+python -m pip install MetaTrader5.whl
+
+3. Verify:
+
+python - << 'PY'
+import MetaTrader5 as mt5, sys, platform
+print("✅  Imported MetaTrader5", mt5.__version__)
+print("Python:", sys.version)
+print("Platform:", platform.platform())
+PY
+
+If you see the “✅ Imported” line, the library is in place.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+D. IF EVERYTHING ABOVE STILL FAILS…
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Fall back to the Windows-under-Wine route (File 31.txt Option A).  
+It **will** work because the Windows wheel is universal.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Once MetaTrader5 installs cleanly, run:
+
+tmux new -s goldex
+cd /opt/goldex-bot
+source venv/bin/activate
+python goldex_bot.py     # or the small inline test script
+# Ctrl-b d  (detach)
+
+You should finally see “✅ Connected. Balance: …”.
+
+Good luck—ping me with the next log if anything’s still stuck.
+──────────────────────────────────────────────────────────────────────────────

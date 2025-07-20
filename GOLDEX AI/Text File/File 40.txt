@@ -1,0 +1,62 @@
+──────────────────────────────────────────────────────────────────────────────
+THE RUNTIME STILL ISN’T INSTALLED – HERE’S EXACTLY WHAT TO TYPE
+──────────────────────────────────────────────────────────────────────────────
+Why the previous attempt failed
+• The command you pasted was followed by a stray quote / comment, so
+  winetricks just showed its help and **did nothing**.  
+• We must run winetricks with ONE clean line and wait until it returns.
+
+STEP-BY-STEP  (copy each line individually)
+────────────────────────────────────────────
+# 0) make sure you’re still logged in via SSH
+# 1) point Wine to the correct prefix
+export WINEPREFIX=$HOME/.wine
+
+# 2) see if the verb exists
+winetricks list | grep vcrun | head
+#   you should see vcrun2022 in the list
+
+# 3) INSTALL the VC++ runtime  (this is the critical line!)
+winetricks -q -f vcrun2022
+
+#    • “-q”  = quiet (no GUI)  
+#    • “-f”  = force overwrite if an older runtime exists  
+#    • It will take 30-60 s.  No output means success.
+
+# 4) confirm it was installed
+winetricks list-installed | grep vcrun
+
+#    expected:  vcrun2022
+
+# 5) restart wineserver
+wineserver -k
+sleep 2
+
+# 6) re-run the connectivity test
+DISPLAY=:1 wine C:\\opt\\goldex-bot\\winevenv\\Scripts\\python.exe - <<'PY'
+import MetaTrader5 as mt5, os, sys; from dotenv import load_dotenv
+load_dotenv('/opt/goldex-bot/.env')
+ok = mt5.initialize(login=int(os.getenv('DEMO_LOGIN',0)),
+                    password=os.getenv('DEMO_PASSWORD',''),
+                    server=os.getenv('DEMO_SERVER',''))
+print("✅ Connected — Balance:", mt5.account_info().balance) if ok else \
+      sys.exit(f"❌ init failed: {mt5.last_error()}")
+mt5.shutdown(); sys.exit(0)
+PY
+
+# 7) if you see the green ✅ line, launch the bot
+tmux new -s goldex -d "export DISPLAY=:1 && wine C:\\opt\\goldex-bot\\winevenv\\Scripts\\python.exe C:\\opt\\goldex-bot\\goldex_bot.py"
+echo '🚀 GoldexBot is now running inside tmux session "goldex".'
+
+Troubleshooting
+───────────────
+• If `winetricks -q -f vcrun2022` prints **help again**, your clipboard is
+  adding hidden characters.  Type the command manually.  
+• If `vcrun2022` isn’t listed, use `vcrun2019` instead:  
+  winetricks -q -f vcrun2019  
+• Still getting “fetestexcept” after install?  The runtime didn’t register.
+  Run:  WINEPREFIX=$HOME/.wine winetricks -q -f vcrun2022 win10
+
+One clean runtime install is all that’s missing.  After step 6 shows ✅,
+your bot is ready.  Paste any new error if it still won’t connect.
+──────────────────────────────────────────────────────────────────────────────

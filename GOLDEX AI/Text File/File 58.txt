@@ -1,0 +1,47 @@
+──────────────────────────────────────────────────────────────────────────────
+LAST, SIMPLE WAY:  RUN BOT WITH NATIVE mt5linux (NO DOCKER / NO WINE)
+──────────────────────────────────────────────────────────────────────────────
+Facts we learned
+• mt5linux is already installed in your venv and imports fine.  
+• You spent hours fighting images + Wine.  
+• Your script GOLDEXV9.py already uses mt5linux directly.
+
+Therefore: just run the bot with the **native Linux MT5 library** you
+already have, skip Docker entirely, and you’re finished.
+
+ONE-MINUTE CHECK
+────────────────
+$ cd /opt/goldex-bot
+$ source venv/bin/activate
+$ python GOLDEXV9.py
+
+If it prints:
+✓ Successfully imported mt5linux  
+❌ Please set your demo account credentials in the script!
+
+→ Edit the file, fill in DEMO_LOGIN / PASSWORD / SERVER (or load from .env).
+
+RUN 24/7 IN TMUX
+────────────────
+$ tmux new -s goldex
+$ cd /opt/goldex-bot
+$ source venv/bin/activate
+$ python GOLDEXV9.py
+# Ctrl-b  d   (detach)
+
+Re-attach:
+$ tmux attach -t goldex
+
+If you **must** keep Docker, fix build context (files not found):
+───────────────────────────────
+$ cd /opt/goldex-bot
+$ docker build -t mt5-local .
+#  ^ note the dot → sends directory context so COPY works
+$ docker run -d --name goldex -e DISPLAY=:1 mt5-local
+
+…but the fastest path is simply running the script natively under the venv
+you already have.
+
+Deep breath—activate venv, `python GOLDEXV9.py`, watch the logs.  
+You’ll finally see your balance line.  Done. 💥
+──────────────────────────────────────────────────────────────────────────────

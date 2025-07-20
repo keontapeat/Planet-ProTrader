@@ -1,0 +1,39 @@
+──────────────────────────────────────────────────────────────────────────────
+FIX: “failed to read .env … unexpected character”  
+──────────────────────────────────────────────────────────────────────────────
+Compose expects **ONLY** KEY=value lines in .env.  
+Your .env has extra echo / emoji lines from copy-paste.
+
+CLEAN .env (30 sec)
+───────────────────
+$ cd /opt/goldex-bot
+$ cp .env .env.back         # safety copy
+
+# open with nano
+$ nano .env
+
+Delete EVERYTHING except the three creds and optional vars, e.g.
+
+DEMO_LOGIN=845638
+DEMO_PASSWORD=GI7#scVJbBekrg
+DEMO_SERVER=Coinexx-Demo
+SYMBOL=XAUUSD
+
+(no quotes, no spaces around “=”, one var per line, UTF-8 plain text)
+
+Save & exit  (Ctrl-O → Enter → Ctrl-X).
+
+RESTART COMPOSE
+───────────────
+$ docker compose up -d
+$ docker compose logs -f
+
+You should now see:
+  goldex  | ✅ Connected — Balance: $2,500.00
+
+If you still get an .env error, run:
+  $ cat -n .env
+to show numbered lines and remove any stray characters.
+
+Once logs show the green check the bot is finally live. 🚀
+──────────────────────────────────────────────────────────────────────────────

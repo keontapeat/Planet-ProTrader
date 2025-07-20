@@ -1,0 +1,39 @@
+================================================================================
+🚀 GOLDEX AI™ COMPLETE HETZNER CLOUD SETUP GUIDE
+================================================================================
+
+WHAT YOU NEED TO DO (5 MINUTES):
+1. Create Hetzner account at console.hetzner-cloud.com
+2. Create CX21 server (€4.15/month) with Ubuntu 22.04
+3. Get Claude API key from console.anthropic.com
+4. Download Firebase service account JSON from Firebase console
+5. Run the setup commands below
+
+================================================================================
+📋 STEP 1: CREATE SERVER ON HETZNER
+================================================================================
+
+1. Go to: https://console.hetzner-cloud.com
+2. Sign up and add payment method
+3. Create new project: "GOLDEX-AI"
+4. Add server:
+   - Location: Choose closest to you
+   - Image: Ubuntu 22.04
+   - Type: CX21 (2 vCPU, 4GB RAM) - €4.15/month
+   - Name: goldex-ai-server
+5. Click "Create & Buy Now"
+6. Note down your server IP address
+
+================================================================================
+📋 STEP 2: CONNECT TO YOUR SERVER
+================================================================================
+
+ssh root@YOUR_SERVER_IP
+
+(Replace YOUR_SERVER_IP with the actual IP from Hetzner)
+
+================================================================================
+📋 STEP 3: RUN ONE-COMMAND SETUP
+================================================================================
+
+Copy and paste this entire block into your server terminal:

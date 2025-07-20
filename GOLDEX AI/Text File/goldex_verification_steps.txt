@@ -1,0 +1,53 @@
+================================================================================
+GOLDEX AI – QUICK VERIFICATION CHECKLIST
+================================================================================
+1.  ACTIVATE VENV & RUN BOT
+────────────────────────────────────────────────────────────────
+$ ssh root@172.234.201.231
+# inside VPS
+$ cd /opt/goldex-bot
+$ source venv/bin/activate
+(venv)$ python goldexv9.py
+
+2.  EXPECTED START-UP OUTPUT
+────────────────────────────────────────────────────────────────
+✓ Successfully imported mt5linux
+✓ MT5 initialized successfully
+✅ Successfully connected to DEMO account!
+📊 Account: 845638
+🏦 Server: Coinexx-Demo
+💰 Balance: $xxxx.xx
+…               (status table prints every 5 min)
+🎯 Signal generated: BUY/SELL (Confidence: nn.n%)
+✅ Trade executed successfully!
+
+3.  IF YOU SEE “❌ Demo account credentials not provided!”
+────────────────────────────────────────────────────────────────
+•  Edit the file again:  nano goldexv9.py
+•  Scroll to the **main()** section (~line 520)
+•  Ensure the 3 lines read EXACTLY:
+
+    DEMO_LOGIN    = 845638
+    DEMO_PASSWORD = "GI7#scVJbBekrg"
+    DEMO_SERVER   = "Coinexx-Demo"
+
+•  Ctrl-O  → Enter  → Ctrl-X, then re-run Step 1.
+
+4.  IF THE SCRIPT CRASHES / ERRORS
+────────────────────────────────────────────────────────────────
+•  Copy the LAST 20-30 lines of terminal output (ignore the shell prompt)  
+•  Paste it back to me here for diagnosis.
+
+5.  VIEW LIVE LOG WITHOUT TMUX
+────────────────────────────────────────────────────────────────
+(venv)$ tail -f goldex_bot.log         # live log stream
+
+6.  RUN 24/7 IN TMUX
+────────────────────────────────────────────────────────────────
+(venv)$ tmux new -s goldex
+(venv)$ python goldexv9.py
+(detach: Ctrl-b then d)
+Reconnect later:   tmux attach -t goldex
+
+That’s it – follow these steps and confirm the green check-marks.
+================================================================================

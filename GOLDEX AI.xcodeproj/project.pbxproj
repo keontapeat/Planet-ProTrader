@@ -6,13 +6,62 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		056DC7C72E27867600F5DF2B /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = 056DC7C62E27867600F5DF2B /* FirebaseAI */; };
+		056DC7C92E27867600F5DF2B /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 056DC7C82E27867600F5DF2B /* FirebaseAnalytics */; };
+		056DC7CB2E27867600F5DF2B /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 056DC7CA2E27867600F5DF2B /* FirebaseAuth */; };
+		056DC7CD2E27867600F5DF2B /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 056DC7CC2E27867600F5DF2B /* FirebaseCore */; };
+		056DC7CF2E27867600F5DF2B /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 056DC7CE2E27867600F5DF2B /* FirebaseCrashlytics */; };
+		056DC7D12E27867600F5DF2B /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 056DC7D02E27867600F5DF2B /* FirebaseFirestore */; };
+		056DC7D32E27867600F5DF2B /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 056DC7D22E27867600F5DF2B /* FirebaseStorage */; };
+		05773C682E2903AB00101B7B /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 05773C672E2903AB00101B7B /* Auth */; };
+		05773C6A2E2903AB00101B7B /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 05773C692E2903AB00101B7B /* Functions */; };
+		05773C6C2E2903AB00101B7B /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 05773C6B2E2903AB00101B7B /* PostgREST */; };
+		05773C6E2E2903AB00101B7B /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 05773C6D2E2903AB00101B7B /* Realtime */; };
+		05773C702E2903AB00101B7B /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 05773C6F2E2903AB00101B7B /* Storage */; };
+		05D2702E2E29109E00D13ACB /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 05D2702D2E29109E00D13ACB /* Supabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		0599B1612E23F1BC001FBCE0 /* GOLDEX AI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "GOLDEX AI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		056DC7AC2E2750F400F5DF2B /* Exceptions for "GOLDEX AI" folder in "GOLDEX AI" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Text File/File 10.txt",
+				"Text File/File 12.txt",
+				"Text File/File 13.txt",
+				"Text File/File 16.txt",
+				"Text File/File 23.txt",
+				Utilities/GoldexAIAPI.swift,
+			);
+			target = 0599B1602E23F1BC001FBCE0 /* GOLDEX AI */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		056DC7AD2E2750F400F5DF2B /* Exceptions for "GOLDEX AI" folder in "Compile Sources" phase from "GOLDEX AI" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 0599B15D2E23F1BC001FBCE0 /* Sources */;
+			membershipExceptions = (
+				"Text File/File 10.txt",
+				"Text File/File 12.txt",
+				"Text File/File 13.txt",
+				"Text File/File 16.txt",
+				"Text File/File 23.txt",
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		0599B1632E23F1BC001FBCE0 /* GOLDEX AI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				056DC7AC2E2750F400F5DF2B /* Exceptions for "GOLDEX AI" folder in "GOLDEX AI" target */,
+				056DC7AD2E2750F400F5DF2B /* Exceptions for "GOLDEX AI" folder in "Compile Sources" phase from "GOLDEX AI" target */,
+			);
 			path = "GOLDEX AI";
 			sourceTree = "<group>";
 		};
@@ -23,6 +72,19 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				05773C702E2903AB00101B7B /* Storage in Frameworks */,
+				056DC7C92E27867600F5DF2B /* FirebaseAnalytics in Frameworks */,
+				056DC7CB2E27867600F5DF2B /* FirebaseAuth in Frameworks */,
+				056DC7CF2E27867600F5DF2B /* FirebaseCrashlytics in Frameworks */,
+				05773C6A2E2903AB00101B7B /* Functions in Frameworks */,
+				05773C6C2E2903AB00101B7B /* PostgREST in Frameworks */,
+				056DC7CD2E27867600F5DF2B /* FirebaseCore in Frameworks */,
+				056DC7D32E27867600F5DF2B /* FirebaseStorage in Frameworks */,
+				056DC7C72E27867600F5DF2B /* FirebaseAI in Frameworks */,
+				05773C682E2903AB00101B7B /* Auth in Frameworks */,
+				056DC7D12E27867600F5DF2B /* FirebaseFirestore in Frameworks */,
+				05773C6E2E2903AB00101B7B /* Realtime in Frameworks */,
+				05D2702E2E29109E00D13ACB /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,6 +95,7 @@
 			isa = PBXGroup;
 			children = (
 				0599B1632E23F1BC001FBCE0 /* GOLDEX AI */,
+				05D2702C2E29109E00D13ACB /* Frameworks */,
 				0599B1622E23F1BC001FBCE0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -43,6 +106,13 @@
 				0599B1612E23F1BC001FBCE0 /* GOLDEX AI.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		05D2702C2E29109E00D13ACB /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -65,6 +135,19 @@
 			);
 			name = "GOLDEX AI";
 			packageProductDependencies = (
+				056DC7C62E27867600F5DF2B /* FirebaseAI */,
+				056DC7C82E27867600F5DF2B /* FirebaseAnalytics */,
+				056DC7CA2E27867600F5DF2B /* FirebaseAuth */,
+				056DC7CC2E27867600F5DF2B /* FirebaseCore */,
+				056DC7CE2E27867600F5DF2B /* FirebaseCrashlytics */,
+				056DC7D02E27867600F5DF2B /* FirebaseFirestore */,
+				056DC7D22E27867600F5DF2B /* FirebaseStorage */,
+				05773C672E2903AB00101B7B /* Auth */,
+				05773C692E2903AB00101B7B /* Functions */,
+				05773C6B2E2903AB00101B7B /* PostgREST */,
+				05773C6D2E2903AB00101B7B /* Realtime */,
+				05773C6F2E2903AB00101B7B /* Storage */,
+				05D2702D2E29109E00D13ACB /* Supabase */,
 			);
 			productName = "GOLDEX AI";
 			productReference = 0599B1612E23F1BC001FBCE0 /* GOLDEX AI.app */;
@@ -94,6 +177,10 @@
 			);
 			mainGroup = 0599B1582E23F1BC001FBCE0;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				056DC7C52E27867600F5DF2B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				05773C662E2903AB00101B7B /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0599B1622E23F1BC001FBCE0 /* Products */;
 			projectDirPath = "";
@@ -265,6 +352,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.keontapeat.GOLDEX-AI";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -293,6 +381,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.keontapeat.GOLDEX-AI";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -324,6 +413,93 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		056DC7C52E27867600F5DF2B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.0.0;
+			};
+		};
+		05773C662E2903AB00101B7B /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase-community/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		056DC7C62E27867600F5DF2B /* FirebaseAI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 056DC7C52E27867600F5DF2B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAI;
+		};
+		056DC7C82E27867600F5DF2B /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 056DC7C52E27867600F5DF2B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		056DC7CA2E27867600F5DF2B /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 056DC7C52E27867600F5DF2B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		056DC7CC2E27867600F5DF2B /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 056DC7C52E27867600F5DF2B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		056DC7CE2E27867600F5DF2B /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 056DC7C52E27867600F5DF2B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+		056DC7D02E27867600F5DF2B /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 056DC7C52E27867600F5DF2B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		056DC7D22E27867600F5DF2B /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 056DC7C52E27867600F5DF2B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+		05773C672E2903AB00101B7B /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05773C662E2903AB00101B7B /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		05773C692E2903AB00101B7B /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05773C662E2903AB00101B7B /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		05773C6B2E2903AB00101B7B /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05773C662E2903AB00101B7B /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		05773C6D2E2903AB00101B7B /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05773C662E2903AB00101B7B /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		05773C6F2E2903AB00101B7B /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05773C662E2903AB00101B7B /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		05D2702D2E29109E00D13ACB /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05773C662E2903AB00101B7B /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 0599B1592E23F1BC001FBCE0 /* Project object */;
 }

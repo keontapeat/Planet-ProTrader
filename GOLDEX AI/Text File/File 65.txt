@@ -1,0 +1,239 @@
+================================================================================
+GOLDEX AI VPS MONITORING & TROUBLESHOOTING GUIDE
+================================================================================
+Complete commands to check if your VPS is running, connected, and actively trading.
+
+🔍 VPS CONNECTION & STATUS CHECK
+────────────────────────────────────────────────────────────────
+
+1. TEST VPS CONNECTION
+ssh root@172.234.201.231
+# If this fails: VPS is down or IP changed
+# If asks for password: VPS is running
+
+2. CHECK VPS SYSTEM STATUS
+uptime
+# Shows: how long VPS has been running
+
+free -h
+# Shows: memory usage (should have available RAM)
+
+df -h
+# Shows: disk space (should not be 100% full)
+
+top
+# Shows: running processes (press 'q' to exit)
+
+🤖 GOLDEX BOT STATUS CHECK
+────────────────────────────────────────────────────────────────
+
+3. CHECK IF GOLDEX SERVICE IS RUNNING
+systemctl status goldex.service --no-pager
+# EXPECT: "Active: active (running)" in GREEN
+# If "inactive (dead)" = bot is stopped
+# If "failed" = bot crashed
+
+4. CHECK GOLDEX BOT LOGS (LIVE)
+journalctl -u goldex.service -f
+# Shows live log output - look for:
+# ✅ "Successfully connected to DEMO account!"
+# ✅ Trade status updates
+# ❌ Any error messages
+# Press Ctrl+C to exit
+
+5. CHECK GOLDEX BOT LOGS (RECENT)
+journalctl -u goldex.service -n 50
+# Shows last 50 log entries
+
+6. CHECK IF GOLDEX PROCESS IS RUNNING
+ps aux | grep goldex
+# Should show python process running goldexv9.py
+
+7. CHECK GOLDEX FILE TIMESTAMP
+ls -l /opt/goldex-bot/goldexv9.py
+# Verify file was uploaded correctly
+
+📊 TRADING ACTIVITY CHECK
+────────────────────────────────────────────────────────────────
+
+8. CHECK RECENT TRADES IN LOGS
+journalctl -u goldex.service -n 100 | grep -i "trade\|position\|order\|buy\|sell"
+# Shows any trading activity
+
+9. CHECK GOLDEX LOG FILE (if exists)
+tail -f /opt/goldex-bot/goldex_bot.log
+# Shows bot's internal log file
+
+10. CHECK MT5 CONNECTION STATUS
+cd /opt/goldex-bot
+source venv/bin/activate
+python -c "
+import mt5linux as mt5
+print('✅ MT5 initialized:', mt5.initialize())
+print('✅ Terminal info:', mt5.terminal_info())
+print('✅ Account info:', mt5.account_info())
+mt5.shutdown()
+"
+
+📡 NETWORK & CONNECTIVITY CHECK
+────────────────────────────────────────────────────────────────
+
+11. CHECK INTERNET CONNECTION
+ping -c 4 google.com
+# Should show successful ping responses
+
+12. CHECK BROKER CONNECTION
+ping -c 4 trade.coinexx.com
+# Should ping your broker's server
+
+13. CHECK OPEN NETWORK CONNECTIONS
+netstat -tulpn | grep python
+# Shows if bot has active connections
+
+🔧 TROUBLESHOOTING COMMANDS
+────────────────────────────────────────────────────────────────
+
+14. RESTART GOLDEX BOT
+systemctl restart goldex.service
+systemctl status goldex.service --no-pager
+
+15. IF BOT IS CRASHED/STOPPED
+systemctl start goldex.service
+systemctl enable goldex.service
+
+16. CHECK SYSTEM RESOURCES
+free -h && df -h && uptime
+# Memory, disk, and system load
+
+17. CHECK FOR ERRORS
+dmesg | tail -20
+# System error messages
+
+18. MANUAL TEST (TROUBLESHOOTING)
+cd /opt/goldex-bot
+source venv/bin/activate
+python goldexv9.py
+# Run manually to see live output
+# Press Ctrl+C to stop
+
+📋 QUICK STATUS CHECK SCRIPT
+────────────────────────────────────────────────────────────────
+
+19. CREATE QUICK STATUS SCRIPT
+nano /opt/goldex-bot/check_status.sh
+
+# Paste this content:
+#!/bin/bash
+echo "=== GOLDEX VPS STATUS CHECK ==="
+echo "📍 VPS Uptime:"
+uptime
+echo ""
+echo "🤖 Goldex Service Status:"
+systemctl status goldex.service --no-pager | head -5
+echo ""
+echo "📊 Recent Activity:"
+journalctl -u goldex.service -n 10 --no-pager | tail -5
+echo ""
+echo "💾 System Resources:"
+free -h | head -2
+df -h | grep -E "(Filesystem|/dev/)"
+echo ""
+echo "🔗 Process Check:"
+ps aux | grep goldex | grep -v grep
+echo ""
+echo "=== STATUS CHECK COMPLETE ==="
+
+# Make executable:
+chmod +x /opt/goldex-bot/check_status.sh
+
+20. RUN QUICK STATUS CHECK
+/opt/goldex-bot/check_status.sh
+
+🚨 COMMON ISSUES & SOLUTIONS
+────────────────────────────────────────────────────────────────
+
+❌ "Connection refused" when SSH
+→ VPS is down or IP changed
+→ Contact VPS provider
+
+❌ "Active: inactive (dead)"
+→ Bot stopped: systemctl start goldex.service
+
+❌ "Active: failed"
+→ Bot crashed: journalctl -u goldex.service -n 20
+→ Check error messages and restart
+
+❌ "No such file or directory"
+→ Script not uploaded: re-upload goldexv9.py
+→ scp "/Users/keonta/.../goldexv9.py" root@172.234.201.231:/opt/goldex-bot/
+
+❌ "ModuleNotFoundError"
+→ Dependencies missing:
+→ source /opt/goldex-bot/venv/bin/activate
+→ pip install mt5linux pandas numpy
+
+❌ "Failed to connect to MT5"
+→ Check demo account credentials in goldexv9.py
+→ Test manual connection with command #10
+
+❌ "No trades happening"
+→ Check market hours (forex markets closed weekends)
+→ Check if demo account has sufficient balance
+→ Verify trading signals in logs
+
+🔄 DAILY MONITORING ROUTINE
+────────────────────────────────────────────────────────────────
+
+Morning Check:
+1. ssh root@172.234.201.231
+2. /opt/goldex-bot/check_status.sh
+3. journalctl -u goldex.service -n 20
+
+Evening Check:
+1. Check for any trades: journalctl -u goldex.service -n 100 | grep -i trade
+2. Check system resources: free -h && df -h
+3. Check uptime: uptime
+
+Weekly Maintenance:
+1. Update dependencies: pip install --upgrade mt5linux pandas numpy
+2. Clean old logs: journalctl --vacuum-time=7d
+3. Check disk space: df -h
+
+📱 AUTOMATED MONITORING SETUP
+────────────────────────────────────────────────────────────────
+
+Set up automatic alerts:
+1. Create monitoring script:
+nano /opt/goldex-bot/monitor.sh
+
+#!/bin/bash
+if ! systemctl is-active --quiet goldex.service; then
+    echo "ALERT: Goldex service is down!" | mail -s "Goldex Alert" your-email@example.com
+    systemctl restart goldex.service
+fi
+
+2. Add to crontab:
+crontab -e
+# Add this line:
+*/5 * * * * /opt/goldex-bot/monitor.sh
+
+================================================================================
+🎯 SUMMARY: VPS HEALTH CHECK COMMANDS
+================================================================================
+
+Connection:     ssh root@172.234.201.231
+Service Status: systemctl status goldex.service --no-pager
+Live Logs:      journalctl -u goldex.service -f
+Quick Status:   /opt/goldex-bot/check_status.sh
+Restart Bot:    systemctl restart goldex.service
+Manual Test:    cd /opt/goldex-bot && source venv/bin/activate && python goldexv9.py
+
+Your VPS is healthy if:
+✅ SSH connects successfully
+✅ Service shows "Active: active (running)"
+✅ Logs show "Successfully connected to DEMO account!"
+✅ No error messages in recent logs
+✅ System has available memory/disk space
+
+🚀 Your GOLDEX AI bot is running 24/7 and ready to trade!
+================================================================================

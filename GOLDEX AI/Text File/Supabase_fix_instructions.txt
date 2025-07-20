@@ -1,0 +1,18 @@
+================================================================================
+WHY THE APP STILL CRASHES & HOW TO FIX IT
+================================================================================
+Problem
+───────
+`SupabaseManager` force-unwraps an **invalid URL**:
+
+    "https://https://tetuqchhlrhpbwatrods.supabase.co"
+            ↑ duplicated “https://”
+
+`URL(string:)` returns **nil**, the `!` then crashes at launch.
+
+Two clean solutions are below – pick one:
+
+────────────────────────────────────────────────────────────────
+OPTION 1 – Keep SupabaseManager (quick patch)
+────────────────────────────────────────────────────────────────
+Edit the file and remove the duplicated protocol string:

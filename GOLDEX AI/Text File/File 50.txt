@@ -1,0 +1,47 @@
+──────────────────────────────────────────────────────────────────────────────
+STATUS CHECK & WHAT TO EXPECT
+──────────────────────────────────────────────────────────────────────────────
+1. You’re sitting at the shell prompt inside /opt/goldex-bot (screenshot).  
+2. That means Docker & docker-compose are ready to run.
+
+NOW RUN THE TWO KEY COMMANDS
+────────────────────────────
+$ cd /opt/goldex-bot
+$ docker compose up -d            # → image download + container start
+
+• First run → pulls ~1 GB image (1–3 min on VPS).  
+• When the prompt returns, container is running in background.
+
+TAIL THE LOGS
+─────────────
+$ docker compose logs -f          # live stream (Ctrl-C stops tail, bot keeps running)
+
+EXPECTED FIRST LINES
+────────────────────
+goldex  | Xvfb :1 started …
+goldex  | ✅ Connected — Balance: $2,500.00
+goldex  | [strategy loop …]
+
+IF YOU SEE THE GREEN CHECK → SUCCESS 🎉
+
+COMMON FIRST-RUN ISSUES
+───────────────────────
+• “Cannot locate goldex_bot.py”  
+  → Make sure file is in /opt/goldex-bot/bot/
+
+• “Invalid login”  
+  → Check .env creds (DEMO_LOGIN / PASSWORD / SERVER).
+
+• Image pull fails / 503  
+  → just rerun `docker compose up -d` (network hiccup).
+
+DAY-TO-DAY COMMANDS
+───────────────────
+$ docker compose down            # stop bot
+$ docker compose up -d           # start bot
+$ docker compose logs -f         # tail logs
+$ docker compose ps              # see running container
+
+That’s it—run the two commands above, look for the green balance line, and
+your bot is officially live.  Paste any errors if they appear. 🚀
+──────────────────────────────────────────────────────────────────────────────

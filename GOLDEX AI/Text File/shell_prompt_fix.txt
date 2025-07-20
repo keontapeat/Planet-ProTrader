@@ -1,0 +1,45 @@
+================================================================================
+WHY YOU KEEP GETTING “syntax error near unexpected token `$'”
+================================================================================
+The characters in front of each line ( (venv)$, root@localhost:# ) are *just
+the shell prompt*. They tell you who you are, where you are, and which venv is
+active—but **they are NOT part of the command**.
+
+Anything left of the blinking cursor is a prompt.
+Only what you type after the space is executed.
+
+────────────────────────────────────────────────────────────────
+1.  GOOD vs. BAD EXAMPLES
+────────────────────────────────────────────────────────────────
+BAD  →  (venv)$ python goldexv9.py          ← you typed the prompt too  
+GOOD →  python goldexv9.py                  ← only the command itself
+
+BAD  →  (venv) python goldexv9.py           ← same problem  
+GOOD →  python goldexv9.py
+
+────────────────────────────────────────────────────────────────
+2.  EXACT STEPS – COPY/PASTE THESE *ONLY* (no prompt)
+────────────────────────────────────────────────────────────────
+ssh root@172.234.201.231
+cd /opt/goldex-bot
+source venv/bin/activate
+python goldexv9.py
+
+────────────────────────────────────────────────────────────────
+3.  IF YOU WANT TO USE TMUX
+────────────────────────────────────────────────────────────────
+tmux new -s goldex
+python goldexv9.py
+# detach with  Ctrl-b  then  d
+tmux attach -t goldex           # re-attach later
+
+────────────────────────────────────────────────────────────────
+4.  DON’T FORGET: CREDENTIALS MUST BE SET INSIDE goldexv9.py
+────────────────────────────────────────────────────────────────
+DEMO_LOGIN    = 845638
+DEMO_PASSWORD = "GI7#scVJbBekrg"
+DEMO_SERVER   = "Coinexx-Demo"
+
+Save (Ctrl-O → Enter → Ctrl-X). Then run the 4-line command block above.
+
+================================================================================

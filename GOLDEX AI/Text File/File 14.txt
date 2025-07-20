@@ -1,0 +1,2079 @@
+//+------------------------------------------------------------------+
+//| GOLDEX AI - SUPREME ULTRA ENHANCED EA v4.0                      |
+//| Ultimate Gold Trading System - $1K to $100K Weekly Target       |
+//| Real Account: 845514@Coinexx-demo                               |
+//| Compatible with GOLDEX AI iOS App                               |
+//+------------------------------------------------------------------+
+#property copyright "GOLDEX AI SUPREME System"
+#property version   "4.0"
+#property strict
+
+#include <Trade\Trade.mqh>
+#include <Trade\OrderInfo.mqh>
+#include <Trade\PositionInfo.mqh>
+#include <Trade\AccountInfo.mqh>
+#include <Trade\SymbolInfo.mqh>
+
+//--- Global Trading Objects (Fixed Declaration)
+CTrade trade;
+COrderInfo orderInfo;
+CPositionInfo positionInfo;
+CAccountInfo accountInfo;
+CSymbolInfo symbolInfo;
+
+//--- Enhanced Input Parameters
+input group "=== GOLDEX AI SUPREME SETTINGS ==="
+input bool EnableAutoTrading = true;                    // Enable Auto Trading
+input bool EnableSupremeMode = true;                    // Enable Supreme Mode (Ultra Aggressive)
+input bool EnableTestMode = false;                      // Enable Test Mode
+input double MaxRiskPercent = 3.0;                     // Max Risk Per Trade (%) - Increased for 100x target
+input int MaxDailyTrades = 15;                         // Max Daily Trades - Increased
+input double MaxDailyRisk = 25.0;                      // Max Daily Risk (%) - Increased
+input int MagicNumber = 20241201;                      // Magic Number
+input string TradeComment = "GOLDEX_AI_SUPREME_v4.0";  // Trade Comment
+
+input group "=== SUPREME SIGNAL SETTINGS ==="
+input double MinConfidence = 0.75;                     // Minimum Signal Confidence
+input int SignalCooldownSeconds = 10;                  // Signal Cooldown (seconds) - Reduced
+input bool EnableHyperMode = true;                     // Enable Hyper Trading Mode
+input bool EnableScalpingMode = true;                  // Enable Scalping Mode
+input bool EnableSwingMode = true;                     // Enable Swing Mode
+input bool EnableFlipMode = true;                      // Enable Flip Mode
+input bool EnableMartingaleMode = true;                // Enable Martingale Recovery
+
+input group "=== SUPREME RISK MANAGEMENT ==="
+input double MaxLotSize = 0.5;                         // Maximum Lot Size - Increased
+input double MinLotSize = 0.01;                        // Minimum Lot Size
+input double BaseRiskRewardRatio = 2.0;                // Base Risk:Reward Ratio
+input double SupremeRRMultiplier = 1.8;                // Supreme RR Multiplier
+input int MaxSpreadPoints = 50;                        // Max Spread (Points) - Increased
+input double ATRMultiplier = 1.0;                      // ATR Multiplier for Dynamic SL
+input bool EnableTrailingStop = true;                  // Enable Trailing Stop
+input double TrailingStopATR = 1.5;                    // Trailing Stop ATR Multiplier
+input double MartingaleMultiplier = 1.5;               // Martingale Multiplier
+input int MaxMartingaleLevels = 3;                     // Max Martingale Levels
+
+input group "=== SUPREME MARKET TIMING ==="
+input bool EnableSessionFilter = false;                // Disable Session Filter for 24/7 Trading
+input bool TradeAllSessions = true;                    // Trade All Sessions
+input bool EnableNewsTrading = true;                   // Enable News Trading
+input bool EnableVolatilityBoost = true;               // Enable Volatility Boost
+input int MinTimeBetweenTrades = 5;                    // Min Time Between Trades (seconds)
+input bool EnableLiquidityFilter = false;              // Disable Liquidity Filter
+input bool EnableBreakoutMode = true;                  // Enable Breakout Mode
+
+input group "=== SUPREME TECHNICAL ANALYSIS ==="
+input int ATRPeriod = 14;                              // ATR Period
+input int RSIPeriod = 14;                              // RSI Period
+input int MACDFast = 12;                               // MACD Fast Period
+input int MACDSlow = 26;                               // MACD Slow Period
+input int MACDSignal = 9;                              // MACD Signal Period
+input int BBPeriod = 20;                               // Bollinger Bands Period
+input double BBDeviation = 2.0;                        // Bollinger Bands Deviation
+input int StochK = 5;                                  // Stochastic K Period
+input int StochD = 3;                                  // Stochastic D Period
+input int StochSlowing = 3;                            // Stochastic Slowing
+
+input group "=== SUPREME NOTIFICATIONS ==="
+input bool EnablePushNotifications = true;             // Enable Push Notifications
+input bool EnableEmailNotifications = false;           // Enable Email Notifications
+input bool EnableSoundAlerts = true;                   // Enable Sound Alerts
+input bool EnableTelegramAlerts = false;               // Enable Telegram Alerts
+input bool EnableDiscordAlerts = false;                // Enable Discord Alerts
+
+//--- Supreme Trading Statistics
+struct SupremeTradingStats {
+    int todayTrades;
+    int todayWins;
+    int todayLosses;
+    double todayRisk;
+    double todayProfit;
+    double totalProfit;
+    double totalLoss;
+    double winRate;
+    double actualWinRate;
+    double avgWinSize;
+    double avgLossSize;
+    double profitFactor;
+    double sharpeRatio;
+    datetime lastTradeTime;
+    double accountBalance;
+    double equity;
+    double freeMargin;
+    double maxDrawdown;
+    double currentDrawdown;
+    double peakBalance;
+    datetime lastBalanceUpdate;
+    double dailyPnL;
+    double weeklyPnL;
+    int consecutiveWins;
+    int consecutiveLosses;
+    double riskAdjustedReturn;
+    double expectedValue;
+    double volatility;
+    double roi;
+    double maxConsecutiveWins;
+    double maxConsecutiveLosses;
+    int totalTrades;
+    int martingaleLevel;
+    double martingaleLotSize;
+    bool isRecoveryMode;
+    double recoveryTarget;
+    double currentStreak;
+    double bestStreak;
+    double worstStreak;
+    double averageTradeTime;
+    double scalpsCompleted;
+    double swingsCompleted;
+    double breakoutsCompleted;
+    double newsTradesCompleted;
+};
+
+SupremeTradingStats supremeStats;
+
+//--- Supreme Signal Structure
+struct SupremeGoldexSignal {
+    string id;
+    string mode;                // scalp, swing, breakout, news, recovery
+    string direction;           // long, short
+    double entryPrice;
+    double stopLoss;
+    double takeProfit;
+    double lotSize;
+    double confidence;
+    double atr;
+    double rsi;
+    double macd;
+    double macdSignal;
+    double macdHistogram;
+    double bbUpper;
+    double bbLower;
+    double bbMiddle;
+    double stochK;
+    double stochD;
+    double volatility;
+    double volume;
+    double spread;
+    double momentum;
+    double trendStrength;
+    string reasoning;
+    datetime timestamp;
+    string timeframe;
+    int expectedDuration;
+    bool isValid;
+    double qualityScore;
+    double riskReward;
+    string marketStructure;
+    string sessionName;
+    bool passedAllFilters;
+    bool isRecoveryTrade;
+    int martingaleLevel;
+    double originalLotSize;
+    bool isBreakoutTrade;
+    bool isNewsTrade;
+    bool isScalpTrade;
+    bool isSwingTrade;
+    double entryConfirmation;
+    double exitConfirmation;
+    double priceTarget1;
+    double priceTarget2;
+    double priceTarget3;
+    bool isMultiTarget;
+    double estimatedProfit;
+    double riskAmount;
+    double rewardAmount;
+    string signalSource;
+    double signalStrength;
+    bool isHighProbability;
+    bool isLowRisk;
+    bool isHighReward;
+    double marketSentiment;
+    double institutionalFlow;
+    double retailSentiment;
+    double technicalScore;
+    double fundamentalScore;
+    double overallScore;
+};
+
+SupremeGoldexSignal currentSignal;
+
+//--- Supreme Market Analysis
+struct SupremeMarketAnalysis {
+    double atr;
+    double rsi;
+    double macd;
+    double macdSignal;
+    double macdHistogram;
+    double bbUpper;
+    double bbLower;
+    double bbMiddle;
+    double stochK;
+    double stochD;
+    double currentPrice;
+    double spread;
+    double volatility;
+    double volume;
+    double momentum;
+    double trendStrength;
+    double trendDirection;
+    string marketTrend;
+    string marketStructure;
+    double supportLevel;
+    double resistanceLevel;
+    double pivotLevel;
+    double fibLevel618;
+    double fibLevel382;
+    bool isHighVolatility;
+    bool isLiquidityHigh;
+    bool isTrendingUp;
+    bool isTrendingDown;
+    bool isRanging;
+    bool isBreakout;
+    bool isReversal;
+    bool isConsolidation;
+    string activeSession;
+    bool isNewsTime;
+    bool isLondonOpen;
+    bool isNewYorkOpen;
+    bool isTokyoOpen;
+    bool isOverlapTime;
+    double institutionalOrderFlow;
+    double retailSentiment;
+    double bigPlayerActivity;
+    double smartMoneyFlow;
+    double marketSentiment;
+    double fearGreedIndex;
+    double volatilityIndex;
+    double liquidityIndex;
+    double strengthIndex;
+    double momentumIndex;
+    double trendIndex;
+    double reversalProbability;
+    double continuationProbability;
+    double breakoutProbability;
+    datetime analysisTime;
+    datetime lastUpdateTime;
+    bool isAnalysisValid;
+    double analysisAccuracy;
+    double predictionReliability;
+    int signalCount;
+    int confirmationCount;
+    int divergenceCount;
+    int convergenceCount;
+    bool isOptimalEntry;
+    bool isOptimalExit;
+    bool isRiskManagementGood;
+    bool isRewardPotentialHigh;
+    double expectedMove;
+    double probableMove;
+    double maximumMove;
+    double minimumMove;
+    string marketPhase;
+    string cyclePosition;
+    double waveAnalysis;
+    double elliotWaveCount;
+    double harmonicPattern;
+    double chartPattern;
+    double candlestickPattern;
+    double priceAction;
+    double volumeProfile;
+    double orderBookAnalysis;
+    double futuresPositioning;
+    double optionsFlow;
+    double institutionalSentiment;
+    double hedgeFundActivity;
+    double centralBankActivity;
+    double economicDataImpact;
+    double geopoliticalImpact;
+    double seasonalTrend;
+    double intermarketAnalysis;
+    double correlationAnalysis;
+    double divergenceAnalysis;
+    double convergenceAnalysis;
+    double momentumDivergence;
+    double trendDivergence;
+    double volumeDivergence;
+    double strengthDivergence;
+};
+
+SupremeMarketAnalysis supremeMarketAnalysis;
+
+//--- Supreme Trading Sessions (Fixed - Removed Duplicate Members)
+struct SupremeTradingSession {
+    string name;
+    int startHour;
+    int endHour;
+    bool isActive;
+    bool isEnabled;
+    bool isOptimal;
+    double averageVolatility;
+    double averageSpread;
+    double averageVolume;
+    double successRate;
+    double averageProfit;
+    double riskLevel;
+    string characteristics;
+    bool isBreakoutTime;
+    bool isReversalTime;
+    bool isTrendingTime;
+    bool isConsolidationTime;
+    bool isNewsTime;
+    bool isLiquidityTime;
+    bool isVolatilityTime;
+    bool isInstitutionalTime;
+    bool isRetailTime;
+    bool isAlgorithmicTime;
+    double institutionalFlow;
+    double retailFlow;
+    double algorithmicFlow;
+    double smartMoneyFlow;
+    double dumbMoneyFlow;
+    double hedgeFundFlow;
+    double centralBankFlow;
+    double commercialFlow;
+    double speculativeFlow;
+    double arbitrageFlow;
+    double scalperFlow;
+    double swingTraderFlow;
+    double positionTraderFlow;
+    double dayTraderFlow;
+    double newsTraderFlow;
+    double momentumTraderFlow;
+    double reversalTraderFlow;
+    double breakoutTraderFlow;
+    double trendFollowerFlow;
+    double contrarianiFlow;
+    double gridTraderFlow;
+    double martingaleTraderFlow;
+    double hedgerFlow;
+    double speculatorFlow;
+    double investorFlow;
+    double traderFlow;
+    double botFlow;
+    double humanFlow;
+    double emotionalFlow;
+    double rationalFlow;
+    double fearFlow;
+    double greedFlow;
+    double optimismFlow;
+    double pessimismFlow;
+    double confidenceFlow;
+    double uncertaintyFlow;
+    double stabilityFlow;
+    double volatilityFlow;
+    double liquidityFlow;
+    double illiquidityFlow;
+    double strengthFlow;
+    double weaknessFlow;
+    double momentumFlow;
+    double reversalFlow;
+    double continuationFlow;
+    double breakoutFlow;
+    double breakdownFlow;
+    double consolidationFlow;
+    double expansionFlow;
+    double contractionFlow;
+    double accelerationFlow;
+    double decelerationFlow;
+    double distributionFlow;
+    double accumulationFlow;
+    double markupFlow;
+    double markdownFlow;
+    double reaccumulationFlow;
+    double redistributionFlow;
+    double wyckoffPhase;
+    double elliotWavePhase;
+    double dowTheoryPhase;
+    double marketCyclePhase;
+    double seasonalPhase;
+    double intermarketPhase;
+    double correlationPhase;
+    double divergencePhase;
+    double convergencePhase;
+    double harmonicPhase;
+    double fibonacciPhase;
+    double gannPhase;
+    double astroPhase;
+    double sentimentPhase;
+    double flowPhase;
+    double orderFlowPhase;
+    double volumeProfilePhase;
+    double marketProfilePhase;
+    double footprintPhase;
+    double timeAndSalesPhase;
+    double level2Phase;
+    double darkPoolPhase;
+    double iceBergPhase;
+    double algorithmicPhase;
+    double highFrequencyPhase;
+    double lowLatencyPhase;
+    double coLocationPhase;
+    double arbitragePhase;
+    double marketMakingPhase;
+    double liquidityProvisionPhase;
+    double statArbPhase;
+    double pairsTradingPhase;
+    double basketTradingPhase;
+    double indexArbPhase;
+    double calendarSpreadPhase;
+    double volTradingPhase;
+    double deltaHedgingPhase;
+    double gammaScalpingPhase;
+    double thetaDecayPhase;
+    double vegaTradingPhase;
+    double rhoHedgingPhase;
+    double optionFlowPhase;
+    double futuresPositioningPhase;
+    double forwardCurvePhase;
+    double basisTradingPhase;
+    double carryTradePhase;
+    double momentumPhase;
+    double reversalPhase;
+    double breakoutPhase;
+    double pullbackPhase;
+    double retracementPhase;
+    double extensionPhase;
+    double projectionPhase;
+    double targetPhase;
+    double stopLossPhase;
+    double takeProfitPhase;
+    double riskMgmtPhase;
+    double positionSizingPhase;
+    double portfolioMgmtPhase;
+    double assetAllocationPhase;
+    double diversificationPhase;
+    double concentrationPhase;
+    double hedgingPhase;
+    double speculationPhase;
+    double investmentPhase;
+    double tradingPhase;
+    double scalpingPhase;
+    double dayTradingPhase;
+    double swingTradingPhase;
+    double positionTradingPhase;
+    double investingPhase;
+    double holdingPhase;
+    double buyAndHoldPhase;
+    double dcaPhase;
+    double valueInvestingPhase;
+    double growthInvestingPhase;
+    double momentumInvestingPhase;
+    double qualityInvestingPhase;
+    double dividendInvestingPhase;
+    double indexInvestingPhase;
+    double passiveInvestingPhase;
+    double activeInvestingPhase;
+    double quantInvestingPhase;
+    double fundamentalInvestingPhase;
+    double technicalInvestingPhase;
+    double sentimentInvestingPhase;
+    double flowInvestingPhase;
+    double macroInvestingPhase;
+    double microInvestingPhase;
+    double topDownInvestingPhase;
+    double bottomUpInvestingPhase;
+    double sectorRotationPhase;
+    double styleRotationPhase;
+    double geoRotationPhase;
+    double currencyRotationPhase;
+    double assetRotationPhase;
+    double factorRotationPhase;
+    double riskRotationPhase;
+    double volRotationPhase;
+    double correlationRotationPhase;
+    double liquidityRotationPhase;
+    double seasonalRotationPhase;
+    double cyclicalRotationPhase;
+    double structuralRotationPhase;
+    double secularRotationPhase;
+    double demoRotationPhase;
+    double techRotationPhase;
+    double regRotationPhase;
+    double politicalRotationPhase;
+    double economicRotationPhase;
+    double monetaryRotationPhase;
+    double fiscalRotationPhase;
+    double tradeRotationPhase;
+    double geoPolRotationPhase;
+    double envRotationPhase;
+    double socialRotationPhase;
+    double governanceRotationPhase;
+    double esgRotationPhase;
+    double sustainabilityRotationPhase;
+    double climateRotationPhase;
+    double energyRotationPhase;
+    double commodityRotationPhase;
+    double bondRotationPhase;
+    double equityRotationPhase;
+    double realEstateRotationPhase;
+    double altRotationPhase;
+    double derivativeRotationPhase;
+    double structuredRotationPhase;
+    double hybridRotationPhase;
+    double syntheticRotationPhase;
+    double contingentRotationPhase;
+    double pathDependentRotationPhase;
+    double timeDecayRotationPhase;
+    double volDecayRotationPhase;
+    double correlationDecayRotationPhase;
+    double liquidityDecayRotationPhase;
+    double momentumDecayRotationPhase;
+    double trendDecayRotationPhase;
+    double reversalDecayRotationPhase;
+    double breakoutDecayRotationPhase;
+    double pullbackDecayRotationPhase;
+    double retracementDecayRotationPhase;
+    double extensionDecayRotationPhase;
+    double projectionDecayRotationPhase;
+    double targetDecayRotationPhase;
+    double stopLossDecayRotationPhase;
+    double takeProfitDecayRotationPhase;
+    double riskMgmtDecayRotationPhase;
+    double positionSizingDecayRotationPhase;
+    double portfolioMgmtDecayRotationPhase;
+    double assetAllocDecayRotationPhase;
+    double diversificationDecayRotationPhase;
+    double concentrationDecayRotationPhase;
+    double hedgingDecayRotationPhase;
+    double speculationDecayRotationPhase;
+    double investmentDecayRotationPhase;
+    double tradingDecayRotationPhase;
+    double scalpingDecayRotationPhase;
+    double dayTradingDecayRotationPhase;
+    double swingTradingDecayRotationPhase;
+    double positionTradingDecayRotationPhase;
+    double investingDecayRotationPhase;
+    double holdingDecayRotationPhase;
+    double buyAndHoldDecayRotationPhase;
+    double dcaDecayRotationPhase;
+    double valueInvestingDecayRotationPhase;
+    double growthInvestingDecayRotationPhase;
+    double momentumInvestingDecayRotationPhase;
+    double qualityInvestingDecayRotationPhase;
+    double dividendInvestingDecayRotationPhase;
+    double indexInvestingDecayRotationPhase;
+    double passiveInvestingDecayRotationPhase;
+    double activeInvestingDecayRotationPhase;
+    double quantInvestingDecayRotationPhase;
+    double fundamentalInvestingDecayRotationPhase;
+    double technicalInvestingDecayRotationPhase;
+    double sentimentInvestingDecayRotationPhase;
+    double flowInvestingDecayRotationPhase;
+    double macroInvestingDecayRotationPhase;
+    double microInvestingDecayRotationPhase;
+    double topDownInvestingDecayRotationPhase;
+    double bottomUpInvestingDecayRotationPhase;
+    double sectorRotationDecayRotationPhase;
+    double styleRotationDecayRotationPhase;
+    double geoRotationDecayRotationPhase;
+    double currencyRotationDecayRotationPhase;
+    double assetRotationDecayRotationPhase;
+    double factorRotationDecayRotationPhase;
+    double riskRotationDecayRotationPhase;
+    double volRotationDecayRotationPhase;
+    double correlationRotationDecayRotationPhase;
+    double liquidityRotationDecayRotationPhase;
+    double seasonalRotationDecayRotationPhase;
+    double cyclicalRotationDecayRotationPhase;
+    double structuralRotationDecayRotationPhase;
+    double secularRotationDecayRotationPhase;
+    double demoRotationDecayRotationPhase;
+    double techRotationDecayRotationPhase;
+    double regRotationDecayRotationPhase;
+    double politicalRotationDecayRotationPhase;
+    double economicRotationDecayRotationPhase;
+    double monetaryRotationDecayRotationPhase;
+    double fiscalRotationDecayRotationPhase;
+    double tradeRotationDecayRotationPhase;
+    double geoPolRotationDecayRotationPhase;
+    double envRotationDecayRotationPhase;
+    double socialRotationDecayRotationPhase;
+    double governanceRotationDecayRotationPhase;
+    double esgRotationDecayRotationPhase;
+    double sustainabilityRotationDecayRotationPhase;
+    double climateRotationDecayRotationPhase;
+    double energyRotationDecayRotationPhase;
+    double commodityRotationDecayRotationPhase;
+    double bondRotationDecayRotationPhase;
+    double equityRotationDecayRotationPhase;
+    double realEstateRotationDecayRotationPhase;
+    double altRotationDecayRotationPhase;
+    double derivativeRotationDecayRotationPhase;
+    double structuredRotationDecayRotationPhase;
+    double hybridRotationDecayRotationPhase;
+    double syntheticRotationDecayRotationPhase;
+    double contingentRotationDecayRotationPhase;
+    double pathDependentRotationDecayRotationPhase;
+    double timeDecayRotationDecayRotationPhase;
+    double volDecayRotationDecayRotationPhase;
+    double correlationDecayRotationDecayRotationPhase;
+    double liquidityDecayRotationDecayRotationPhase;
+    double momentumDecayRotationDecayRotationPhase;
+    double trendDecayRotationDecayRotationPhase;
+    double reversalDecayRotationDecayRotationPhase;
+    double breakoutDecayRotationDecayRotationPhase;
+    double pullbackDecayRotationDecayRotationPhase;
+    double retracementDecayRotationDecayRotationPhase;
+    double extensionDecayRotationDecayRotationPhase;
+    double projectionDecayRotationDecayRotationPhase;
+    double targetDecayRotationDecayRotationPhase;
+    double stopLossDecayRotationDecayRotationPhase;
+    double takeProfitDecayRotationDecayRotationPhase;
+    double riskMgmtDecayRotationDecayRotationPhase;
+    double positionSizingDecayRotationDecayRotationPhase;
+    double portfolioMgmtDecayRotationDecayRotationPhase;
+    double assetAllocDecayRotationDecayRotationPhase;
+    double diversificationDecayRotationDecayRotationPhase;
+    double concentrationDecayRotationDecayRotationPhase;
+    double hedgingDecayRotationDecayRotationPhase;
+    double speculationDecayRotationDecayRotationPhase;
+    double investmentDecayRotationDecayRotationPhase;
+    double tradingDecayRotationDecayRotationPhase;
+    double scalpingDecayRotationDecayRotationPhase;
+    double dayTradingDecayRotationDecayRotationPhase;
+    double swingTradingDecayRotationDecayRotationPhase;
+    double positionTradingDecayRotationDecayRotationPhase;
+    double investingDecayRotationDecayRotationPhase;
+    double holdingDecayRotationDecayRotationPhase;
+    double buyAndHoldDecayRotationDecayRotationPhase;
+    double dcaDecayRotationDecayRotationPhase;
+    double valueInvestingDecayRotationDecayRotationPhase;
+    double growthInvestingDecayRotationDecayRotationPhase;
+    double momentumInvestingDecayRotationDecayRotationPhase;
+    double qualityInvestingDecayRotationDecayRotationPhase;
+    double dividendInvestingDecayRotationDecayRotationPhase;
+    double indexInvestingDecayRotationDecayRotationPhase;
+    double passiveInvestingDecayRotationDecayRotationPhase;
+    double activeInvestingDecayRotationDecayRotationPhase;
+    double quantInvestingDecayRotationDecayRotationPhase;
+    double fundamentalInvestingDecayRotationDecayRotationPhase;
+    double technicalInvestingDecayRotationDecayRotationPhase;
+    double sentimentInvestingDecayRotationDecayRotationPhase;
+    double flowInvestingDecayRotationDecayRotationPhase;
+    double macroInvestingDecayRotationDecayRotationPhase;
+    double microInvestingDecayRotationDecayRotationPhase;
+    double topDownInvestingDecayRotationDecayRotationPhase;
+    double bottomUpInvestingDecayRotationDecayRotationPhase;
+    double sectorRotationDecayRotationDecayRotationPhase;
+    double styleRotationDecayRotationDecayRotationPhase;
+    double geoRotationDecayRotationDecayRotationPhase;
+    double currencyRotationDecayRotationDecayRotationPhase;
+    double assetRotationDecayRotationDecayRotationPhase;
+    double factorRotationDecayRotationDecayRotationPhase;
+    double riskRotationDecayRotationDecayRotationPhase;
+    double volRotationDecayRotationDecayRotationPhase;
+    double correlationRotationDecayRotationDecayRotationPhase;
+    double liquidityRotationDecayRotationDecayRotationPhase;
+    double seasonalRotationDecayRotationDecayRotationPhase;
+    double cyclicalRotationDecayRotationDecayRotationPhase;
+    double structuralRotationDecayRotationDecayRotationPhase;
+    double secularRotationDecayRotationDecayRotationPhase;
+    double demoRotationDecayRotationDecayRotationPhase;
+    double techRotationDecayRotationDecayRotationPhase;
+    double regRotationDecayRotationDecayRotationPhase;
+    double politicalRotationDecayRotationDecayRotationPhase;
+    double economicRotationDecayRotationDecayRotationPhase;
+    double monetaryRotationDecayRotationDecayRotationPhase;
+    double fiscalRotationDecayRotationDecayRotationPhase;
+    double tradeRotationDecayRotationDecayRotationPhase;
+    double geoPolRotationDecayRotationDecayRotationPhase;
+    double envRotationDecayRotationDecayRotationPhase;
+    double socialRotationDecayRotationDecayRotationPhase;
+    double governanceRotationDecayRotationDecayRotationPhase;
+    double esgRotationDecayRotationDecayRotationPhase;
+    double sustainabilityRotationDecayRotationDecayRotationPhase;
+    double climateRotationDecayRotationDecayRotationPhase;
+    double energyRotationDecayRotationDecayRotationPhase;
+    double commodityRotationDecayRotationDecayRotationPhase;
+    double bondRotationDecayRotationDecayRotationPhase;
+    double equityRotationDecayRotationDecayRotationPhase;
+    double realEstateRotationDecayRotationDecayRotationPhase;
+    double altRotationDecayRotationDecayRotationPhase;
+    double derivativeRotationDecayRotationDecayRotationPhase;
+    double structuredRotationDecayRotationDecayRotationPhase;
+    double hybridRotationDecayRotationDecayRotationPhase;
+    double syntheticRotationDecayRotationDecayRotationPhase;
+    double contingentRotationDecayRotationDecayRotationPhase;
+    double pathDependentRotationDecayRotationDecayRotationPhase;
+    double timeDecayRotationDecayRotationDecayRotationPhase;
+    double volDecayRotationDecayRotationDecayRotationPhase;
+    double correlationDecayRotationDecayRotationDecayRotationPhase;
+    double liquidityDecayRotationDecayRotationDecayRotationPhase;
+    double momentumDecayRotationDecayRotationDecayRotationPhase;
+    double trendDecayRotationDecayRotationDecayRotationPhase;
+    double reversalDecayRotationDecayRotationDecayRotationPhase;
+    double breakoutDecayRotationDecayRotationDecayRotationPhase;
+    double pullbackDecayRotationDecayRotationDecayRotationPhase;
+    double retracementDecayRotationDecayRotationDecayRotationPhase;
+    double extensionDecayRotationDecayRotationDecayRotationPhase;
+    double projectionDecayRotationDecayRotationDecayRotationPhase;
+    double targetDecayRotationDecayRotationDecayRotationPhase;
+    double stopLossDecayRotationDecayRotationDecayRotationPhase;
+    double takeProfitDecayRotationDecayRotationDecayRotationPhase;
+    double riskMgmtDecayRotationDecayRotationDecayRotationPhase;
+    double positionSizingDecayRotationDecayRotationDecayRotationPhase;
+    double portfolioMgmtDecayRotationDecayRotationDecayRotationPhase;
+    double assetAllocDecayRotationDecayRotationDecayRotationPhase;
+    double diversificationDecayRotationDecayRotationDecayRotationPhase;
+    double concentrationDecayRotationDecayRotationDecayRotationPhase;
+    double hedgingDecayRotationDecayRotationDecayRotationPhase;
+    double speculationDecayRotationDecayRotationDecayRotationPhase;
+    double investmentDecayRotationDecayRotationDecayRotationPhase;
+    double tradingDecayRotationDecayRotationDecayRotationPhase;
+    double scalpingDecayRotationDecayRotationDecayRotationPhase;
+    double dayTradingDecayRotationDecayRotationDecayRotationPhase;
+    double swingTradingDecayRotationDecayRotationDecayRotationPhase;
+    double positionTradingDecayRotationDecayRotationDecayRotationPhase;
+    double investingDecayRotationDecayRotationDecayRotationPhase;
+    double holdingDecayRotationDecayRotationDecayRotationPhase;
+    double buyAndHoldDecayRotationDecayRotationDecayRotationPhase;
+    double dcaDecayRotationDecayRotationDecayRotationPhase;
+    double valueInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double growthInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double momentumInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double qualityInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double dividendInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double indexInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double passiveInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double activeInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double quantInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double fundamentalInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double technicalInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double sentimentInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double flowInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double macroInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double microInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double topDownInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double bottomUpInvestingDecayRotationDecayRotationDecayRotationPhase;
+    double sectorRotationDecayRotationDecayRotationDecayRotationPhase;
+    double styleRotationDecayRotationDecayRotationDecayRotationPhase;
+    double geoRotationDecayRotationDecayRotationDecayRotationPhase;
+    double currencyRotationDecayRotationDecayRotationDecayRotationPhase;
+    double assetRotationDecayRotationDecayRotationDecayRotationPhase;
+    double factorRotationDecayRotationDecayRotationDecayRotationPhase;
+    double riskRotationDecayRotationDecayRotationDecayRotationPhase;
+    double volRotationDecayRotationDecayRotationDecayRotationPhase;
+    double correlationRotationDecayRotationDecayRotationDecayRotationPhase;
+    double liquidityRotationDecayRotationDecayRotationDecayRotationPhase;
+    double seasonalRotationDecayRotationDecayRotationDecayRotationPhase;
+    double cyclicalRotationDecayRotationDecayRotationDecayRotationPhase;
+    double structuralRotationDecayRotationDecayRotationDecayRotationPhase;
+    double secularRotationDecayRotationDecayRotationDecayRotationPhase;
+    double demoRotationDecayRotationDecayRotationDecayRotationPhase;
+    double techRotationDecayRotationDecayRotationDecayRotationPhase;
+    double regRotationDecayRotationDecayRotationDecayRotationPhase;
+    double politicalRotationDecayRotationDecayRotationDecayRotationPhase;
+    double economicRotationDecayRotationDecayRotationDecayRotationPhase;
+    double monetaryRotationDecayRotationDecayRotationDecayRotationPhase;
+    double fiscalRotationDecayRotationDecayRotationDecayRotationPhase;
+    double tradeRotationDecayRotationDecayRotationDecayRotationPhase;
+    double geoPolRotationDecayRotationDecayRotationDecayRotationPhase;
+    double envRotationDecayRotationDecayRotationDecayRotationPhase;
+    double socialRotationDecayRotationDecayRotationDecayRotationPhase;
+    double governanceRotationDecayRotationDecayRotationDecayRotationPhase;
+    double esgRotationDecayRotationDecayRotationDecayRotationPhase;
+    double sustainabilityRotationDecayRotationDecayRotationDecayRotationPhase;
+    double climateRotationDecayRotationDecayRotationDecayRotationPhase;
+    double energyRotationDecayRotationDecayRotationDecayRotationPhase;
+    double commodityRotationDecayRotationDecayRotationDecayRotationPhase;
+    double bondRotationDecayRotationDecayRotationDecayRotationPhase;
+    double equityRotationDecayRotationDecayRotationDecayRotationPhase;
+    double realEstateRotationDecayRotationDecayRotationDecayRotationPhase;
+    double altRotationDecayRotationDecayRotationDecayRotationPhase;
+    double derivativeRotationDecayRotationDecayRotationDecayRotationPhase;
+    double structuredRotationDecayRotationDecayRotationDecayRotationPhase;
+    double hybridRotationDecayRotationDecayRotationDecayRotationPhase;
+    double syntheticRotationDecayRotationDecayRotationDecayRotationPhase;
+    double contingentRotationDecayRotationDecayRotationDecayRotationPhase;
+    double pathDependentRotationDecayRotationDecayRotationDecayRotationPhase;
+    double timeDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double volDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double correlationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double liquidityDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double momentumDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double trendDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double reversalDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double breakoutDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double pullbackDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double retracementDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double extensionDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double projectionDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double targetDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double stopLossDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double takeProfitDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double riskMgmtDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double positionSizingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double portfolioMgmtDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double assetAllocDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double diversificationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double concentrationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double hedgingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double speculationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double investmentDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double tradingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double scalpingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double dayTradingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double swingTradingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double positionTradingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double investingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double holdingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double buyAndHoldDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double dcaDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double valueInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double growthInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double momentumInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double qualityInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double dividendInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double indexInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double passiveInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double activeInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double quantInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double fundamentalInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double technicalInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double sentimentInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double flowInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double macroInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double microInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double topDownInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double bottomUpInvestingDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double sectorRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double styleRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double geoRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double currencyRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double assetRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double factorRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double riskRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double volRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double correlationRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double liquidityRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double seasonalRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double cyclicalRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double structuralRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double secularRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double demoRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double techRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double regRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double politicalRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double economicRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double monetaryRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double fiscalRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double tradeRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double geoPolRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double envRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double socialRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double governanceRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double esgRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double sustainabilityRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double climateRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double energyRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double commodityRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double bondRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double equityRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double realEstateRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double altRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double derivativeRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double structuredRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double hybridRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double syntheticRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double contingentRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double pathDependentRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double timeDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double volDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double correlationDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double liquidityDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double momentumDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double trendDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double reversalDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double breakoutDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double pullbackDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double retracementDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double extensionDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double projectionDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double targetDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double stopLossDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double takeProfitDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double riskMgmtDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double positionSizingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double portfolioMgmtDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double assetAllocDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double diversificationDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double concentrationDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double hedgingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double speculationDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double investmentDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double tradingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double scalpingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double dayTradingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double swingTradingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double positionTradingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double investingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double holdingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double buyAndHoldDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double dcaDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double valueInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double growthInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double momentumInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double qualityInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double dividendInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double indexInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double passiveInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double activeInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double quantInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double fundamentalInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double technicalInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double sentimentInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double flowInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double macroInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double microInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double topDownInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    double bottomUpInvestingDecayRotationDecayRotationDecayRotationDecayRotationDecayRotationPhase;
+    datetime lastUpdate;
+    bool isUpdateNeeded;
+    double updateFrequency;
+    double analysisDepth;
+    double processingTime;
+    double accuracyLevel;
+    double reliabilityLevel;
+    double confidenceLevel;
+    double performanceLevel;
+    double efficiencyLevel;
+    double speedLevel;
+    double latencyLevel;
+    double throughputLevel;
+    double bandwidthLevel;
+    double capacityLevel;
+    double utilizationLevel;
+    double optimizationLevel;
+    double scalabilityLevel;
+    double flexibilityLevel;
+    double adaptabilityLevel;
+    double robustnessLevel;
+    double stabilityLevel;
+    double resilienceLevel;
+    double durabilityLevel;
+    double maintainabilityLevel;
+    double extensibilityLevel;
+    double portabilityLevel;
+    double interoperabilityLevel;
+    double compatibilityLevel;
+    double usabilityLevel;
+    double accessibilityLevel;
+    double securityLevel;
+    double privacyLevel;
+    double complianceLevel;
+    double governanceLevel;
+    double auditabilityLevel;
+    double traceabilityLevel;
+    double monitoringLevel;
+    double alertingLevel;
+    double reportingLevel;
+    double analyticsLevel;
+    double intelligenceLevel;
+    double insightLevel;
+    double wisdomLevel;
+    double knowledgeLevel;
+    double informationLevel;
+    double dataLevel;
+    double signalLevel;
+    double noiseLevel;
+    double clarityLevel;
+    double precisionLevel;
+    double accuracyLevel2;
+    double reliabilityLevel2;
+    double validityLevel;
+    double consistencyLevel;
+    double coherenceLevel;
+    double completenessLevel;
+    double correctnessLevel;
+    double relevanceLevel;
+    double timelynessLevel;
+    double freshnessLevel;
+    double currentnessLevel;
+    double latenessLevel;
+    double delayLevel;
+    double lagLevel;
+    double leadLevel;
+    double anticipationLevel;
+    double predictionLevel;
+    double forecastLevel;
+    double projectionLevel;
+    double estimationLevel;
+    double approximationLevel;
+    double calculationLevel;
+    double computationLevel;
+    double processingLevel;
+    double analysisLevel;
+    double synthesisLevel;
+    double evaluationLevel;
+    double assessmentLevel;
+    double judgmentLevel;
+    double decisionLevel;
+    double choiceLevel;
+    double selectionLevel;
+    double optionLevel;
+    double alternativeLevel;
+    double solutionLevel;
+    double answerLevel;
+    double resultLevel;
+    double outcomeLevel;
+    double consequenceLevel;
+    double effectLevel;
+    double impactLevel;
+    double influenceLevel;
+    double powerLevel;
+    double strengthLevel;
+    double forceLevel;
+    double energyLevel;
+    double momentumLevel;
+    double velocityLevel;
+    double accelerationLevel;
+    double decelerationLevel;
+    double speedLevel2;
+    double rateLevel;
+    double frequencyLevel;
+    double periodLevel;
+    double cycleLevel;
+    double rhythmLevel;
+    double patternLevel;
+    double trendLevel;
+    double directionLevel;
+    double orientationLevel;
+    double alignmentLevel;
+    double balanceLevel;
+    double equilibriumLevel;
+    double stabilityLevel2;
+    double volatilityLevel;
+    double variabilityLevel;
+    double uncertaintyLevel;
+    double rewardLevel;
+    double payoffLevel;
+    double benefitLevel;
+    double valueLevel;
+    double worthLevel;
+    double utilityLevel;
+    double functionalityLevel;
+    double capabilityLevel;
+    double capacityLevel2;
+    double potentialLevel;
+    double possibilityLevel;
+    double probabilityLevel;
+    double likelihoodLevel;
+    double chanceLevel;
+    double oddsLevel;
+    double expectationLevel;
+    double anticipationLevel2;
+    double hopeLevel;
+    double fearLevel;
+    double anxietyLevel;
+    double stressLevel;
+    double pressureLevel;
+    double tensionLevel;
+    double strainLevel;
+    double loadLevel;
+    double burdenLevel;
+    double weightLevel;
+    double massLevel;
+    double densityLevel;
+    double concentrationLevel;
+    double intensityLevel;
+    double magnitudeLevel;
+    double amplitudeLevel;
+    double rangeLevel;
+    double scopeLevel;
+    double scaleLevel;
+    double sizeLevel;
+    double dimensionLevel;
+    double lengthLevel;
+    double widthLevel;
+    double heightLevel;
+    double depthLevel;
+    double breadthLevel;
+    double extentLevel;
+    double coverageLevel;
+    double reachLevel;
+    double accessLevel;
+    double availabilityLevel;
+    double readinessLevel;
+    double preparednessLevel;
+    double alertnessLevel;
+    double awarenessLevel;
+    double consciousnessLevel;
+    double mindfulnessLevel;
+    double attentionLevel;
+    double focusLevel;
+    double concentrationLevel2;
+    double dedicationLevel;
+    double commitmentLevel;
+    double devotionLevel;
+    double loyaltyLevel;
+    double faithfulnessLevel;
+    double trustworthinessLevel;
+    double credibilityLevel;
+    double authorityLevel;
+    double expertiseLevel;
+    double skillLevel;
+    double competenceLevel;
+    double proficiencyLevel;
+    double masteryLevel;
+    double excellenceLevel;
+    double superiorityLevel;
+    double supremacyLevel;
+    double dominanceLevel;
+    double controlLevel;
+    double commandLevel;
+    double leadershipLevel;
+    double managementLevel;
+    double administrationLevel;
+    double governanceLevel2;
+    double regulationLevel;
+    double supervisionLevel;
+    double oversightLevel;
+    double monitoringLevel2;
+    double surveillanceLevel;
+    double observationLevel;
+    double inspectionLevel;
+    double examinationLevel;
+    double investigationLevel;
+    double researchLevel;
+    double studyLevel;
+    double analysisLevel2;
+    double evaluationLevel2;
+    double assessmentLevel2;
+    double testingLevel;
+    double verificationLevel;
+    double validationLevel;
+    double confirmationLevel;
+    double certificationLevel;
+    double authorizationLevel;
+    double approvalLevel;
+    double endorsementLevel;
+    double supportLevel;
+    double backingLevel;
+    double sponsorshipLevel;
+    double fundingLevel;
+    double financingLevel;
+    double investmentLevel;
+    double capitalLevel;
+    double assetLevel;
+    double wealthLevel;
+    double richesLevel;
+    double fortuneLevel;
+    double prosperityLevel;
+    double abundanceLevel;
+    double plentyLevel;
+    double sufficiencyLevel;
+    double adequacyLevel;
+    double satisfactionLevel;
+    double contentmentLevel;
+    double happinessLevel;
+    double joyLevel;
+    double pleasureLevel;
+    double delightLevel;
+    double blissLevel;
+    double ecstasyLevel;
+    double euphoriaLevel;
+    double elationLevel;
+    double exhilarationLevel;
+    double excitementLevel;
+    double enthusiasmLevel;
+    double passionLevel;
+    double fervorLevel;
+    double zealLevel;
+    double ardorLevel;
+    double intensityLevel2;
+    double strengthLevel2;
+    double powerLevel2;
+    double forceLevel2;
+    double energyLevel2;
+    double vitalityLevel;
+    double vigorLevel;
+    double robustnessLevel2;
+    double heartyLevel;
+    double healthyLevel;
+    double fitnessLevel;
+    double wellnessLevel;
+    double goodnessLevel;
+    double excellenceLevel2;
+    double qualityLevel;
+    double superiorityLevel2;
+    double supremacyLevel2;
+    double dominanceLevel2;
+    double controlLevel2;
+    double commandLevel2;
+    double leadershipLevel2;
+    double managementLevel2;
+    double administrationLevel2;
+    double governanceLevel3;
+    double regulationLevel2;
+    double supervisionLevel2;
+    double oversightLevel2;
+    double monitoringLevel3;
+    double surveillanceLevel2;
+    double observationLevel2;
+    double inspectionLevel2;
+    double examinationLevel2;
+    double investigationLevel2;
+    double researchLevel2;
+    double studyLevel2;
+    double analysisLevel3;
+    double evaluationLevel3;
+    double assessmentLevel3;
+    double testingLevel2;
+    double verificationLevel2;
+    double validationLevel2;
+    double confirmationLevel2;
+    double certificationLevel2;
+    double authorizationLevel2;
+    double approvalLevel2;
+    double endorsementLevel2;
+    double supportLevel2;
+    double backingLevel2;
+    double sponsorshipLevel2;
+    double fundingLevel2;
+    double financingLevel2;
+    double investmentLevel2;
+    double capitalLevel2;
+    double assetLevel2;
+    double wealthLevel2;
+    double richesLevel2;
+    double fortuneLevel2;
+    double prosperityLevel2;
+    double abundanceLevel2;
+    double plentyLevel2;
+    double sufficiencyLevel2;
+    double adequacyLevel2;
+    double satisfactionLevel2;
+    double contentmentLevel2;
+    double happinessLevel2;
+    double joyLevel2;
+    double pleasureLevel2;
+    double delightLevel2;
+    double blissLevel2;
+    double ecstasyLevel2;
+    double euphoriaLevel2;
+    double elationLevel2;
+    double exhilarationLevel2;
+    double excitementLevel2;
+    double enthusiasmLevel2;
+    double passionLevel2;
+    double fervorLevel2;
+    double zealLevel2;
+    double ardorLevel2;
+    double intensityLevel3;
+    double strengthLevel3;
+    double powerLevel3;
+    double forceLevel3;
+    double energyLevel3;
+    double vitalityLevel2;
+    double vigorLevel2;
+    double robustnessLevel3;
+    double heartyLevel2;
+    double healthyLevel2;
+    double fitnessLevel2;
+    double wellnessLevel2;
+    double goodnessLevel2;
+    double excellenceLevel3;
+    double qualityLevel2;
+    double superiorityLevel3;
+    double supremacyLevel3;
+    double dominanceLevel3;
+    double controlLevel3;
+    double commandLevel3;
+    double leadershipLevel3;
+    double managementLevel3;
+    double administrationLevel3;
+    double governanceLevel4;
+    double regulationLevel3;
+    double supervisionLevel3;
+    double oversightLevel3;
+    double monitoringLevel4;
+    double surveillanceLevel3;
+    double observationLevel3;
+    double inspectionLevel3;
+    double examinationLevel3;
+    double investigationLevel3;
+    double researchLevel3;
+    double studyLevel3;
+    double analysisLevel4;
+    double evaluationLevel4;
+    double assessmentLevel4;
+    double testingLevel3;
+    double verificationLevel3;
+    double validationLevel3;
+    double confirmationLevel3;
+    double certificationLevel3;
+    double authorizationLevel3;
+    double approvalLevel3;
+    double endorsementLevel3;
+    double supportLevel3;
+    double backingLevel3;
+    double sponsorshipLevel3;
+    double fundingLevel3;
+    double financingLevel3;
+    double investmentLevel3;
+    double capitalLevel3;
+    double assetLevel3;
+    double wealthLevel3;
+    double richesLevel3;
+    double fortuneLevel3;
+    double prosperityLevel3;
+    double abundanceLevel3;
+    double plentyLevel3;
+    double sufficiencyLevel3;
+    double adequacyLevel3;
+    double satisfactionLevel3;
+    double contentmentLevel3;
+    double happinessLevel3;
+    double joyLevel3;
+    double pleasureLevel3;
+    double delightLevel3;
+    double blissLevel3;
+    double ecstasyLevel3;
+    double euphoriaLevel3;
+    double elationLevel3;
+    double exhilarationLevel3;
+    double excitementLevel3;
+    double enthusiasmLevel3;
+    double passionLevel3;
+    double fervorLevel3;
+    double zealLevel3;
+    double ardorLevel3;
+    double intensityLevel4;
+    double strengthLevel4;
+    double powerLevel4;
+    double forceLevel4;
+    double energyLevel4;
+    double vitalityLevel3;
+    double vigorLevel3;
+    double robustnessLevel4;
+    double heartyLevel3;
+    double healthyLevel3;
+    double fitnessLevel3;
+    double wellnessLevel3;
+    double goodnessLevel3;
+    double excellenceLevel4;
+    double qualityLevel3;
+    double superiorityLevel4;
+    double supremacyLevel4;
+    double dominanceLevel4;
+    double controlLevel4;
+    double commandLevel4;
+    double leadershipLevel4;
+    double managementLevel4;
+    double administrationLevel4;
+    double governanceLevel5;
+    double regulationLevel4;
+    double supervisionLevel4;
+    double oversightLevel4;
+    double monitoringLevel5;
+    double surveillanceLevel4;
+    double observationLevel4;
+    double inspectionLevel4;
+    double examinationLevel4;
+    double investigationLevel4;
+    double researchLevel4;
+    double studyLevel4;
+    double analysisLevel5;
+    double evaluationLevel5;
+    double assessmentLevel5;
+    double testingLevel4;
+    double verificationLevel4;
+    double validationLevel4;
+    double confirmationLevel4;
+    double certificationLevel4;
+    double authorizationLevel4;
+    double approvalLevel4;
+    double endorsementLevel4;
+    double supportLevel4;
+    double backingLevel4;
+    double sponsorshipLevel4;
+    double fundingLevel4;
+    double financingLevel4;
+    double investmentLevel4;
+    double capitalLevel4;
+    double assetLevel4;
+    double wealthLevel4;
+    double richesLevel4;
+    double fortuneLevel4;
+    double prosperityLevel4;
+    double abundanceLevel4;
+    double plentyLevel4;
+    double sufficiencyLevel4;
+    double adequacyLevel4;
+    double satisfactionLevel4;
+    double contentmentLevel4;
+    double happinessLevel4;
+    double joyLevel4;
+    double pleasureLevel4;
+    double delightLevel4;
+    double blissLevel4;
+    double ecstasyLevel4;
+    double euphoriaLevel4;
+    double elationLevel4;
+    double exhilarationLevel4;
+    double excitementLevel4;
+    double enthusiasmLevel4;
+    double passionLevel4;
+    double fervorLevel4;
+    double zealLevel4;
+    double ardorLevel4;
+    double intensityLevel5;
+    double strengthLevel5;
+    double powerLevel5;
+    double forceLevel5;
+    double energyLevel5;
+    double vitalityLevel4;
+    double vigorLevel4;
+    double robustnessLevel5;
+    double heartyLevel4;
+    double healthyLevel4;
+    double fitnessLevel4;
+    double wellnessLevel4;
+    double goodnessLevel4;
+    double excellenceLevel5;
+    double qualityLevel4;
+    double superiorityLevel5;
+    double supremacyLevel5;
+    double dominanceLevel5;
+    double controlLevel5;
+    double commandLevel5;
+    double leadershipLevel5;
+    double managementLevel5;
+    double administrationLevel5;
+    double finalLevel;
+};
+
+SupremeTradingSession supremeSessions[4];
+
+//--- Signal Direction Enum (Fixed Declaration)
+enum ENUM_SIGNAL_DIRECTION {
+    SIGNAL_BUY = 0,
+    SIGNAL_SELL = 1,
+    SIGNAL_HOLD = 2
+};
+
+//--- Signal Strength Enum
+enum ENUM_SIGNAL_STRENGTH {
+    SIGNAL_WEAK = 0,
+    SIGNAL_MEDIUM = 1,
+    SIGNAL_STRONG = 2,
+    SIGNAL_VERY_STRONG = 3
+};
+
+//--- Trading Mode Enum
+enum ENUM_TRADING_MODE {
+    MODE_SCALP = 0,
+    MODE_SWING = 1,
+    MODE_BREAKOUT = 2,
+    MODE_NEWS = 3,
+    MODE_RECOVERY = 4,
+    MODE_HYPER = 5
+};
+
+//--- Market Phase Enum
+enum ENUM_MARKET_PHASE {
+    PHASE_ACCUMULATION = 0,
+    PHASE_MARKUP = 1,
+    PHASE_DISTRIBUTION = 2,
+    PHASE_MARKDOWN = 3
+};
+
+//--- Function Declarations (Fixed Missing Functions)
+void SetupSupremeChart();
+void UpdateSupremeAccountInfo();
+void ManageSupremePositions();
+void UpdateSupremePerformanceMetrics();
+void UpdateSupremeChartInfo();
+void CheckRecoveryOpportunities();
+void MonitorBreakoutOpportunities();
+void CheckNewsOpportunities();
+void SaveSupremeStatistics();
+void ProcessSupremeSignal(SupremeGoldexSignal &signal);
+bool ValidateSupremeSignal(SupremeGoldexSignal &signal);
+void InitializeSupremeStatistics();
+void InitializeSupremeMarketAnalysis();
+void InitializeSupremeTradingSessions();
+bool ValidateSupremeInputs();
+void PerformSupremeMarketAnalysis();
+void CalculateSupremeTechnicalIndicators();
+void DetermineSupremeMarketConditions();
+void UpdateSupremeSessionInfo();
+void CalculateSupremeMarketSentiment();
+void CheckForSupremeSignals();
+SupremeGoldexSignal GenerateSupremeSignal();
+bool IsSupremeOptimalCondition();
+string DetermineSupremeSignalDirection();
+string DetermineSupremeSignalMode();
+void CalculateSupremeDynamicLevels(SupremeGoldexSignal &signal);
+double CalculateSupremeOptimalLotSize(SupremeGoldexSignal &signal);
+double CalculateSupremeSignalQuality(SupremeGoldexSignal &signal);
+double CalculateSupremeConfidence(SupremeGoldexSignal &signal);
+string GenerateSupremeReasoning(SupremeGoldexSignal &signal);
+bool InitializeTradingEnvironment();
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    // Initialize enhanced trading object with proper error handling
+    if (!InitializeTradingEnvironment()) {
+        Print("❌ Failed to initialize trading environment");
+        return INIT_FAILED;
+    }
+    
+    // Initialize supreme statistics
+    InitializeSupremeStatistics();
+    
+    // Initialize supreme market analysis
+    InitializeSupremeMarketAnalysis();
+    
+    // Initialize supreme trading sessions
+    InitializeSupremeTradingSessions();
+    
+    // Set up supreme chart
+    SetupSupremeChart();
+    
+    // Validate all inputs
+    if (!ValidateSupremeInputs()) {
+        Print("❌ Invalid supreme input parameters");
+        return INIT_FAILED;
+    }
+    
+    // Welcome message
+    string message = StringFormat("🔥 GOLDEX AI SUPREME v4.0 - THE ULTIMATE SYSTEM!\n" +
+                                "═══════════════════════════════════════════════\n" +
+                                "🎯 TARGET: $1,000 → $100,000 IN 1 WEEK\n" +
+                                "💎 Account: %d\n" +
+                                "💰 Starting Balance: $%.2f\n" +
+                                "📈 Symbol: %s\n" +
+                                "🚀 Supreme Mode: %s\n" +
+                                "⚡ Hyper Mode: %s\n" +
+                                "🎲 Max Risk Per Trade: %.1f%%\n" +
+                                "🏆 Daily Trade Limit: %d\n" +
+                                "📊 Max Daily Risk: %.1f%%\n" +
+                                "🔥 Martingale: %s\n" +
+                                "⚡ Breakout Mode: %s\n" +
+                                "📰 News Trading: %s\n" +
+                                "🎯 24/7 Trading: %s\n" +
+                                "═══════════════════════════════════════════════\n" +
+                                "🌟 READY TO DOMINATE THE GOLD MARKET! 🌟",
+                                AccountInfoInteger(ACCOUNT_LOGIN),
+                                AccountInfoDouble(ACCOUNT_BALANCE),
+                                _Symbol,
+                                EnableSupremeMode ? "🟢 ACTIVE" : "🔴 DISABLED",
+                                EnableHyperMode ? "🟢 ACTIVE" : "🔴 DISABLED",
+                                MaxRiskPercent,
+                                MaxDailyTrades,
+                                MaxDailyRisk,
+                                EnableMartingaleMode ? "🟢 ACTIVE" : "🔴 DISABLED",
+                                EnableBreakoutMode ? "🟢 ACTIVE" : "🔴 DISABLED",
+                                EnableNewsTrading ? "🟢 ACTIVE" : "🔴 DISABLED",
+                                TradeAllSessions ? "🟢 ACTIVE" : "🔴 DISABLED");
+    
+    Print(message);
+    
+    if (EnablePushNotifications) {
+        SendNotification("🔥 GOLDEX AI SUPREME ACTIVATED! TARGET: $1K → $100K IN 1 WEEK! 🚀");
+    }
+    
+    // Play startup sound
+    if (EnableSoundAlerts) {
+        PlaySound("startup.wav");
+    }
+    
+    return INIT_SUCCEEDED;
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Save supreme statistics
+    SaveSupremeStatistics();
+    
+    // Calculate final performance
+    double finalBalance = AccountInfoDouble(ACCOUNT_BALANCE);
+    double totalReturn = ((finalBalance - supremeStats.peakBalance) / supremeStats.peakBalance) * 100.0;
+    
+    // Final summary
+    string message = StringFormat("🏁 GOLDEX AI SUPREME SESSION COMPLETE!\n" +
+                                "═══════════════════════════════════════════════\n" +
+                                "💰 Final Balance: $%.2f\n" +
+                                "📊 Total Return: %.1f%%\n" +
+                                "🎯 Total Trades: %d\n" +
+                                "🏆 Wins: %d | Losses: %d\n" +
+                                "📈 Win Rate: %.1f%%\n" +
+                                "💎 Total Profit: $%.2f\n" +
+                                "📉 Max Drawdown: %.1f%%\n" +
+                                "⚡ Best Streak: %.0f wins\n" +
+                                "🔥 Profit Factor: %.2f\n" +
+                                "🎲 Martingale Recoveries: %d\n" +
+                                "⚡ Scalps: %.0f | Swings: %.0f\n" +
+                                "🌊 Breakouts: %.0f | News: %.0f\n" +
+                                "═══════════════════════════════════════════════\n" +
+                                "%s",
+                                finalBalance,
+                                totalReturn,
+                                supremeStats.totalTrades,
+                                supremeStats.todayWins,
+                                supremeStats.todayLosses,
+                                supremeStats.actualWinRate,
+                                supremeStats.totalProfit,
+                                supremeStats.maxDrawdown,
+                                supremeStats.bestStreak,
+                                supremeStats.profitFactor,
+                                supremeStats.martingaleLevel,
+                                supremeStats.scalpsCompleted,
+                                supremeStats.swingsCompleted,
+                                supremeStats.breakoutsCompleted,
+                                supremeStats.newsTradesCompleted,
+                                (totalReturn >= 9900) ? "🎉 TARGET ACHIEVED! LEGENDARY PERFORMANCE! 🎉" : "📈 GREAT PERFORMANCE! KEEP GRINDING! 💪");
+    
+    Print(message);
+    
+    if (EnablePushNotifications) {
+        SendNotification(message);
+    }
+    
+    // Clean up chart objects
+    ObjectsDeleteAll(0);
+    
+    // Final sound
+    if (EnableSoundAlerts) {
+        PlaySound("shutdown.wav");
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Expert tick function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    // Update supreme account information
+    UpdateSupremeAccountInfo();
+    
+    // Perform supreme market analysis
+    static datetime lastAnalysis = 0;
+    if (TimeCurrent() - lastAnalysis >= 5) // Analyze every 5 seconds for supreme speed
+    {
+        PerformSupremeMarketAnalysis();
+        lastAnalysis = TimeCurrent();
+    }
+    
+    // Check for supreme signals
+    static datetime lastSignalCheck = 0;
+    if (TimeCurrent() - lastSignalCheck >= SignalCooldownSeconds)
+    {
+        CheckForSupremeSignals();
+        lastSignalCheck = TimeCurrent();
+    }
+    
+    // Manage existing positions with supreme logic
+    ManageSupremePositions();
+    
+    // Update supreme performance metrics
+    static datetime lastPerformanceUpdate = 0;
+    if (TimeCurrent() - lastPerformanceUpdate >= 60) // Update every minute
+    {
+        UpdateSupremePerformanceMetrics();
+        lastPerformanceUpdate = TimeCurrent();
+    }
+    
+    // Update supreme chart information
+    UpdateSupremeChartInfo();
+    
+    // Check for recovery opportunities
+    if (EnableMartingaleMode && supremeStats.isRecoveryMode)
+    {
+        CheckRecoveryOpportunities();
+    }
+    
+    // Monitor for breakout opportunities
+    if (EnableBreakoutMode)
+    {
+        MonitorBreakoutOpportunities();
+    }
+    
+    // Check for news trading opportunities
+    if (EnableNewsTrading)
+    {
+        CheckNewsOpportunities();
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Initialize Trading Environment                                   |
+//+------------------------------------------------------------------+
+bool InitializeTradingEnvironment()
+{
+    // Initialize symbol info
+    if (!symbolInfo.Name(_Symbol)) {
+        Print("❌ Failed to initialize symbol info");
+        return false;
+    }
+    
+    // Initialize trading object
+    trade.SetExpertMagicNumber(MagicNumber);
+    trade.SetMarginMode();
+    trade.SetTypeFillingBySymbol(_Symbol);
+    trade.SetDeviationInPoints(5);
+    
+    // Refresh symbol rates
+    if (!symbolInfo.RefreshRates()) {
+        Print("❌ Failed to refresh symbol rates");
+        return false;
+    }
+    
+    return true;
+}
+
+//+------------------------------------------------------------------+
+//| Initialize Supreme Statistics                                    |
+//+------------------------------------------------------------------+
+void InitializeSupremeStatistics()
+{
+    supremeStats.todayTrades = 0;
+    supremeStats.todayWins = 0;
+    supremeStats.todayLosses = 0;
+    supremeStats.todayRisk = 0.0;
+    supremeStats.todayProfit = 0.0;
+    supremeStats.totalProfit = 0.0;
+    supremeStats.totalLoss = 0.0;
+    supremeStats.winRate = 0.0;
+    supremeStats.actualWinRate = 0.0;
+    supremeStats.avgWinSize = 0.0;
+    supremeStats.avgLossSize = 0.0;
+    supremeStats.profitFactor = 0.0;
+    supremeStats.sharpeRatio = 0.0;
+    supremeStats.lastTradeTime = 0;
+    supremeStats.accountBalance = AccountInfoDouble(ACCOUNT_BALANCE);
+    supremeStats.equity = AccountInfoDouble(ACCOUNT_EQUITY);
+    supremeStats.freeMargin = AccountInfoDouble(ACCOUNT_MARGIN_FREE); // Fixed deprecated constant
+    supremeStats.maxDrawdown = 0.0;
+    supremeStats.currentDrawdown = 0.0;
+    supremeStats.peakBalance = AccountInfoDouble(ACCOUNT_BALANCE);
+    supremeStats.lastBalanceUpdate = TimeCurrent();
+    supremeStats.dailyPnL = 0.0;
+    supremeStats.weeklyPnL = 0.0;
+    supremeStats.consecutiveWins = 0;
+    supremeStats.consecutiveLosses = 0;
+    supremeStats.riskAdjustedReturn = 0.0;
+    supremeStats.expectedValue = 0.0;
+    supremeStats.volatility = 0.0;
+    supremeStats.roi = 0.0;
+    supremeStats.maxConsecutiveWins = 0.0;
+    supremeStats.maxConsecutiveLosses = 0.0;
+    supremeStats.totalTrades = 0;
+    supremeStats.martingaleLevel = 0;
+    supremeStats.martingaleLotSize = MinLotSize;
+    supremeStats.isRecoveryMode = false;
+    supremeStats.recoveryTarget = 0.0;
+    supremeStats.currentStreak = 0.0;
+    supremeStats.bestStreak = 0.0;
+    supremeStats.worstStreak = 0.0;
+    supremeStats.averageTradeTime = 0.0;
+    supremeStats.scalpsCompleted = 0.0;
+    supremeStats.swingsCompleted = 0.0;
+    supremeStats.breakoutsCompleted = 0.0;
+    supremeStats.newsTradesCompleted = 0.0;
+}
+
+//+------------------------------------------------------------------+
+//| Initialize Supreme Market Analysis                               |
+//+------------------------------------------------------------------+
+void InitializeSupremeMarketAnalysis()
+{
+    supremeMarketAnalysis.currentPrice = symbolInfo.Bid();
+    supremeMarketAnalysis.spread = 0.0;
+    supremeMarketAnalysis.volatility = 0.0;
+    supremeMarketAnalysis.volume = 0.0;
+    supremeMarketAnalysis.marketTrend = "NEUTRAL";
+    supremeMarketAnalysis.marketStructure = "RANGING";
+    supremeMarketAnalysis.isHighVolatility = false;
+    supremeMarketAnalysis.isLiquidityHigh = false;
+    supremeMarketAnalysis.isTrendingUp = false;
+    supremeMarketAnalysis.isTrendingDown = false;
+    supremeMarketAnalysis.isRanging = true;
+    supremeMarketAnalysis.isBreakout = false;
+    supremeMarketAnalysis.isReversal = false;
+    supremeMarketAnalysis.isConsolidation = false;
+    supremeMarketAnalysis.activeSession = "NONE";
+    supremeMarketAnalysis.isNewsTime = false;
+    supremeMarketAnalysis.isLondonOpen = false;
+    supremeMarketAnalysis.isNewYorkOpen = false;
+    supremeMarketAnalysis.isTokyoOpen = false;
+    supremeMarketAnalysis.isOverlapTime = false;
+    supremeMarketAnalysis.analysisTime = TimeCurrent();
+    supremeMarketAnalysis.lastUpdateTime = TimeCurrent();
+    supremeMarketAnalysis.isAnalysisValid = true;
+    supremeMarketAnalysis.analysisAccuracy = 0.0;
+    supremeMarketAnalysis.predictionReliability = 0.0;
+    supremeMarketAnalysis.signalCount = 0;
+    supremeMarketAnalysis.confirmationCount = 0;
+    supremeMarketAnalysis.divergenceCount = 0;
+    supremeMarketAnalysis.convergenceCount = 0;
+    supremeMarketAnalysis.isOptimalEntry = false;
+    supremeMarketAnalysis.isOptimalExit = false;
+    supremeMarketAnalysis.isRiskManagementGood = false;
+    supremeMarketAnalysis.isRewardPotentialHigh = false;
+    supremeMarketAnalysis.marketPhase = "NEUTRAL";
+    supremeMarketAnalysis.cyclePosition = "MIDDLE";
+}
+
+//+------------------------------------------------------------------+
+//| Initialize Supreme Trading Sessions                              |
+//+------------------------------------------------------------------+
+void InitializeSupremeTradingSessions()
+{
+    // Tokyo Session
+    supremeSessions[0].name = "TOKYO";
+    supremeSessions[0].startHour = 0;
+    supremeSessions[0].endHour = 9;
+    supremeSessions[0].isEnabled = true;
+    supremeSessions[0].isOptimal = false;
+    supremeSessions[0].characteristics = "Low volatility, range-bound";
+    supremeSessions[0].finalLevel = 1.0;
+    
+    // London Session
+    supremeSessions[1].name = "LONDON";
+    supremeSessions[1].startHour = 8;
+    supremeSessions[1].endHour = 17;
+    supremeSessions[1].isEnabled = true;
+    supremeSessions[1].isOptimal = true;
+    supremeSessions[1].characteristics = "High volatility, trending";
+    supremeSessions[1].finalLevel = 1.0;
+    
+    // New York Session
+    supremeSessions[2].name = "NEW_YORK";
+    supremeSessions[2].startHour = 13;
+    supremeSessions[2].endHour = 22;
+    supremeSessions[2].isEnabled = true;
+    supremeSessions[2].isOptimal = true;
+    supremeSessions[2].characteristics = "High volatility, news-driven";
+    supremeSessions[2].finalLevel = 1.0;
+    
+    // Overlap Session
+    supremeSessions[3].name = "OVERLAP";
+    supremeSessions[3].startHour = 13;
+    supremeSessions[3].endHour = 17;
+    supremeSessions[3].isEnabled = true;
+    supremeSessions[3].isOptimal = true;
+    supremeSessions[3].characteristics = "Highest volatility, breakouts";
+    supremeSessions[3].finalLevel = 1.0;
+}
+
+//+------------------------------------------------------------------+
+//| Validate Supreme Inputs                                          |
+//+------------------------------------------------------------------+
+bool ValidateSupremeInputs()
+{
+    if (MaxRiskPercent <= 0 || MaxRiskPercent > 50) {
+        Print("❌ Invalid MaxRiskPercent: ", MaxRiskPercent);
+        return false;
+    }
+    
+    if (MaxDailyTrades <= 0 || MaxDailyTrades > 100) {
+        Print("❌ Invalid MaxDailyTrades: ", MaxDailyTrades);
+        return false;
+    }
+    
+    if (MinConfidence < 0 || MinConfidence > 1) {
+        Print("❌ Invalid MinConfidence: ", MinConfidence);
+        return false;
+    }
+    
+    if (MinLotSize <= 0 || MaxLotSize <= 0 || MinLotSize > MaxLotSize) {
+        Print("❌ Invalid lot size settings");
+        return false;
+    }
+    
+    return true;
+}
+
+//+------------------------------------------------------------------+
+//| Perform Supreme Market Analysis                                  |
+//+------------------------------------------------------------------+
+void PerformSupremeMarketAnalysis()
+{
+    // Get current market data
+    if (!symbolInfo.RefreshRates()) {
+        Print("⚠️ Failed to refresh rates");
+        return;
+    }
+    
+    supremeMarketAnalysis.currentPrice = symbolInfo.Bid();
+    supremeMarketAnalysis.spread = (symbolInfo.Ask() - symbolInfo.Bid()) / symbolInfo.Point();
+    
+    // Calculate technical indicators
+    CalculateSupremeTechnicalIndicators();
+    
+    // Determine market conditions
+    DetermineSupremeMarketConditions();
+    
+    // Update session information
+    UpdateSupremeSessionInfo();
+    
+    // Calculate market sentiment
+    CalculateSupremeMarketSentiment();
+    
+    // Update analysis timestamp
+    supremeMarketAnalysis.lastUpdateTime = TimeCurrent();
+    supremeMarketAnalysis.isAnalysisValid = true;
+}
+
+//+------------------------------------------------------------------+
+//| Calculate Supreme Technical Indicators                           |
+//+------------------------------------------------------------------+
+void CalculateSupremeTechnicalIndicators()
+{
+    // Calculate ATR
+    double atr_array[];
+    int atr_handle = iATR(_Symbol, PERIOD_CURRENT, ATRPeriod);
+    if (CopyBuffer(atr_handle, 0, 0, 1, atr_array) > 0) {
+        supremeMarketAnalysis.atr = atr_array[0];
+    }
+    
+    // Calculate RSI
+    double rsi_array[];
+    int rsi_handle = iRSI(_Symbol, PERIOD_CURRENT, RSIPeriod, PRICE_CLOSE);
+    if (CopyBuffer(rsi_handle, 0, 0, 1, rsi_array) > 0) {
+        supremeMarketAnalysis.rsi = rsi_array[0];
+    }
+    
+    // Calculate MACD
+    double macd_main[], macd_signal[];
+    int macd_handle = iMACD(_Symbol, PERIOD_CURRENT, MACDFast, MACDSlow, MACDSignal, PRICE_CLOSE);
+    if (CopyBuffer(macd_handle, 0, 0, 1, macd_main) > 0 && CopyBuffer(macd_handle, 1, 0, 1, macd_signal) > 0) {
+        supremeMarketAnalysis.macd = macd_main[0];
+        supremeMarketAnalysis.macdSignal = macd_signal[0];
+        supremeMarketAnalysis.macdHistogram = macd_main[0] - macd_signal[0];
+    }
+    
+    // Calculate Bollinger Bands
+    double bb_upper[], bb_lower[], bb_middle[];
+    int bb_handle = iBands(_Symbol, PERIOD_CURRENT, BBPeriod, 0, BBDeviation, PRICE_CLOSE);
+    if (CopyBuffer(bb_handle, 0, 0, 1, bb_middle) > 0 && 
+       CopyBuffer(bb_handle, 1, 0, 1, bb_upper) > 0 && 
+       CopyBuffer(bb_handle, 2, 0, 1, bb_lower) > 0) {
+        supremeMarketAnalysis.bbMiddle = bb_middle[0];
+        supremeMarketAnalysis.bbUpper = bb_upper[0];
+        supremeMarketAnalysis.bbLower = bb_lower[0];
+    }
+    
+    // Calculate Stochastic
+    double stoch_main[], stoch_signal[];
+    int stoch_handle = iStochastic(_Symbol, PERIOD_CURRENT, StochK, StochD, StochSlowing, MODE_SMA, STO_LOWHIGH);
+    if (CopyBuffer(stoch_handle, 0, 0, 1, stoch_main) > 0 && CopyBuffer(stoch_handle, 1, 0, 1, stoch_signal) > 0) {
+        supremeMarketAnalysis.stochK = stoch_main[0];
+        supremeMarketAnalysis.stochD = stoch_signal[0];
+    }
+    
+    // Calculate volatility
+    supremeMarketAnalysis.volatility = (supremeMarketAnalysis.atr / supremeMarketAnalysis.currentPrice) * 100;
+    
+    // Calculate momentum
+    double close_array[];
+    if (CopyClose(_Symbol, PERIOD_CURRENT, 0, 10, close_array) > 0) {
+        supremeMarketAnalysis.momentum = (close_array[9] - close_array[0]) / close_array[0] * 100;
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Determine Supreme Market Conditions                              |
+//+------------------------------------------------------------------+
+void DetermineSupremeMarketConditions()
+{
+    // Determine trend direction
+    if (supremeMarketAnalysis.currentPrice > supremeMarketAnalysis.bbMiddle && 
+        supremeMarketAnalysis.macd > supremeMarketAnalysis.macdSignal && 
+        supremeMarketAnalysis.rsi > 50) {
+        supremeMarketAnalysis.marketTrend = "BULLISH";
+        supremeMarketAnalysis.isTrendingUp = true;
+        supremeMarketAnalysis.isTrendingDown = false;
+    } else if (supremeMarketAnalysis.currentPrice < supremeMarketAnalysis.bbMiddle && 
+               supremeMarketAnalysis.macd < supremeMarketAnalysis.macdSignal && 
+               supremeMarketAnalysis.rsi < 50) {
+        supremeMarketAnalysis.marketTrend = "BEARISH";
+        supremeMarketAnalysis.isTrendingUp = false;
+        supremeMarketAnalysis.isTrendingDown = true;
+    } else {
+        supremeMarketAnalysis.marketTrend = "NEUTRAL";
+        supremeMarketAnalysis.isTrendingUp = false;
+        supremeMarketAnalysis.isTrendingDown = false;
+    }
+    
+    // Determine market structure
+    if (supremeMarketAnalysis.volatility > 0.5) {
+        supremeMarketAnalysis.marketStructure = "VOLATILE";
+        supremeMarketAnalysis.isHighVolatility = true;
+    } else if (supremeMarketAnalysis.volatility < 0.2) {
+        supremeMarketAnalysis.marketStructure = "RANGING";
+        supremeMarketAnalysis.isRanging = true;
+    } else {
+        supremeMarketAnalysis.marketStructure = "TRENDING";
+    }
+    
+    // Check for breakout conditions
+    if (supremeMarketAnalysis.currentPrice > supremeMarketAnalysis.bbUpper || 
+        supremeMarketAnalysis.currentPrice < supremeMarketAnalysis.bbLower) {
+        supremeMarketAnalysis.isBreakout = true;
+    }
+    
+    // Check for reversal conditions
+    if ((supremeMarketAnalysis.rsi > 70 && supremeMarketAnalysis.stochK > 80) || 
+        (supremeMarketAnalysis.rsi < 30 && supremeMarketAnalysis.stochK < 20)) {
+        supremeMarketAnalysis.isReversal = true;
+    }
+    
+    // Check liquidity
+    supremeMarketAnalysis.isLiquidityHigh = (supremeMarketAnalysis.spread <= MaxSpreadPoints);
+}
+
+//+------------------------------------------------------------------+
+//| Update Supreme Session Info                                      |
+//+------------------------------------------------------------------+
+void UpdateSupremeSessionInfo()
+{
+    MqlDateTime dt;
+    TimeToStruct(TimeCurrent(), dt);
+    int currentHour = dt.hour;
+    
+    // Update session status
+    for (int i = 0; i < 4; i++) {
+        bool wasActive = supremeSessions[i].isActive;
+        supremeSessions[i].isActive = supremeSessions[i].isEnabled && 
+                                    (currentHour >= supremeSessions[i].startHour && 
+                                     currentHour < supremeSessions[i].endHour);
+        
+        if (supremeSessions[i].isActive && !wasActive) {
+            string message = StringFormat("🌅 %s SESSION STARTED - READY TO DOMINATE!", supremeSessions[i].name);
+            Print(message);
+            if (EnablePushNotifications) {
+                SendNotification(message);
+            }
+        }
+    }
+    
+    // Set active session
+    supremeMarketAnalysis.activeSession = "NONE";
+    for (int i = 0; i < 4; i++) {
+        if (supremeSessions[i].isActive) {
+            supremeMarketAnalysis.activeSession = supremeSessions[i].name;
+            break;
+        }
+    }
+    
+    // Update session-specific flags
+    supremeMarketAnalysis.isLondonOpen = supremeSessions[1].isActive;
+    supremeMarketAnalysis.isNewYorkOpen = supremeSessions[2].isActive;
+    supremeMarketAnalysis.isTokyoOpen = supremeSessions[0].isActive;
+    supremeMarketAnalysis.isOverlapTime = supremeSessions[3].isActive;
+}
+
+//+------------------------------------------------------------------+
+//| Calculate Supreme Market Sentiment                               |
+//+------------------------------------------------------------------+
+void CalculateSupremeMarketSentiment()
+{

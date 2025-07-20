@@ -1,0 +1,102 @@
+================================================================================
+KEEP GOLDEX AI RUNNING 24/7  +  AUTOMATED FIREBASE SCREENSHOTS
+================================================================================
+A.  GUARANTEED 24/7 UPTIME
+────────────────────────────────────────────────────────────────
+1.  systemd SERVICE (already created)
+   • goldex.service has  Restart=always  — if the bot crashes, it restarts.
+   • Verify:
+        systemctl is-enabled goldex      # → enabled
+        systemctl is-active  goldex      # → active
+
+2.  ADD EXTRA SAFETY (auto-restart flood control)
+   Edit /etc/systemd/system/goldex.service → under [Service] add:
+        StartLimitIntervalSec=600
+        StartLimitBurst=10
+   Reload + restart:
+        systemctl daemon-reload
+        systemctl restart goldex.service
+
+3.  OPTIONAL HEALTH-CHECK CRON
+   crontab -e
+        */5 * * * * systemctl is-active --quiet goldex || systemctl restart goldex
+
+B.  FIREBASE SCREENSHOT LOGGING (BEFORE / DURING / AFTER)
+────────────────────────────────────────────────────────────────
+We’ll capture PNG reports (equity curve, performance table, etc.) and push them
+to Firebase Storage.
+
+1.  PREPARE FIREBASE
+   • In Firebase Console → create a new project (or use existing).  
+   • Enable Storage → generate a **service account key JSON**.  
+   • Download file, rename to  firebase-key.json  and upload to VPS:
+        scp firebase-key.json root@172.234.201.231:/opt/goldex-bot/
+
+2.  INSTALL LIBRARIES
+   ssh root@172.234.201.231
+   source /opt/goldex-bot/venv/bin/activate
+   pip install firebase-admin matplotlib pillow
+
+3.  ADD CODE SNIPPETS  (open goldexv9.py)
+────────────────────────────────────────────────────────────────
+i.  Imports  (top of file, after std-lib imports):
+    import firebase_admin
+    from firebase_admin import credentials, storage
+    from datetime import datetime
+    import matplotlib.pyplot as plt
+    from PIL import Image
+
+ii.  Initialization  (inside  GoldexBot.__init__  after other vars):
+    # Firebase
+    cred = credentials.Certificate("firebase-key.json")
+    firebase_admin.initialize_app(cred, {
+        'storageBucket': '<YOUR_BUCKET>.appspot.com'
+    })
+    self.firebase_bucket = storage.bucket()
+
+iii.  Utility to upload a file:
+    def upload_to_firebase(self, local_path, remote_name):
+        blob = self.firebase_bucket.blob(remote_name)
+        blob.upload_from_filename(local_path)
+        logger.info(f"📤 Uploaded {remote_name} to Firebase")
+
+iv.  Equity curve screenshot (call before run loop, each trade, and on exit):
+    def capture_equity_chart(self, tag):
+        stats = self.get_account_stats()
+        if not stats: return
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        filename  = f"equity_{tag}_{timestamp}.png"
+        # simple bar chart example
+        plt.figure(figsize=(4,2))
+        plt.bar(["Balance","Equity"], [stats['balance'], stats['equity']],
+                color=["gold","orange"])
+        plt.title(f"Equity Snapshot ({tag})")
+        plt.tight_layout()
+        plt.savefig(filename, dpi=200)
+        plt.close()
+        self.upload_to_firebase(filename, f"screenshots/{filename}")
+        os.remove(filename)
+
+v.  Hook points:
+   • Right after successful MT5 login  →  self.capture_equity_chart("before")
+   • Right after every successful trade → self.capture_equity_chart("during")
+   • In finally: block, just before mt5.shutdown() → self.capture_equity_chart("after")
+
+4.  REUPLOAD SCRIPT
+   On Mac:
+   scp "/Users/keonta/.../goldexv9.py" root@172.234.201.231:/opt/goldex-bot/goldexv9.py
+   (also upload  firebase-key.json  once)
+
+5.  RELOAD SERVICE
+   ssh root@172.234.201.231
+   systemctl restart goldex.service
+
+6.  VERIFY
+   journalctl -u goldex.service -n 30       # look for “Uploaded … to Firebase”
+   Firebase Console → Storage → /screenshots/  should show PNGs.
+
+================================================================================
+With systemd auto-restart + optional cron guard + Firebase snapshot uploads,
+your bot is self-healing, starts on reboot, and archives visual performance
+proof (before / during / after) 24×7.  🚀📈🔥
+================================================================================

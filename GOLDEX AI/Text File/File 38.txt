@@ -1,0 +1,68 @@
+──────────────────────────────────────────────────────────────────────────────
+WHY IT’S STILL CRASHING & THE 60-SECOND CORRECTION
+──────────────────────────────────────────────────────────────────────────────
+WHAT YOU DID RIGHT ✅
+• Stayed in the same Wine prefix ($HOME/.wine)  
+• Re-ran the connectivity test to confirm the issue  
+
+WHAT WENT WRONG 🛑
+• The line `winetricks -q vcrun2022` was **not** executed.  
+  You launched plain `winetricks` with no verb, so it only printed the help
+  text and exited. Therefore the VC++ runtime DLLs (ucrtbase.dll etc.) were
+  never installed, so `fetestexcept` is still missing.
+
+ONE-COMMAND FIX
+────────────────────────────────────────────
+export WINEPREFIX=$HOME/.wine
+winetricks -q vcrun2022       # ← don’t omit “vcrun2022”!
+
+• “-q” = quiet / no GUI.  
+• “vcrun2022” automatically brings in the full VC++ 2015-2022 runtime that
+  contains the needed ucrt DLLs.
+
+IF YOU SEE DOWNLOAD POP-UPS
+────────────────────────────────────────────
+If your SSH session switches to a blue dialog or asks to accept the licence,
+press TAB to highlight “Accept”, then ENTER.  It takes ~30–60 s.
+
+RESTART WINE SERVICES (optional but safe)
+────────────────────────────────────────────
+wineserver -k        # kills any cached DLL handles
+sleep 2
+
+RE-RUN THE TEST AGAIN
+────────────────────────────────────────────
+export WINEPREFIX=$HOME/.wine
+DISPLAY=:1 \
+wine C:\\opt\\goldex-bot\\winevenv\\Scripts\\python.exe - <<'PY'
+import MetaTrader5 as mt5, os, sys
+from dotenv import load_dotenv
+load_dotenv('/opt/goldex-bot/.env')
+if not mt5.initialize(login=int(os.getenv('DEMO_LOGIN',0)),
+                      password=os.getenv('DEMO_PASSWORD',''),
+                      server=os.getenv('DEMO_SERVER','')):
+    print("❌ init failed:", mt5.last_error()); sys.exit(1)
+print("✅ Connected — Balance:", mt5.account_info().balance)
+mt5.shutdown()
+PY
+
+EXPECTED RESULT
+  ✅ Connected — Balance: <number>
+
+LAUNCH THE BOT (after the green check)
+────────────────────────────────────────────
+tmux new -s goldex -d "
+  export DISPLAY=:1 &&
+  wine C:\\opt\\goldex-bot\\winevenv\\Scripts\\python.exe C:\\opt\\goldex-bot\\goldex_bot.py
+"
+echo '🚀  GoldexBot running inside tmux session "goldex".'
+
+CHEAT-SHEET
+───────────
+tmux attach -t goldex   → live logs  
+Ctrl-b  d               → detach  
+tmux kill-session -t goldex → stop bot  
+
+You should be fully operational after this single `winetricks -q vcrun2022`
+run.  If the same fetestexcept error appears again, paste the new log.
+──────────────────────────────────────────────────────────────────────────────

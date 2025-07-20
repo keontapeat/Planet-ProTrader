@@ -1,0 +1,69 @@
+──────────────────────────────────────────────────────────────────────────────
+WHAT JUST HAPPENED & HOW TO FIX IT
+──────────────────────────────────────────────────────────────────────────────
+1. You DID follow the checklist correctly:
+   • pip/setuptools were upgraded
+   • cache was purged
+   • pip still said “No matching distribution”
+   • you tried to grab the wheel manually  
+     → the URL I gave returned 404 (MetaQuotes pushed a newer build).
+
+2. Let’s grab the CURRENT wheel dynamically so the link never breaks.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+A. PULL THE LATEST LINUX-x86_64 / CPython-3.10 WHEEL AUTOMATICALLY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Run these four lines inside your *activated* venv:
+
+PYVER=$(python -c 'import sys;print(f"{sys.version_info.major}{sys.version_info.minor}")')
+ARCH_TAG="manylinux_2_34_x86_64"
+PKG_URL=$(python - <<PY
+import json, sys, urllib.request, re, html
+data=json.load(urllib.request.urlopen('https://pypi.org/pypi/MetaTrader5/json'))
+ver=data['info']['version']
+files=[f for f in data['releases'][ver] if 'cp${PYVER}-cp${PYVER}' in f['filename'] and '${ARCH_TAG}' in f['filename']]
+print(files[0]['url'] if files else '')
+PY)
+wget -O MetaTrader5.whl "$PKG_URL"
+python -m pip install MetaTrader5.whl
+
+The script:
+• Detects your Python minor version (3.10 → “310”).  
+• Queries PyPI’s JSON API, finds the wheel that matches `cp310` and Linux
+  `manylinux_2_34_x86_64`.  
+• Downloads & installs it.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+B. QUICK VERIFY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+python - <<'PY'
+import MetaTrader5 as mt5, sys, platform
+print("✅  MetaTrader5 version:", mt5.__version__)
+print("Python:", sys.version.split()[0], "| Platform:", platform.machine())
+PY
+
+Expect:
+✅ MetaTrader5 version: 5.x.x
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+C. IF THE WHEEL STILL WON’T INSTALL…
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Double-check CPU arch:  `uname -m` must be `x86_64`.  
+• If it’s **not** (`aarch64`, `armv8`, etc.) → there is *no* native wheel;
+  switch to the Windows-under-Wine route (File 31.txt Option A) and install
+  the Windows wheel instead—guaranteed to work.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NEXT STEP ON SUCCESS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+tmux new -s goldex
+cd /opt/goldex-bot
+source venv/bin/activate
+python goldex_bot.py         # or your quick test snippet
+#   ⌃b d   (detach)
+
+You should finally see:
+✅ Connected. Balance: <amount>
+
+If not, paste the new error and we’ll keep chasing it down.
+──────────────────────────────────────────────────────────────────────────────

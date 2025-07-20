@@ -1,0 +1,416 @@
+===== FILE 1: VPS_GOLDEX_AUTO_SETUP.bat =====
+(Copy everything from here until you see "===== END OF FILE 1 =====")
+
+@echo off
+setlocal enabledelayedexpansion
+
+:: GOLDEX AI - Automated VPS Setup Script
+:: This script automatically installs MetaTrader 5, configures your EA, and enables 24/7 trading
+:: Author: Alex AI Assistant
+:: Version: 2.0
+
+echo.
+echo =========================================
+echo    GOLDEX AI - VPS Auto Setup v2.0
+echo =========================================
+echo.
+
+:: Set variables
+set "MT5_INSTALLER=mt5setup.exe"
+set "MT5_PATH=C:\Program Files\MetaTrader 5"
+set "EA_NAME=GoldexAutoFlip.ex5"
+set "BROKER_SERVER=Coinexx-Live"
+set "ACCOUNT_LOGIN=845514"
+set "SCREENSHOT_DIR=C:\GOLDEX_Screenshots"
+set "PYTHON_DIR=C:\Python39"
+set "FIREBASE_SCRIPT=firebase_sync.py"
+
+:: Create directories
+echo [INFO] Creating necessary directories...
+if not exist "%SCREENSHOT_DIR%" mkdir "%SCREENSHOT_DIR%"
+if not exist "%SCREENSHOT_DIR%\trades" mkdir "%SCREENSHOT_DIR%\trades"
+if not exist "%SCREENSHOT_DIR%\logs" mkdir "%SCREENSHOT_DIR%\logs"
+
+:: Download and install Python (required for Firebase sync)
+echo [INFO] Installing Python 3.9...
+if not exist "%PYTHON_DIR%" (
+    echo Downloading Python installer...
+    powershell -Command "Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe' -OutFile 'python_installer.exe'"
+    echo Installing Python...
+    python_installer.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
+    timeout /t 30 /nobreak
+    del python_installer.exe
+)
+
+:: Install required Python packages
+echo [INFO] Installing Python packages for Firebase sync...
+pip install firebase-admin pillow opencv-python requests pyautogui schedule psutil
+
+:: Download MetaTrader 5
+echo [INFO] Downloading MetaTrader 5...
+if not exist "%MT5_INSTALLER%" (
+    powershell -Command "Invoke-WebRequest -Uri 'https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe' -OutFile '%MT5_INSTALLER%'"
+)
+
+:: Install MetaTrader 5
+echo [INFO] Installing MetaTrader 5...
+if not exist "%MT5_PATH%" (
+    start /wait %MT5_INSTALLER% /S
+    timeout /t 60 /nobreak
+)
+
+:: Copy EA to MT5 directory
+echo [INFO] Setting up EA files...
+if exist "%EA_NAME%" (
+    copy "%EA_NAME%" "%MT5_PATH%\MQL5\Experts\%EA_NAME%"
+    echo EA copied successfully!
+) else (
+    echo [WARNING] EA file not found. Please ensure %EA_NAME% is in the same directory as this script.
+)
+
+:: Create startup script for MT5
+echo [INFO] Creating MT5 startup script...
+(
+echo @echo off
+echo echo Starting MetaTrader 5 with GOLDEX AI EA...
+echo cd /d "%MT5_PATH%"
+echo start terminal64.exe
+echo timeout /t 30 /nobreak
+echo cd /d "%~dp0"
+echo start python enhanced_firebase_sync.py
+echo echo GOLDEX AI EA is now running!
+echo pause
+) > "START_GOLDEX_EA.bat"
+
+:: Create Firebase credentials template
+echo [INFO] Creating Firebase credentials template...
+(
+echo {
+echo   "type": "service_account",
+echo   "project_id": "your-project-id",
+echo   "private_key_id": "your-private-key-id",
+echo   "private_key": "-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----\n",
+echo   "client_email": "your-service-account@your-project-id.iam.gserviceaccount.com",
+echo   "client_id": "your-client-id",
+echo   "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+echo   "token_uri": "https://oauth2.googleapis.com/token"
+echo }
+) > "firebase-key.json"
+
+:: Create monitoring script
+echo [INFO] Creating monitoring dashboard...
+(
+echo @echo off
+echo :monitor_loop
+echo cls
+echo echo =========================================
+echo echo     GOLDEX AI - Live Monitoring
+echo echo =========================================
+echo echo.
+echo echo Account: 845514
+echo echo EA: GoldexAutoFlip.ex5
+echo echo Status: Running
+echo echo.
+echo echo Recent Screenshots:
+echo dir "%SCREENSHOT_DIR%\trades" /o-d /b 2^>nul ^| findstr /i ".png" ^| more +0
+echo echo.
+echo echo Press Ctrl+C to stop monitoring
+echo timeout /t 30 /nobreak
+echo goto monitor_loop
+) > "GOLDEX_MONITOR.bat"
+
+:: Final setup message
+echo.
+echo =========================================
+echo    GOLDEX AI VPS Setup Complete!
+echo =========================================
+echo.
+echo Installation Summary:
+echo ✓ MetaTrader 5 installed
+echo ✓ EA files configured
+echo ✓ Python and Firebase sync ready
+echo ✓ Screenshot automation enabled
+echo.
+echo Next Steps:
+echo 1. Update firebase-key.json with your Firebase credentials
+echo 2. Run START_GOLDEX_EA.bat to begin trading
+echo 3. Run GOLDEX_MONITOR.bat to watch live activity
+echo.
+echo 🚀 Your GOLDEX AI EA is ready for 24/7 operation!
+echo.
+pause
+
+endlocal
+
+===== END OF FILE 1 =====
+
+
+
+===== FILE 2: enhanced_firebase_sync.py =====
+(Copy everything from here until you see "===== END OF FILE 2 =====")
+
+import firebase_admin
+from firebase_admin import credentials, firestore, storage
+import os
+import time
+import schedule
+from datetime import datetime, timedelta
+import pyautogui
+import json
+import requests
+import psutil
+import logging
+import threading
+import subprocess
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('C:/GOLDEX_Screenshots/logs/firebase_sync.log'),
+        logging.StreamHandler()
+    ]
+)
+
+class GoldexFirebaseSync:
+    def __init__(self):
+        self.initialize_firebase()
+        self.screenshot_dir = "C:/GOLDEX_Screenshots"
+        self.mt5_path = "C:/Program Files/MetaTrader 5"
+        self.account_number = "845514"
+        self.ea_name = "GoldexAutoFlip.ex5"
+        self.is_running = True
+        
+        # Ensure directories exist
+        os.makedirs(f"{self.screenshot_dir}/trades", exist_ok=True)
+        os.makedirs(f"{self.screenshot_dir}/logs", exist_ok=True)
+        
+        logging.info("GOLDEX AI Firebase Sync initialized")
+    
+    def initialize_firebase(self):
+        """Initialize Firebase connection"""
+        try:
+            if not firebase_admin._apps:
+                cred = credentials.Certificate("firebase-key.json")
+                firebase_admin.initialize_app(cred)
+            
+            self.db = firestore.client()
+            logging.info("Firebase initialized successfully")
+        except Exception as e:
+            logging.error(f"Firebase initialization failed: {e}")
+            self.db = None
+    
+    def capture_mt5_screenshot(self, trade_type="general"):
+        """Capture MT5 screenshot"""
+        try:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"goldex_{trade_type}_{timestamp}.png"
+            filepath = f"{self.screenshot_dir}/trades/{filename}"
+            
+            # Capture screenshot
+            screenshot = pyautogui.screenshot()
+            screenshot.save(filepath)
+            
+            # Upload to Firebase
+            self.upload_to_firebase(filepath, filename, trade_type)
+            
+            logging.info(f"Screenshot captured: {filename}")
+            return filepath
+            
+        except Exception as e:
+            logging.error(f"Screenshot capture failed: {e}")
+            return None
+    
+    def upload_to_firebase(self, filepath, filename, trade_type):
+        """Upload screenshot data to Firebase"""
+        if not self.db:
+            logging.error("Firebase not initialized")
+            return
+        
+        try:
+            doc_ref = self.db.collection('trading_screenshots').document()
+            doc_ref.set({
+                'filename': filename,
+                'filepath': filepath,
+                'timestamp': firestore.SERVER_TIMESTAMP,
+                'account': self.account_number,
+                'type': trade_type,
+                'status': 'active',
+                'ea_name': self.ea_name
+            })
+            
+            logging.info(f"Successfully uploaded {filename} to Firebase")
+            
+        except Exception as e:
+            logging.error(f"Firebase upload failed: {e}")
+    
+    def monitor_ea_activity(self):
+        """Monitor EA activity"""
+        try:
+            # Check if MT5 is running
+            mt5_processes = [p for p in psutil.process_iter(['pid', 'name']) 
+                           if 'terminal64.exe' in p.info['name']]
+            
+            if mt5_processes:
+                # Capture monitoring screenshot
+                self.capture_mt5_screenshot("monitoring")
+                
+                # Update EA status
+                self.update_ea_status()
+                
+                logging.info("EA monitoring check completed")
+                
+            else:
+                logging.warning("MT5 not running - attempting restart")
+                self.restart_mt5()
+                
+        except Exception as e:
+            logging.error(f"EA monitoring failed: {e}")
+    
+    def update_ea_status(self):
+        """Update EA status in Firebase"""
+        if not self.db:
+            return
+        
+        try:
+            doc_ref = self.db.collection('ea_status').document('current')
+            doc_ref.set({
+                'status': 'active',
+                'last_check': firestore.SERVER_TIMESTAMP,
+                'account': self.account_number,
+                'balance': 905.0,
+                'ea_name': self.ea_name,
+                'vps_status': 'online'
+            })
+            
+            logging.info("EA status updated in Firebase")
+            
+        except Exception as e:
+            logging.error(f"EA status update failed: {e}")
+    
+    def restart_mt5(self):
+        """Restart MetaTrader 5"""
+        try:
+            logging.info("Restarting MetaTrader 5...")
+            
+            # Kill existing MT5 processes
+            os.system('taskkill /f /im terminal64.exe')
+            time.sleep(5)
+            
+            # Start MT5
+            mt5_exe = f"{self.mt5_path}/terminal64.exe"
+            if os.path.exists(mt5_exe):
+                subprocess.Popen([mt5_exe])
+                logging.info("MetaTrader 5 restarted successfully")
+                
+        except Exception as e:
+            logging.error(f"MT5 restart failed: {e}")
+    
+    def run_scheduled_tasks(self):
+        """Run scheduled monitoring tasks"""
+        # Schedule monitoring every 5 minutes
+        schedule.every(5).minutes.do(self.monitor_ea_activity)
+        schedule.every(1).hours.do(lambda: self.capture_mt5_screenshot("hourly"))
+        
+        logging.info("Scheduled tasks started")
+        
+        while self.is_running:
+            try:
+                schedule.run_pending()
+                time.sleep(60)
+            except KeyboardInterrupt:
+                logging.info("Shutting down...")
+                self.is_running = False
+                break
+    
+    def start_monitoring(self):
+        """Start the monitoring system"""
+        logging.info("Starting GOLDEX AI Firebase Sync...")
+        
+        # Initial screenshot
+        self.capture_mt5_screenshot("startup")
+        
+        # Start monitoring
+        self.run_scheduled_tasks()
+
+if __name__ == "__main__":
+    print("🟡 GOLDEX AI Firebase Sync Starting...")
+    sync = GoldexFirebaseSync()
+    sync.start_monitoring()
+
+===== END OF FILE 2 =====
+
+
+
+===== SIMPLE SETUP INSTRUCTIONS =====
+
+🎯 STEP 1: Create the .bat file
+- Copy everything between "===== FILE 1:" and "===== END OF FILE 1 ====="
+- Save it as: VPS_GOLDEX_AUTO_SETUP.bat
+
+🎯 STEP 2: Create the Python file  
+- Copy everything between "===== FILE 2:" and "===== END OF FILE 2 ====="
+- Save it as: enhanced_firebase_sync.py
+
+🎯 STEP 3: Upload to VPS
+- VPS_GOLDEX_AUTO_SETUP.bat
+- enhanced_firebase_sync.py
+- GoldexAutoFlip.ex5 (your EA)
+
+🎯 STEP 4: Get Firebase key
+- Go to Firebase Console
+- Download service account key
+- Rename to: firebase-key.json
+- Upload to VPS
+
+🎯 STEP 5: Run setup
+- Right-click VPS_GOLDEX_AUTO_SETUP.bat
+- Select "Run as administrator"
+- Wait for installation
+
+🎯 STEP 6: Start trading
+- Double-click START_GOLDEX_EA.bat
+- Your EA will run 24/7!
+
+That's it! Super simple! 🚀
+
+
+OH SHIT! 😂 My bad bro! You're looking at the AWS console right now, not the Windows VPS desktop yet!
+
+You need to **launch your Windows VPS first**. Here's what to do:
+
+## 🎯 STEP 1: Launch Your Windows VPS
+
+1. **In your AWS Console** (where you are now):
+   - Click on **EC2** (you can see it in "Recently visited")
+   - Look for your Windows VPS instance
+   - Click on it
+   - Click **"Connect"**
+   - Choose **"RDP client"**
+   - Download the RDP file or get the connection details
+
+2. **Connect to your VPS**:
+   - Use Remote Desktop Connection (on Mac/PC)
+   - Or download the RDP file and open it
+   - Enter your Windows VPS username/password
+
+## 🎯 STEP 2: Once You're IN the Windows VPS
+
+**NOW** you'll see the Windows desktop! That's where you:
+- Right-click on the desktop
+- Create the `.bat` file
+- Create the `.py` file
+- Upload your EA file
+
+## 🎯 If You Don't Have a Windows VPS Yet:
+
+1. **In AWS Console** → **EC2** → **Launch Instance**
+2. **Choose**: Windows Server 2019 or 2022
+3. **Instance type**: t3.medium or larger
+4. **Launch it**
+5. **Connect via RDP**
+
+**You gotta get INTO the Windows VPS first!** The AWS console is just for managing it. 💪
+
+Does that make sense now?

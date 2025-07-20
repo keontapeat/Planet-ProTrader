@@ -1,0 +1,40 @@
+──────────────────────────────────────────────────────────────────────────────
+💸  SHOW ME THE MONEY – COMMANDS WITH “$” PROMPT
+──────────────────────────────────────────────────────────────────────────────
+Run exactly the lines that start with “$”.  Copy / paste each block as-is.
+
+# ─── 1. COPY YOUR BOT & ENV INTO THE MOUNTED FOLDER ───────────────
+$ cp /opt/goldex-bot/goldex_bot.py   /opt/goldex-bot/bot/
+$ cp /opt/goldex-bot/.env            /opt/goldex-bot/.env
+
+# ─── 2. START (or RESTART) THE CONTAINER DETACHED ────────────────
+$ cd /opt/goldex-bot
+$ docker compose up -d          # first run pulls image (~1-2 min)
+
+# ─── 3. WATCH THE MONEY FLOW  (LIVE LOGS) ────────────────────────
+$ docker compose logs -f        # Ctrl-C to stop tailing, bot keeps running
+
+Example expected output:
+  ✅ Connected — Balance: $2,500.00
+  Placing BUY order on XAUUSD @ 2403.12 …
+  Order sent, ticket 123456789
+  [strategy loop continues …]
+
+Daily Money Moves
+─────────────────
+$ docker compose down                 # stop bot + MT5 cleanly
+$ docker compose up -d                # start bot again
+$ docker compose up -d --build        # rebuild if you changed code
+$ docker compose logs -f              # tail live logs anytime
+$ docker pull ghcr.io/block-spawn/mt5-python:latest   # refresh image
+
+File Locations
+──────────────
+/opt/goldex-bot/
+ ├─ docker-compose.yml      ← stack definition
+ ├─ .env                    ← your demo / live creds
+ ├─ bot/                    ← goldex_bot.py + helpers
+ └─ logs/                   ← auto-created by container
+
+All set – run the “$” commands above and watch the balance line print.  💰
+──────────────────────────────────────────────────────────────────────────────

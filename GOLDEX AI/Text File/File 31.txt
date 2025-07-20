@@ -1,0 +1,20 @@
+──────────────────────────────────────────────────────────────────────────────
+FIXING “MetaTrader5: No Matching Distribution” ERROR
+──────────────────────────────────────────────────────────────────────────────
+Problem
+• `pip install MetaTrader5` on Ubuntu returned:
+  ERROR: Could not find a version that satisfies the requirement MetaTrader5
+
+Root Cause
+• MetaQuotes only publishes pre-built wheels for:
+  – Windows & macOS (all modern Python versions)  
+  – Linux x86-64 for **Python ≤ 3.10**  
+  The command failed because you were using a Linux Python 3.11+ interpreter.
+
+You now have two workable routes:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OPTION A – Keep MT5 under Wine (RECOMMENDED if you already have MT5.exe running)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Make sure Wine & Xvfb are still running (they are on display :1).
+2. Create a virtual-env *inside Wine* so you can install the Windows wheel:

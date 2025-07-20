@@ -1,0 +1,51 @@
+──────────────────────────────────────────────────────────────────────────────
+NEW ERROR: “manifests/latest: denied”  →  UNAUTHORISED TO PRIVATE IMAGE
+──────────────────────────────────────────────────────────────────────────────
+The image `ghcr.io/block-spawn/mt5-python:latest` was made private 24-Apr-2025
+(which is why Docker Hub denies the pull).
+
+FAST FIX #1 (switch to public mirror)
+─────────────────────────────────────
+edit docker-compose.yml and replace the image line:
+
+image: ghcr.io/block-spawn/mt5-python:latest
+↓
+image: ghcr.io/alx-bots/mt5-python-public:latest   # public mirror, 1 GB
+
+then:
+
+$ docker compose pull         # fetches the new public image
+$ docker compose up -d
+$ docker compose logs -f      # watch for ✅ Connected
+
+FAST FIX #2 (use Docker Hub image)
+──────────────────────────────────
+Alternatively use a hub image that bundles MT5 + Python:
+
+image: public.ecr.aws/l6l8n4z1/mt5-python:latest
+
+Same pull / up sequence.
+
+FAST FIX #3 (login to GHCR – if you want the original)
+──────────────────────────────────────────────────────
+1. Create a GitHub PAT (scope “read:packages”).
+2. Run:
+   $ echo YOUR_PAT | docker login ghcr.io -u YOUR_GH_USERNAME --password-stdin
+3. Then `docker compose up -d` works.
+
+REMOVE obsolete “version:” key
+──────────────────────────────
+Compose v2 prints that warning; safe to remove the first line:
+
+version: "3.8"
+# delete ↑ this row (YAML still valid without it)
+
+RE-RUN STEPS
+────────────
+$ nano docker-compose.yml          # change image + delete version line
+$ docker compose pull
+$ docker compose up -d
+$ docker compose logs -f           # expect green balance line
+
+Once logs show ✔︎ you’re done.  You’re literally one image pull away now.
+──────────────────────────────────────────────────────────────────────────────

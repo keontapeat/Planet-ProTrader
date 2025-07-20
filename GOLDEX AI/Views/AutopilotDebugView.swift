@@ -1,0 +1,1244 @@
+//
+//  AutopilotDebugView.swift
+//  GOLDEX AI
+//
+//  Created by AI Assistant on 7/13/25.
+//
+
+import SwiftUI
+
+struct AutopilotDebugView: View {
+    @StateObject private var autopilotEngine = AutopilotUpdateEngine()
+    @State private var selectedLogLevel: AutopilotUpdateEngine.LogLevel = .info
+    @State private var showingSystemReport = false
+    @State private var showingBugDetails = false
+    @State private var selectedBug: AutopilotUpdateEngine.BugReport?
+    @State private var showingOptimizationDetails = false
+    @State private var selectedOptimization: AutopilotUpdateEngine.OptimizationSuggestion?
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // System Health Header
+                    SystemHealthHeaderView(
+                        systemHealth: autopilotEngine.systemHealth,
+                        updateStatus: autopilotEngine.updateStatus,
+                        isScanning: autopilotEngine.isScanning
+                    )
+                    
+                    // Quick Actions
+                    QuickActionsView(
+                        autopilotEngine: autopilotEngine,
+                        showingSystemReport: $showingSystemReport
+                    )
+                    
+                    // Performance Metrics
+                    AutopilotPerformanceMetricsView(
+                        performanceMetrics: autopilotEngine.performanceMetrics
+                    )
+                    
+                    // Active Issues
+                    ActiveIssuesView(
+                        bugReports: autopilotEngine.bugReports,
+                        optimizationSuggestions: autopilotEngine.optimizationSuggestions,
+                        selectedBug: $selectedBug,
+                        selectedOptimization: $selectedOptimization,
+                        showingBugDetails: $showingBugDetails,
+                        showingOptimizationDetails: $showingOptimizationDetails
+                    )
+                    
+                    // Debug Log
+                    DebugLogView(
+                        debugLogs: autopilotEngine.debugLogs,
+                        selectedLogLevel: $selectedLogLevel
+                    )
+                    
+                    // Scan Schedule
+                    ScanScheduleView(
+                        scanFrequency: autopilotEngine.scanFrequency,
+                        nextScheduledScan: autopilotEngine.nextScheduledScan,
+                        autoUpdateEnabled: autopilotEngine.autoUpdateEnabled,
+                        onFrequencyChange: { frequency in
+                            autopilotEngine.setScanFrequency(frequency)
+                        },
+                        onAutoUpdateToggle: {
+                            autopilotEngine.toggleAutoUpdate()
+                        }
+                    )
+                    
+                    Spacer(minLength: 100)
+                }
+                .padding()
+            }
+            .navigationTitle("Autopilot Debug Engine")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    HStack {
+                        Button("Manual Scan") {
+                            autopilotEngine.manualScan()
+                        }
+                        .disabled(autopilotEngine.isScanning)
+                        
+                        Button("Report") {
+                            showingSystemReport = true
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showingSystemReport) {
+                SystemReportView(
+                    systemReport: autopilotEngine.getSystemReport()
+                )
+            }
+            .sheet(isPresented: $showingBugDetails) {
+                if let selectedBug = selectedBug {
+                    BugDetailView(bug: selectedBug)
+                }
+            }
+            .sheet(isPresented: $showingOptimizationDetails) {
+                if let selectedOptimization = selectedOptimization {
+                    OptimizationDetailView(optimization: selectedOptimization)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Supporting Views
+
+struct SystemHealthHeaderView: View {
+    let systemHealth: AutopilotUpdateEngine.SystemHealth
+    let updateStatus: AutopilotUpdateEngine.UpdateStatus
+    let isScanning: Bool
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                VStack(alignment: .leading) {
+                    Text("System Health")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    HStack {
+                        Text("\(Int(systemHealth.overallHealth))%")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundStyle(systemHealth.status.color)
+                        
+                        VStack(alignment: .leading) {
+                            Text(systemHealth.status.rawValue)
+                                .font(.headline)
+                                .foregroundStyle(systemHealth.status.color)
+                            
+                            if isScanning {
+                                Text(updateStatus.rawValue)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing) {
+                    Image(systemName: updateStatus.icon)
+                        .font(.title2)
+                        .foregroundStyle(updateStatus.color)
+                    
+                    Text("Last Check")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    Text(formatTime(systemHealth.lastHealthCheck))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            
+            // Health Metrics Grid
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 12) {
+                HealthMetricCard(
+                    title: "Code Quality",
+                    value: Int(systemHealth.codeQuality),
+                    color: getHealthColor(systemHealth.codeQuality)
+                )
+                
+                HealthMetricCard(
+                    title: "Performance",
+                    value: Int(systemHealth.performance),
+                    color: getHealthColor(systemHealth.performance)
+                )
+                
+                HealthMetricCard(
+                    title: "Stability",
+                    value: Int(systemHealth.stability),
+                    color: getHealthColor(systemHealth.stability)
+                )
+                
+                HealthMetricCard(
+                    title: "Security",
+                    value: Int(systemHealth.security),
+                    color: getHealthColor(systemHealth.security)
+                )
+            }
+        }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+    
+    private func formatTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+    
+    private func getHealthColor(_ value: Double) -> Color {
+        switch value {
+        case 90...100: return .green
+        case 70..<90: return .yellow
+        case 50..<70: return .orange
+        default: return .red
+        }
+    }
+}
+
+struct HealthMetricCard: View {
+    let title: String
+    let value: Int
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            
+            Text("\(value)%")
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundStyle(color)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(color.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+struct QuickActionsView: View {
+    let autopilotEngine: AutopilotUpdateEngine
+    @Binding var showingSystemReport: Bool
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Quick Actions")
+                .font(.headline)
+                .fontWeight(.semibold)
+            
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 12) {
+                AutopilotQuickActionButton(
+                    title: "Full Scan",
+                    icon: "magnifyingglass.circle.fill",
+                    color: .blue,
+                    isDisabled: autopilotEngine.isScanning
+                ) {
+                    autopilotEngine.manualScan()
+                }
+                
+                AutopilotQuickActionButton(
+                    title: "Clear Logs",
+                    icon: "trash.circle.fill",
+                    color: .red,
+                    isDisabled: false
+                ) {
+                    autopilotEngine.clearDebugLogs()
+                }
+                
+                AutopilotQuickActionButton(
+                    title: "Export Report",
+                    icon: "square.and.arrow.up.circle.fill",
+                    color: .green,
+                    isDisabled: false
+                ) {
+                    showingSystemReport = true
+                }
+                
+                AutopilotQuickActionButton(
+                    title: "Toggle Auto-Update",
+                    icon: autopilotEngine.autoUpdateEnabled ? "checkmark.circle.fill" : "xmark.circle.fill",
+                    color: autopilotEngine.autoUpdateEnabled ? .green : .gray,
+                    isDisabled: false
+                ) {
+                    autopilotEngine.toggleAutoUpdate()
+                }
+            }
+        }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+struct AutopilotQuickActionButton: View {
+    let title: String
+    let icon: String
+    let color: Color
+    let isDisabled: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundStyle(isDisabled ? .gray : color)
+                
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(isDisabled ? .gray : .primary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(isDisabled ? Color.gray.opacity(0.1) : color.opacity(0.1))
+            )
+        }
+        .disabled(isDisabled)
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+struct AutopilotPerformanceMetricsView: View {
+    let performanceMetrics: AutopilotUpdateEngine.PerformanceMetrics
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Performance Metrics")
+                .font(.headline)
+                .fontWeight(.semibold)
+            
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 16) {
+                AutopilotPerformanceMetricCard(
+                    title: "CPU Usage",
+                    value: "\(Int(performanceMetrics.cpuUsage))%",
+                    color: getPerformanceColor(performanceMetrics.cpuUsage, threshold: 80)
+                )
+                
+                AutopilotPerformanceMetricCard(
+                    title: "Memory Usage",
+                    value: "\(Int(performanceMetrics.memoryUsage))MB",
+                    color: getPerformanceColor(performanceMetrics.memoryUsage, threshold: 1000)
+                )
+                
+                AutopilotPerformanceMetricCard(
+                    title: "Response Time",
+                    value: String(format: "%.2fms", performanceMetrics.responseTime * 1000),
+                    color: getPerformanceColor(performanceMetrics.responseTime * 1000, threshold: 100)
+                )
+                
+                AutopilotPerformanceMetricCard(
+                    title: "Error Rate",
+                    value: String(format: "%.3f%%", performanceMetrics.errorRate * 100),
+                    color: getPerformanceColor(performanceMetrics.errorRate * 100, threshold: 1.0)
+                )
+            }
+            
+            // Overall Performance Score
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Overall Performance Score")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                HStack {
+                    Text("\(Int(performanceMetrics.overallScore))/100")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundStyle(getPerformanceColor(performanceMetrics.overallScore, threshold: 70, inverted: true))
+                    
+                    Spacer()
+                    
+                    ProgressView(value: performanceMetrics.overallScore, total: 100)
+                        .progressViewStyle(LinearProgressViewStyle(tint: getPerformanceColor(performanceMetrics.overallScore, threshold: 70, inverted: true)))
+                        .frame(maxWidth: 120)
+                }
+            }
+            .padding()
+            .background(Color.gray.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+    
+    private func getPerformanceColor(_ value: Double, threshold: Double, inverted: Bool = false) -> Color {
+        if inverted {
+            return value >= threshold ? .green : value >= threshold * 0.7 ? .yellow : .red
+        } else {
+            return value <= threshold ? .green : value <= threshold * 1.3 ? .yellow : .red
+        }
+    }
+}
+
+struct AutopilotPerformanceMetricCard: View {
+    let title: String
+    let value: String
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
+            Text(value)
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundStyle(color)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(color.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+struct ActiveIssuesView: View {
+    let bugReports: [AutopilotUpdateEngine.BugReport]
+    let optimizationSuggestions: [AutopilotUpdateEngine.OptimizationSuggestion]
+    @Binding var selectedBug: AutopilotUpdateEngine.BugReport?
+    @Binding var selectedOptimization: AutopilotUpdateEngine.OptimizationSuggestion?
+    @Binding var showingBugDetails: Bool
+    @Binding var showingOptimizationDetails: Bool
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Active Issues")
+                .font(.headline)
+                .fontWeight(.semibold)
+            
+            // Bug Reports
+            if !bugReports.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Bug Reports (\(bugReports.count))")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.red)
+                    
+                    ForEach(bugReports.prefix(3), id: \.id) { bug in
+                        BugReportRow(bug: bug) {
+                            selectedBug = bug
+                            showingBugDetails = true
+                        }
+                    }
+                }
+            }
+            
+            // Optimization Suggestions
+            if !optimizationSuggestions.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Optimization Suggestions (\(optimizationSuggestions.count))")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.blue)
+                    
+                    ForEach(optimizationSuggestions.prefix(3), id: \.id) { suggestion in
+                        OptimizationSuggestionRow(suggestion: suggestion) {
+                            selectedOptimization = suggestion
+                            showingOptimizationDetails = true
+                        }
+                    }
+                }
+            }
+            
+            if bugReports.isEmpty && optimizationSuggestions.isEmpty {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                    Text("No active issues found")
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.green.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+        }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+struct BugReportRow: View {
+    let bug: AutopilotUpdateEngine.BugReport
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(bug.title)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.primary)
+                    
+                    Text(bug.module)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(bug.severity.rawValue)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(bug.severity.color, in: RoundedRectangle(cornerRadius: 4))
+                    
+                    Text(bug.priority.rawValue)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding()
+            .background(Color.red.opacity(0.05))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+struct OptimizationSuggestionRow: View {
+    let suggestion: AutopilotUpdateEngine.OptimizationSuggestion
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(suggestion.title)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.primary)
+                    
+                    Text(suggestion.module)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(suggestion.difficulty.rawValue)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(suggestion.difficulty.color, in: RoundedRectangle(cornerRadius: 4))
+                    
+                    Text("+\(Int(suggestion.performanceGain * 100))%")
+                        .font(.caption2)
+                        .foregroundStyle(.green)
+                }
+            }
+            .padding()
+            .background(Color.blue.opacity(0.05))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+struct DebugLogView: View {
+    let debugLogs: [AutopilotUpdateEngine.DebugLog]
+    @Binding var selectedLogLevel: AutopilotUpdateEngine.LogLevel
+    
+    var filteredLogs: [AutopilotUpdateEngine.DebugLog] {
+        debugLogs.filter { log in
+            switch selectedLogLevel {
+            case .debug: return true
+            case .info: return log.level != .debug
+            case .warning: return log.level == .warning || log.level == .error || log.level == .critical
+            case .error: return log.level == .error || log.level == .critical
+            case .critical: return log.level == .critical
+            }
+        }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Debug Log")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+                
+                Picker("Log Level", selection: $selectedLogLevel) {
+                    ForEach(AutopilotUpdateEngine.LogLevel.allCases, id: \.self) { level in
+                        Text(level.rawValue).tag(level)
+                    }
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .frame(width: 200)
+            }
+            
+            ScrollView {
+                LazyVStack(spacing: 4) {
+                    ForEach(filteredLogs.prefix(20), id: \.id) { log in
+                        DebugLogRow(log: log)
+                    }
+                }
+            }
+            .frame(maxHeight: 300)
+        }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+struct DebugLogRow: View {
+    let log: AutopilotUpdateEngine.DebugLog
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(log.formattedTimestamp)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(width: 80, alignment: .leading)
+            
+            Text(log.level.rawValue)
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 1)
+                .background(log.level.color, in: RoundedRectangle(cornerRadius: 3))
+            
+            Text(log.module)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(width: 80, alignment: .leading)
+            
+            Text(log.message)
+                .font(.caption)
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 2)
+        .padding(.horizontal, 8)
+        .background(log.level == .error || log.level == .critical ? Color.red.opacity(0.1) : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: 4))
+    }
+}
+
+struct ScanScheduleView: View {
+    let scanFrequency: AutopilotUpdateEngine.ScanFrequency
+    let nextScheduledScan: Date
+    let autoUpdateEnabled: Bool
+    let onFrequencyChange: (AutopilotUpdateEngine.ScanFrequency) -> Void
+    let onAutoUpdateToggle: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Scan Schedule")
+                .font(.headline)
+                .fontWeight(.semibold)
+            
+            VStack(spacing: 12) {
+                HStack {
+                    Text("Scan Frequency")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    Spacer()
+                    
+                    Picker("Frequency", selection: .constant(scanFrequency)) {
+                        ForEach(AutopilotUpdateEngine.ScanFrequency.allCases, id: \.self) { frequency in
+                            Text(frequency.rawValue).tag(frequency)
+                        }
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                    .onChange(of: scanFrequency) { _, newValue in
+                        onFrequencyChange(newValue)
+                    }
+                }
+                
+                HStack {
+                    Text("Auto-Update")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    Spacer()
+                    
+                    Toggle("", isOn: .constant(autoUpdateEnabled))
+                        .onChange(of: autoUpdateEnabled) { _, _ in
+                            onAutoUpdateToggle()
+                        }
+                }
+                
+                if scanFrequency != .manual {
+                    HStack {
+                        Text("Next Scan")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        
+                        Spacer()
+                        
+                        Text(formatDateTime(nextScheduledScan))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+    
+    private func formatDateTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, HH:mm"
+        return formatter.string(from: date)
+    }
+}
+
+struct SystemReportView: View {
+    let systemReport: SystemReport
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // System Health Summary
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("System Health Summary")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        SystemHealthSummaryCard(systemHealth: systemReport.systemHealth)
+                    }
+                    
+                    // Performance Summary
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Performance Summary")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        PerformanceSummaryCard(performanceMetrics: systemReport.performanceMetrics)
+                    }
+                    
+                    // Issues Summary
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Issues Summary")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        IssuesSummaryCard(
+                            bugCount: systemReport.bugCount,
+                            optimizationCount: systemReport.optimizationCount
+                        )
+                    }
+                    
+                    // Update History
+                    if !systemReport.updateHistory.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Recent Updates")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                            
+                            ForEach(systemReport.updateHistory.prefix(5), id: \.id) { update in
+                                UpdateHistoryRow(update: update)
+                            }
+                        }
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("System Report")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct SystemHealthSummaryCard: View {
+    let systemHealth: AutopilotUpdateEngine.SystemHealth
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                VStack(alignment: .leading) {
+                    Text("Overall Health")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    
+                    Text("\(Int(systemHealth.overallHealth))%")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundStyle(systemHealth.status.color)
+                }
+                
+                Spacer()
+                
+                Text(systemHealth.status.rawValue)
+                    .font(.headline)
+                    .foregroundStyle(systemHealth.status.color)
+            }
+            
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 12) {
+                HealthDetailCard(title: "Code Quality", value: systemHealth.codeQuality)
+                HealthDetailCard(title: "Performance", value: systemHealth.performance)
+                HealthDetailCard(title: "Stability", value: systemHealth.stability)
+                HealthDetailCard(title: "Security", value: systemHealth.security)
+                HealthDetailCard(title: "Maintainability", value: systemHealth.maintainability)
+                HealthDetailCard(title: "Test Coverage", value: systemHealth.testCoverage)
+            }
+        }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+struct HealthDetailCard: View {
+    let title: String
+    let value: Double
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
+            Text("\(Int(value))%")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(getHealthColor(value))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(getHealthColor(value).opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+    
+    private func getHealthColor(_ value: Double) -> Color {
+        switch value {
+        case 90...100: return .green
+        case 70..<90: return .yellow
+        case 50..<70: return .orange
+        default: return .red
+        }
+    }
+}
+
+struct PerformanceSummaryCard: View {
+    let performanceMetrics: AutopilotUpdateEngine.PerformanceMetrics
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Overall Score: \(Int(performanceMetrics.overallScore))/100")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+                
+                ProgressView(value: performanceMetrics.overallScore, total: 100)
+                    .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+                    .frame(width: 100)
+            }
+            
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 12) {
+                PerformanceDetailCard(title: "CPU Usage", value: "\(Int(performanceMetrics.cpuUsage))%")
+                PerformanceDetailCard(title: "Memory Usage", value: "\(Int(performanceMetrics.memoryUsage))MB")
+                PerformanceDetailCard(title: "Response Time", value: String(format: "%.1fms", performanceMetrics.responseTime * 1000))
+                PerformanceDetailCard(title: "Error Rate", value: String(format: "%.2f%%", performanceMetrics.errorRate * 100))
+            }
+        }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+struct PerformanceDetailCard: View {
+    let title: String
+    let value: String
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.primary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+struct IssuesSummaryCard: View {
+    let bugCount: Int
+    let optimizationCount: Int
+    
+    var body: some View {
+        HStack(spacing: 20) {
+            VStack(spacing: 4) {
+                Text("Active Bugs")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                Text("\(bugCount)")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundStyle(bugCount > 0 ? .red : .green)
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background((bugCount > 0 ? Color.red : Color.green).opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            
+            VStack(spacing: 4) {
+                Text("Optimizations")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                Text("\(optimizationCount)")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.blue)
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(Color.blue.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+    }
+}
+
+struct UpdateHistoryRow: View {
+    let update: AutopilotUpdateEngine.UpdateHistory
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Version \(update.version)")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Text(formatDate(update.timestamp))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            Spacer()
+            
+            VStack(alignment: .trailing, spacing: 2) {
+                HStack {
+                    Text("\(update.bugsFixed) bugs")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                    
+                    Text("\(update.optimizationsApplied) opts")
+                        .font(.caption)
+                        .foregroundStyle(.blue)
+                }
+                
+                Text(update.success ? "Success" : "Failed")
+                    .font(.caption)
+                    .foregroundStyle(update.success ? .green : .red)
+            }
+        }
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+}
+
+struct BugDetailView: View {
+    let bug: AutopilotUpdateEngine.BugReport
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Bug Overview
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Bug Overview")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        HStack {
+                            Text("Severity:")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            
+                            Text(bug.severity.rawValue)
+                                .font(.subheadline)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(bug.severity.color, in: RoundedRectangle(cornerRadius: 6))
+                        }
+                        
+                        HStack {
+                            Text("Priority:")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            
+                            Text(bug.priority.rawValue)
+                                .font(.subheadline)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(bug.priority.color, in: RoundedRectangle(cornerRadius: 6))
+                        }
+                        
+                        HStack {
+                            Text("Module:")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            
+                            Text(bug.module)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    
+                    // Description
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Description")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        Text(bug.description)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    // Reproduction Steps
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Reproduction Steps")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        Text(bug.reproduction)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    // Solution
+                    if let solution = bug.solution {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Proposed Solution")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                            
+                            Text(solution)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    
+                    // Affected Features
+                    if !bug.affectedFeatures.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Affected Features")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                            
+                            ForEach(bug.affectedFeatures, id: \.self) { feature in
+                                Text("• \(feature)")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Bug Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct OptimizationDetailView: View {
+    let optimization: AutopilotUpdateEngine.OptimizationSuggestion
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Optimization Overview
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Optimization Overview")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        HStack {
+                            Text("Difficulty:")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            
+                            Text(optimization.difficulty.rawValue)
+                                .font(.subheadline)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(optimization.difficulty.color, in: RoundedRectangle(cornerRadius: 6))
+                        }
+                        
+                        HStack {
+                            Text("Performance Gain:")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            
+                            Text("+\(Int(optimization.performanceGain * 100))%")
+                                .font(.subheadline)
+                                .foregroundStyle(.green)
+                                .fontWeight(.semibold)
+                        }
+                        
+                        HStack {
+                            Text("Module:")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            
+                            Text(optimization.module)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    
+                    // Description
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Description")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        Text(optimization.description)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    // Expected Improvement
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Expected Improvement")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        Text(optimization.expectedImprovement)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    // Implementation
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Implementation Details")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        Text(optimization.implementation)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    // Estimated Time
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Estimated Time")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        Text(formatDuration(optimization.estimatedTime))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Optimization Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+    
+    private func formatDuration(_ timeInterval: TimeInterval) -> String {
+        let hours = Int(timeInterval) / 3600
+        let minutes = (Int(timeInterval) % 3600) / 60
+        
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        } else {
+            return "\(minutes)m"
+        }
+    }
+}
+
+#Preview("Autopilot Debug Engine") {
+    AutopilotDebugView()
+}
+
+#Preview("Autopilot Debug Engine Light") {
+    AutopilotDebugView()
+        .preferredColorScheme(.light)
+}

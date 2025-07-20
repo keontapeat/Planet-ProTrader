@@ -1,0 +1,122 @@
+
+──────────────────────────────────────────────────────────────────────────────
+GOLDEX-BOT: DIRECT MT5 SETUP & LAUNCH CHECKLIST
+──────────────────────────────────────────────────────────────────────────────
+This file contains the full, copy-paste-ready instructions to connect your
+GoldexBot directly to MetaTrader 5 on your Linode VPS (Ubuntu 22.04) without
+using mt5linux / RPyC. Follow the steps in order.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. SSH IN & ACTIVATE THE VIRTUAL ENVIRONMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ssh root@172.234.201.231
+cd /opt/goldex-bot
+source venv/bin/activate
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. INSTALL / UPGRADE PYTHON DEPENDENCIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+python -m pip install --upgrade pip wheel
+python -m pip install --upgrade MetaTrader5 python-dotenv pandas numpy
+
+(You should see MetaTrader5-5.x.x installed successfully.)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. EDIT THE KEY FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+nano goldex_bot.py      # or vim
+nano .env               # put your demo credentials here
+
+Add / verify these variables in .env (replace the values):
+
+DEMO_LOGIN=12345678
+DEMO_PASSWORD=yourPassword
+DEMO_SERVER=MetaQuotes-Demo
+SYMBOL=XAUUSD
+TIMEFRAME=M5
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. MINIMAL MT5 CONNECTION TEMPLATE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Inside goldex_bot.py, remove any RPyC code and add something like:
+
+from dotenv import load_dotenv
+import os, sys, time
+import MetaTrader5 as mt5
+import pandas as pd
+
+load_dotenv(".env")
+
+LOGIN     = int(os.getenv("DEMO_LOGIN"))
+PASSWORD  = os.getenv("DEMO_PASSWORD")
+SERVER    = os.getenv("DEMO_SERVER")
+SYMBOL    = os.getenv("SYMBOL", "XAUUSD")
+TIMEFRAME = getattr(mt5, f"TIMEFRAME_{os.getenv('TIMEFRAME', 'M5')}")
+LOT_SIZE  = 0.1
+
+def boot_mt5():
+    if not mt5.initialize(login=LOGIN, password=PASSWORD, server=SERVER):
+        print("initialize() failed, error =", mt5.last_error())
+        sys.exit(1)
+    print("✅ Connected to MT5:", mt5.account_info().login)
+
+def shutdown_mt5():
+    mt5.shutdown()
+
+def get_last_bars(n=100):
+    utc_from = pd.Timestamp.utcnow() - pd.Timedelta(minutes=n*5)
+    rates = mt5.copy_rates_from(SYMBOL, TIMEFRAME, utc_from, n)
+    return pd.DataFrame(rates)
+
+if __name__ == "__main__":
+    boot_mt5()
+    df = get_last_bars(10)
+    print(df.tail())
+    shutdown_mt5()
+
+Test it:
+
+python goldex_bot.py
+# Expect: ✅ Connected … plus a dataframe of recent bars.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. TRADING EXAMPLE (REPLACE OLD RPyC ORDER SEND)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+request = {
+    "action":  mt5.TRADE_ACTION_DEAL,
+    "symbol":  SYMBOL,
+    "volume":  LOT_SIZE,
+    "type":    mt5.ORDER_TYPE_BUY,        # or SELL
+    "price":   mt5.symbol_info_tick(SYMBOL).ask,
+    "deviation": 30,
+    "magic":   20250717,
+    "comment": "GoldexBot Demo",
+    "type_time":    mt5.ORDER_TIME_GTC,
+    "type_filling": mt5.ORDER_FILLING_FOK,
+}
+result = mt5.order_send(request)
+print("Order result:", result)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. RUN THE BOT INSIDE TMUX SO IT STAYS ALIVE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+tmux new -s goldex
+cd /opt/goldex-bot
+source venv/bin/activate
+python goldex_bot.py
+# Press CTRL-b then d to detach
+
+To reattach later:
+tmux attach -t goldex
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. QUICK TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• initialize() failed → wrong creds / server name, or MT5 not running.
+• “symbol not found”  → the broker might list XAUUSDm or GOLD; run
+  python -c "import MetaTrader5 as mt5, pprint; mt5.initialize(); pprint.pprint([s.name for s in mt5.symbols_get()]); mt5.shutdown()"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+END OF FILE – YOU’RE READY TO TRADE!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+

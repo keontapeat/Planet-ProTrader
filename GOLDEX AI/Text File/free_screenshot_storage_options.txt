@@ -1,0 +1,109 @@
+================================================================================
+FREE (NO-COST) CLOUD STORAGE OPTIONS FOR YOUR BOT’S SCREENSHOTS
+================================================================================
+Below are 3 services that still offer **completely free** tiers large enough
+for simple PNG uploads.  Each comes with quick Python examples so you can swap
+out Firebase without paying anything.
+
+────────────────────────────────────────────────────────────────
+1.  IMGUR  (Anonymous API – no credit-card)
+────────────────────────────────────────────────────────────────
+Pros  : Simple, 50 uploads / hour per IP, public URLs instantly.  
+Cons  : Public images only, 20 MB max each, Imgur branding.
+
+SETUP
+•  Create a free Imgur account → Settings → *Applications* → “New App”.  
+•  Choose **Anonymous usage** → you receive a “Client ID”.
+
+PYTHON SNIPPET
+    import requests, os, logging
+    def upload_imgur(local_path, client_id):
+        headers = {"Authorization": f"Client-ID {client_id}"}
+        with open(local_path, "rb") as f:
+            resp = requests.post(
+                "https://api.imgur.com/3/image",
+                headers=headers,
+                files={"image": f}
+            )
+        link = resp.json()["data"]["link"]
+        logging.info(f"📤 Uploaded to Imgur: {link}")
+        return link
+
+Call this instead of Firebase’s upload_to_firebase().  Store the returned link
+for reference.
+
+────────────────────────────────────────────────────────────────
+2.  SUPABASE STORAGE  (500 MB free, no card)
+────────────────────────────────────────────────────────────────
+Pros  : Generous quota, private buckets, signed URLs, uses S3-compatible API.  
+Cons  : Requires creating a (free) project & API keys.
+
+SETUP
+•  supabase.io → *Start your project* → Free Tier → create project  
+•  In *Project Settings → API* copy:
+      SUPABASE_URL
+      SUPABASE_SERVICE_ROLE_KEY  (or anon key for public)
+•  Create a Storage bucket called “screenshots”.
+
+PYTHON
+    from supabase import create_client
+    import os, logging
+    SUPA_URL = os.getenv("SUPA_URL")
+    SUPA_KEY = os.getenv("SUPA_KEY")
+    supabase = create_client(SUPA_URL, SUPA_KEY)
+    def supa_upload(local_path, remote_name):
+        with open(local_path, "rb") as f:
+            supabase.storage.from_("screenshots").upload(remote_name, f)
+        url = f"{SUPA_URL}/storage/v1/object/public/screenshots/{remote_name}"
+        logging.info(f"📤 Uploaded to Supabase: {url}")
+        return url
+
+Install:  pip install supabase
+
+────────────────────────────────────────────────────────────────
+3.  GITHUB REPO (via GitHub API) – Totally Free
+────────────────────────────────────────────────────────────────
+Pros  : Unlimited (subject to repo quota), good version history, public CDN.  
+Cons  : Images are public, 100 MB per file limit, 60 API calls/hr without token.
+
+SETUP
+•  Create a public or private repo (private counts against quota).  
+•  Create a **fine-grained PAT** with “contents: write”.  Note the token.
+
+PYTHON
+    import base64, json, requests, logging, os, datetime
+    GITHUB_TOKEN = os.getenv("GH_TOKEN")
+    REPO = "username/screenshot-repo"
+    def gh_upload(local_path):
+        with open(local_path, "rb") as f:
+            content = base64.b64encode(f.read()).decode()
+        name = datetime.datetime.utcnow().strftime("shot_%Y%m%d_%H%M%S.png")
+        url  = f"https://api.github.com/repos/{REPO}/contents/{name}"
+        data = {
+            "message": f"Add {name}",
+            "content": content
+        }
+        r = requests.put(url, headers={"Authorization": f"token {GITHUB_TOKEN}"},
+                         data=json.dumps(data))
+        cdn_url = r.json()["content"]["download_url"]
+        logging.info(f"📤 Uploaded to GitHub: {cdn_url}")
+        return cdn_url
+
+────────────────────────────────────────────────────────────────
+HOW TO SWITCH IN YOUR BOT
+────────────────────────────────────────────────────────────────
+Inside goldexv9.py, choose ONE service and:
+
+1.  Replace the Firebase init & upload functions with the snippet above.  
+2.  Update capture_equity_chart() to call your new upload_xxx() method.  
+3.  Re-scp goldexv9.py to the VPS, restart the service.
+
+────────────────────────────────────────────────────────────────
+WHICH ONE SHOULD I PICK?
+────────────────────────────────────────────────────────────────
+• Need **private** access? → Supabase (free, can create signed URLs).  
+• Need fastest / zero setup? → Imgur (just a client ID).  
+• Want version history & public CDN? → GitHub repo.
+
+Choose based on what suits you—no credit card or payment required.
+================================================================================

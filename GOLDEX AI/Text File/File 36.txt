@@ -1,0 +1,20 @@
+──────────────────────────────────────────────────────────────────────────────
+WHAT JUST HAPPENED & THE TWO-MINUTE FIX
+──────────────────────────────────────────────────────────────────────────────
+WHAT YOU DID CORRECTLY ✅
+• Created Wine venv ✔︎  
+• Installed MetaTrader5 & deps with Wine pip ✔︎  
+• Launched the inline connectivity test ✔︎  
+
+THE CRASH 🛑
+Wine threw:
+  “unimplemented function … api-ms-win-crt-runtime-l1-1-0.dll.fetestexcept,
+   aborting”
+
+Meaning: the MS-VC++ “Universal C-Runtime” (ucrt) is missing in the Wine
+prefix.  MetaTrader5’s DLL loads it, can’t find `fetestexcept`, then Wine
+panic-quits.
+
+QUICK FIX (1 command, 30 s)
+────────────────────────────────────────────
+We’ll install the VC runtimes into the same prefix:

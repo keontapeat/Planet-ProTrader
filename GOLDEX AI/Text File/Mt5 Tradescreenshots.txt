@@ -1,0 +1,220 @@
+#!/bin/bash
+
+# =============================================================================
+# GOLDEX AI MT5 Trade Screenshot Snapper
+# Called by EA to capture and upload trade screenshots to Firebase
+# =============================================================================
+
+SCRIPT_DIR="$HOME/goldex_ai/scripts"
+LOG_FILE="$HOME/goldex_ai/logs/trade_snapper.log"
+PYTHON_SCRIPT="$SCRIPT_DIR/firebase_uploader.py"
+
+# Ensure log directory exists
+mkdir -p "$(dirname "$LOG_FILE")"
+
+# Function to log messages
+log_message() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+# Function to check if display is available
+check_display() {
+    if ! xdpyinfo -display :99 >/dev/null 2>&1; then
+        log_message "⚠️ Display :99 not available, starting Xvfb..."
+        
+        # Kill any existing Xvfb processes
+        pkill -f "Xvfb :99" || true
+        
+        # Start Xvfb
+        Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &
+        sleep 2
+        
+        # Check if it started successfully
+        if ! xdpyinfo -display :99 >/dev/null 2>&1; then
+            log_message "❌ Failed to start Xvfb"
+            return 1
+        else
+            log_message "✅ Xvfb started successfully"
+        fi
+    fi
+    return 0
+}
+
+# Function to capture and upload screenshot
+capture_trade_screenshot() {
+    local trade_type="$1"
+    local trade_data="$2"
+    
+    log_message "📸 Capturing $trade_type screenshot..."
+    
+    # Check display availability
+    if ! check_display; then
+        log_message "❌ Display not available, cannot capture screenshot"
+        return 1
+    fi
+    
+    # Prepare trade data JSON
+    local json_data=""
+    if [ -n "$trade_data" ] && [ "$trade_data" != "null" ]; then
+        json_data="$trade_data"
+    else
+        json_data="{\"trade_type\":\"$trade_type\",\"timestamp\":\"$(date -Iseconds)\",\"vps_hostname\":\"$(hostname)\",\"display\":\":99\"}"
+    fi
+    
+    log_message "📊 Trade data: $json_data"
+    
+    # Set display environment
+    export DISPLAY=:99
+    
+    # Capture and upload using Python script
+    if python3 "$PYTHON_SCRIPT" "$trade_type" "$json_data"; then
+        log_message "✅ $trade_type screenshot uploaded successfully"
+        return 0
+    else
+        log_message "❌ Failed to upload $trade_type screenshot"
+        
+        # Try alternative capture method
+        log_message "🔄 Trying alternative capture method..."
+        
+        # Create fallback screenshot
+        local timestamp=$(date '+%Y%m%d_%H%M%S')
+        local fallback_file="$HOME/goldex_ai/screenshots/fallback_${trade_type}_${timestamp}.png"
+        
+        if import -window root -display :99 "$fallback_file" 2>/dev/null; then
+            log_message "📸 Fallback screenshot captured: $fallback_file"
+            
+            # Try upload again
+            if python3 "$PYTHON_SCRIPT" "fallback_$trade_type" "$json_data"; then
+                log_message "✅ Fallback screenshot uploaded successfully"
+                rm -f "$fallback_file"
+                return 0
+            fi
+        fi
+        
+        return 1
+    fi
+}
+
+# Function to validate trade data JSON
+validate_json() {
+    local json_string="$1"
+    if [ -z "$json_string" ] || [ "$json_string" = "null" ]; then
+        return 0
+    fi
+    
+    echo "$json_string" | python3 -m json.tool >/dev/null 2>&1
+    return $?
+}
+
+# Function to enhance trade data with system info
+enhance_trade_data() {
+    local trade_data="$1"
+    local trade_type="$2"
+    
+    # Get system info
+    local cpu_usage=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
+    local memory_usage=$(free -m | awk 'NR==2{printf "%.2f", $3*100/$2 }')
+    local disk_usage=$(df -h / | awk 'NR==2{print $5}' | tr -d '%')
+    local uptime=$(uptime -p)
+    
+    # Enhance JSON with system info
+    if [ -n "$trade_data" ] && [ "$trade_data" != "null" ]; then
+        # Parse existing JSON and add system info
+        enhanced_data=$(echo "$trade_data" | python3 -c "
+import json
+import sys
+try:
+    data = json.load(sys.stdin)
+    data['system_info'] = {
+        'cpu_usage': '$cpu_usage',
+        'memory_usage': '$memory_usage',
+        'disk_usage': '$disk_usage',
+        'uptime': '$uptime',
+        'hostname': '$(hostname)',
+        'timestamp': '$(date -Iseconds)'
+    }
+    print(json.dumps(data))
+except:
+    print('$trade_data')
+")
+        echo "$enhanced_data"
+    else
+        # Create new JSON with system info
+        echo "{\"trade_type\":\"$trade_type\",\"timestamp\":\"$(date -Iseconds)\",\"system_info\":{\"cpu_usage\":\"$cpu_usage\",\"memory_usage\":\"$memory_usage\",\"disk_usage\":\"$disk_usage\",\"uptime\":\"$uptime\",\"hostname\":\"$(hostname)\"}}"
+    fi
+}
+
+# Function to retry with exponential backoff
+retry_with_backoff() {
+    local max_attempts=3
+    local delay=1
+    local attempt=1
+    
+    while [ $attempt -le $max_attempts ]; do
+        log_message "🔄 Attempt $attempt of $max_attempts..."
+        
+        if capture_trade_screenshot "$1" "$2"; then
+            return 0
+        fi
+        
+        if [ $attempt -lt $max_attempts ]; then
+            log_message "⏳ Waiting $delay seconds before retry..."
+            sleep $delay
+            delay=$((delay * 2))
+        fi
+        
+        attempt=$((attempt + 1))
+    done
+    
+    return 1
+}
+
+# Main execution
+main() {
+    local trade_type="$1"
+    local trade_data="$2"
+    
+    log_message "🚀 Trade snapper started: $trade_type"
+    
+    # Validate inputs
+    if [ -z "$trade_type" ]; then
+        log_message "❌ Error: Trade type is required"
+        echo "Usage: $0 {before_trade|during_trade|after_trade|error|status_update|connection_test|daily_report|recovery} [trade_data_json]"
+        exit 1
+    fi
+    
+    # Validate JSON if provided
+    if ! validate_json "$trade_data"; then
+        log_message "⚠️ Invalid JSON provided, creating fallback data"
+        trade_data=""
+    fi
+    
+    # Enhance trade data with system info
+    enhanced_data=$(enhance_trade_data "$trade_data" "$trade_type")
+    
+    # Execute based on trade type
+    case "$trade_type" in
+        "before_trade"|"during_trade"|"after_trade"|"error"|"status_update"|"connection_test"|"daily_report"|"recovery"|"ea_final")
+            if retry_with_backoff "$trade_type" "$enhanced_data"; then
+                log_message "✅ $trade_type processing completed successfully"
+                exit 0
+            else
+                log_message "❌ $trade_type processing failed after all retries"
+                exit 1
+            fi
+            ;;
+        *)
+            log_message "❌ Unknown trade type: $trade_type"
+            echo "Usage: $0 {before_trade|during_trade|after_trade|error|status_update|connection_test|daily_report|recovery} [trade_data_json]"
+            exit 1
+            ;;
+    esac
+}
+
+# Ensure script is executable
+if [ ! -x "$PYTHON_SCRIPT" ]; then
+    chmod +x "$PYTHON_SCRIPT"
+fi
+
+# Run main function
+main "$@"

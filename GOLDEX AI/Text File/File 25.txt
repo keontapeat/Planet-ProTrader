@@ -1,0 +1,881 @@
+
+//+------------------------------------------------------------------+
+//|                                GOLDEX_AI_FIREBASE_COMPLETE.mq5   |
+//|                                  Copyright 2024, GOLDEX AI Team |
+//|                       Complete Firebase Integration with Screenshots |
+//+------------------------------------------------------------------+
+#property copyright "Copyright 2024, GOLDEX AI Team"
+#property link      "https://goldexai.com"
+#property version   "7.00"
+#property strict
+
+#include <Trade\Trade.mqh>
+#include <Trade\PositionInfo.mqh>
+#include <Trade\AccountInfo.mqh>
+
+CTrade trade;
+CPositionInfo position;
+CAccountInfo account;
+
+//--- Input Parameters
+input group "=== FIREBASE INTEGRATION ==="
+input bool EnableFirebaseUpload = true;
+input bool CaptureBeforeTradeScreenshot = true;
+input bool CaptureDuringTradeScreenshot = true;
+input bool CaptureAfterTradeScreenshot = true;
+input bool CaptureErrorScreenshots = true;
+input bool CaptureStatusUpdates = true;
+
+input group "=== TRADE FREQUENCY CONTROL ==="
+input int TradeFrequencySeconds = 300; // 5 minutes default
+input int MaxTradesPerHour = 12;
+input int MaxTradesPerDay = 288;
+input bool Enable24_7_Trading = true;
+input bool EnableForceTrading = true;
+
+input group "=== RISK MANAGEMENT ==="
+input double RiskPercentage = 8.0;
+input double MaxRiskPercentage = 15.0;
+input double StopLossPoints = 35.0;
+input double TakeProfitPoints = 550.0;
+input bool EnableTrailingStop = false;
+input double TrailingStopPoints = 20.0;
+
+input group "=== PROGRESSIVE SYSTEM ==="
+input bool EnableProgressiveProfit = true;
+input int WinStreakForBonus = 5;
+input double BonusMultiplier = 20.0;
+input bool EnableMartingale = true;
+input double MartingaleMultiplier = 1.5;
+input bool EnableLossRecovery = true;
+
+input group "=== ULTRA AGGRESSIVE MODE ==="
+input bool EnableUltraAggressive = true;
+input int MaxSimultaneousPositions = 5;
+input double ScalpProfitPoints = 10.0;
+input double QuickExitPoints = 5.0;
+input bool EnableInstantScalping = true;
+input bool EnableHedging = true;
+
+input group "=== SYSTEM SETTINGS ==="
+input int MagicNumber = 123456;
+input string TradeComment = "GOLDEX_AI_FIREBASE";
+input bool EnableEmailAlerts = false;
+input string EmailAddress = "your.email@gmail.com";
+
+//--- Global Variables
+double AccountBalance = 0.0;
+double InitialBalance = 0.0;
+double CurrentDrawdown = 0.0;
+double MaxDrawdown = 0.0;
+int TotalTrades = 0;
+int WinningTrades = 0;
+int ConsecutiveWins = 0;
+int ConsecutiveLosses = 0;
+double WinRate = 0.0;
+datetime LastTradeTime = 0;
+datetime LastStatusUpdate = 0;
+datetime LastForceTradeTime = 0;
+string Symbol = "";
+int TradesThisHour = 0;
+int TradesThisDay = 0;
+datetime CurrentHour = 0;
+datetime CurrentDay = 0;
+
+//--- Arrays for multiple position tracking
+ulong PositionTickets[];
+datetime PositionOpenTimes[];
+double PositionProfits[];
+int ActivePositions = 0;
+
+//--- Indicator Handles
+int RSI_Handle;
+int MACD_Handle;
+int MA_Handle_20;
+int MA_Handle_50;
+int ATR_Handle;
+int BB_Handle;
+
+//--- Enums
+enum ENUM_SIGNAL_TYPE
+{
+   SIGNAL_NONE,
+   SIGNAL_BUY,
+   SIGNAL_SELL,
+   SIGNAL_SCALP_BUY,
+   SIGNAL_SCALP_SELL,
+   SIGNAL_FORCE_BUY,
+   SIGNAL_FORCE_SELL,
+   SIGNAL_RECOVERY_BUY,
+   SIGNAL_RECOVERY_SELL
+};
+
+//--- Structures
+struct TradingSignal
+{
+   ENUM_SIGNAL_TYPE direction;
+   double entryPrice;
+   double stopLoss;
+   double takeProfit;
+   double lotSize;
+   double confidence;
+   double riskReward;
+   string signalReason;
+   datetime signalTime;
+   bool isForced;
+   bool isRecovery;
+   bool isScalp;
+};
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+   Symbol = _Symbol;
+   AccountBalance = account.Balance();
+   InitialBalance = AccountBalance;
+   
+   // Initialize time tracking
+   CurrentHour = TimeCurrent() / 3600 * 3600;
+   CurrentDay = TimeCurrent() / 86400 * 86400;
+   
+   // Initialize arrays
+   ArrayResize(PositionTickets, MaxSimultaneousPositions);
+   ArrayResize(PositionOpenTimes, MaxSimultaneousPositions);
+   ArrayResize(PositionProfits, MaxSimultaneousPositions);
+   
+   // Initialize indicators
+   RSI_Handle = iRSI(Symbol, PERIOD_M15, 14, PRICE_CLOSE);
+   MACD_Handle = iMACD(Symbol, PERIOD_M15, 12, 26, 9, PRICE_CLOSE);
+   MA_Handle_20 = iMA(Symbol, PERIOD_M15, 20, 0, MODE_EMA, PRICE_CLOSE);
+   MA_Handle_50 = iMA(Symbol, PERIOD_M15, 50, 0, MODE_EMA, PRICE_CLOSE);
+   ATR_Handle = iATR(Symbol, PERIOD_M15, 14);
+   BB_Handle = iBands(Symbol, PERIOD_M5, 20, 0, 2, PRICE_CLOSE);
+   
+   // Check indicator handles
+   if(RSI_Handle == INVALID_HANDLE || MACD_Handle == INVALID_HANDLE ||
+      MA_Handle_20 == INVALID_HANDLE || MA_Handle_50 == INVALID_HANDLE ||
+      ATR_Handle == INVALID_HANDLE || BB_Handle == INVALID_HANDLE)
+   {
+      Print("❌ Error creating indicator handles");
+      return(INIT_FAILED);
+   }
+   
+   Print("🚀 GOLDEX AI FIREBASE EA v7.0 INITIALIZED");
+   Print("💰 Account Balance: $", AccountBalance);
+   Print("🔥 Firebase Upload: ", EnableFirebaseUpload ? "ENABLED" : "DISABLED");
+   Print("📸 Screenshot Capture: ", CaptureBeforeTradeScreenshot ? "ENABLED" : "DISABLED");
+   Print("⏰ Trade Frequency: Every ", TradeFrequencySeconds, " seconds");
+   Print("🎯 24/7 Trading: ", Enable24_7_Trading ? "ACTIVE" : "INACTIVE");
+   Print("🎰 Progressive Profit: ", EnableProgressiveProfit ? "ON" : "OFF");
+   Print("⚡ Ultra Aggressive: ", EnableUltraAggressive ? "ON" : "OFF");
+   Print("🔄 Max Simultaneous Positions: ", MaxSimultaneousPositions);
+   
+   // Test Firebase connection
+   if(EnableFirebaseUpload)
+   {
+      TestFirebaseConnection();
+   }
+   
+   return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                               |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+   // Release indicator handles
+   if(RSI_Handle != INVALID_HANDLE) IndicatorRelease(RSI_Handle);
+   if(MACD_Handle != INVALID_HANDLE) IndicatorRelease(MACD_Handle);
+   if(MA_Handle_20 != INVALID_HANDLE) IndicatorRelease(MA_Handle_20);
+   if(MA_Handle_50 != INVALID_HANDLE) IndicatorRelease(MA_Handle_50);
+   if(ATR_Handle != INVALID_HANDLE) IndicatorRelease(ATR_Handle);
+   if(BB_Handle != INVALID_HANDLE) IndicatorRelease(BB_Handle);
+   
+   Print("🚀 GOLDEX AI FIREBASE EA DEINITIALIZED");
+   Print("📊 Final Statistics:");
+   Print("💰 Final Balance: $", account.Balance());
+   Print("📈 Total Trades: ", TotalTrades);
+   Print("🏆 Winning Trades: ", WinningTrades);
+   Print("🔥 Max Consecutive Wins: ", ConsecutiveWins);
+   Print("💥 Max Consecutive Losses: ", ConsecutiveLosses);
+   Print("⚡ Final Win Rate: ", (TotalTrades > 0) ? DoubleToString((double)WinningTrades/TotalTrades*100, 2) : "0", "%");
+   
+   // Capture final screenshot
+   if(EnableFirebaseUpload)
+   {
+      string finalData = StringFormat("{\"event\":\"ea_stopped\",\"reason\":%d,\"final_balance\":%.2f,\"total_trades\":%d,\"winning_trades\":%d,\"consecutive_wins\":%d,\"consecutive_losses\":%d,\"win_rate\":%.2f,\"max_drawdown\":%.2f}",
+                                     reason, account.Balance(), TotalTrades, WinningTrades, ConsecutiveWins, ConsecutiveLosses,
+                                     (TotalTrades > 0) ? (double)WinningTrades/TotalTrades*100 : 0, MaxDrawdown);
+      CaptureAndUploadScreenshot("ea_final", finalData);
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Expert tick function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+   // Update time tracking
+   UpdateTimeTracking();
+   
+   // Update account info
+   UpdateAccountInfo();
+   
+   // Status update every hour
+   if(TimeCurrent() - LastStatusUpdate > 3600)
+   {
+      UpdateHourlyStatus();
+      LastStatusUpdate = TimeCurrent();
+   }
+   
+   // Check for forced trading at set intervals
+   if(EnableForceTrading && ShouldForceNewTrade())
+   {
+      ExecuteForceTrading();
+   }
+   
+   // Ultra aggressive trading logic
+   if(EnableUltraAggressive)
+   {
+      ExecuteUltraAggressiveStrategy();
+   }
+   
+   // Regular trading logic
+   if(TimeCurrent() - LastTradeTime >= TradeFrequencySeconds)
+   {
+      if(ShouldTrade())
+      {
+         ExecuteRegularTrade();
+      }
+   }
+   
+   // Loss recovery system
+   if(EnableLossRecovery && ConsecutiveLosses >= 3)
+   {
+      ExecuteLossRecoveryStrategy();
+   }
+   
+   // Manage all positions
+   ManageAllPositions();
+   
+   // Instant scalping
+   if(EnableInstantScalping)
+   {
+      CheckInstantScalpingOpportunity();
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Test Firebase Connection                                         |
+//+------------------------------------------------------------------+
+void TestFirebaseConnection()
+{
+   Print("🔧 Testing Firebase connection...");
+   
+   string testData = StringFormat("{\"event\":\"connection_test\",\"timestamp\":\"%s\",\"account_balance\":%.2f,\"symbol\":\"%s\",\"server\":\"%s\",\"account_number\":%d}",
+                                  TimeToString(TimeCurrent()), AccountBalance, Symbol, AccountInfoString(ACCOUNT_SERVER), AccountInfoInteger(ACCOUNT_LOGIN));
+   
+   if(CaptureAndUploadScreenshot("connection_test", testData))
+   {
+      Print("✅ Firebase connection successful!");
+   }
+   else
+   {
+      Print("❌ Firebase connection failed!");
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Update Time Tracking                                            |
+//+------------------------------------------------------------------+
+void UpdateTimeTracking()
+{
+   datetime currentTime = TimeCurrent();
+   datetime newHour = currentTime / 3600 * 3600;
+   datetime newDay = currentTime / 86400 * 86400;
+   
+   // Reset hourly counter
+   if(newHour != CurrentHour)
+   {
+      CurrentHour = newHour;
+      TradesThisHour = 0;
+   }
+   
+   // Reset daily counter
+   if(newDay != CurrentDay)
+   {
+      CurrentDay = newDay;
+      TradesThisDay = 0;
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Should Force New Trade                                          |
+//+------------------------------------------------------------------+
+bool ShouldForceNewTrade()
+{
+   // Check if enough time has passed since last trade
+   if(TimeCurrent() - LastForceTradeTime < TradeFrequencySeconds)
+      return false;
+   
+   // Check trade limits
+   if(!CanTrade())
+      return false;
+   
+   // Check if we need to force a trade
+   if(ActivePositions == 0)
+      return true;
+   
+   // Force trade even with active positions for maximum aggression
+   if(ActivePositions < MaxSimultaneousPositions)
+      return true;
+   
+   return false;
+}
+
+//+------------------------------------------------------------------+
+//| Can Trade                                                        |
+//+------------------------------------------------------------------+
+bool CanTrade()
+{
+   // Check hourly limit
+   if(TradesThisHour >= MaxTradesPerHour)
+      return false;
+   
+   // Check daily limit
+   if(TradesThisDay >= MaxTradesPerDay)
+      return false;
+   
+   // Check 24/7 trading
+   if(!Enable24_7_Trading)
+   {
+      MqlDateTime dt;
+      TimeCurrent(dt);
+      if(dt.hour < 6 || dt.hour > 22)
+         return false;
+   }
+   
+   // Check maximum drawdown
+   if(CurrentDrawdown > MaxRiskPercentage)
+      return false;
+   
+   return true;
+}
+
+//+------------------------------------------------------------------+
+//| Should Trade                                                     |
+//+------------------------------------------------------------------+
+bool ShouldTrade()
+{
+   if(!CanTrade()) return false;
+   
+   // Check account health
+   double equity = account.Equity();
+   double balance = account.Balance();
+   if(equity < balance * 0.8) return false; // 20% drawdown limit
+   
+   return true;
+}
+
+//+------------------------------------------------------------------+
+//| Execute Force Trading                                           |
+//+------------------------------------------------------------------+
+void ExecuteForceTrading()
+{
+   Print("🎯 Executing forced trade...");
+   
+   TradingSignal signal = GenerateForceSignal();
+   
+   if(signal.direction != SIGNAL_NONE)
+   {
+      ExecuteTradingSignal(signal);
+      LastForceTradeTime = TimeCurrent();
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Execute Ultra Aggressive Strategy                               |
+//+------------------------------------------------------------------+
+void ExecuteUltraAggressiveStrategy()
+{
+   // Generate multiple signals simultaneously
+   TradingSignal signals[];
+   int signalCount = GenerateMultipleSignals(signals);
+   
+   // Execute up to max simultaneous positions
+   for(int i = 0; i < signalCount && ActivePositions < MaxSimultaneousPositions; i++)
+   {
+      if(signals[i].confidence > 70.0 && CanTrade())
+      {
+         ExecuteTradingSignal(signals[i]);
+      }
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Execute Regular Trade                                           |
+//+------------------------------------------------------------------+
+void ExecuteRegularTrade()
+{
+   Print("💼 Executing regular trade...");
+   
+   TradingSignal signal = GenerateRegularSignal();
+   
+   if(signal.direction != SIGNAL_NONE)
+   {
+      ExecuteTradingSignal(signal);
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Execute Loss Recovery Strategy                                  |
+//+------------------------------------------------------------------+
+void ExecuteLossRecoveryStrategy()
+{
+   Print("🔄 Executing loss recovery strategy...");
+   
+   TradingSignal signal = GenerateRecoverySignal();
+   
+   if(signal.direction != SIGNAL_NONE && ActivePositions < MaxSimultaneousPositions)
+   {
+      ExecuteTradingSignal(signal);
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Generate Multiple Signals                                       |
+//+------------------------------------------------------------------+
+int GenerateMultipleSignals(TradingSignal &signals[])
+{
+   ArrayResize(signals, 5);
+   int count = 0;
+   
+   // Scalping signal
+   TradingSignal scalpSignal = GenerateScalpSignal();
+   if(scalpSignal.direction != SIGNAL_NONE)
+   {
+      signals[count] = scalpSignal;
+      count++;
+   }
+   
+   // Trend signal
+   TradingSignal trendSignal = GenerateTrendSignal();
+   if(trendSignal.direction != SIGNAL_NONE)
+   {
+      signals[count] = trendSignal;
+      count++;
+   }
+   
+   // Breakout signal
+   TradingSignal breakoutSignal = GenerateBreakoutSignal();
+   if(breakoutSignal.direction != SIGNAL_NONE)
+   {
+      signals[count] = breakoutSignal;
+      count++;
+   }
+   
+   return count;
+}
+
+//+------------------------------------------------------------------+
+//| Generate Force Signal                                           |
+//+------------------------------------------------------------------+
+TradingSignal GenerateForceSignal()
+{
+   TradingSignal signal;
+   signal.direction = SIGNAL_NONE;
+   signal.isForced = true;
+   signal.signalTime = TimeCurrent();
+   signal.signalReason = "Force_Trade";
+   signal.confidence = 75.0;
+   signal.entryPrice = SymbolInfoDouble(Symbol, SYMBOL_ASK);
+   
+   // Simple market direction
+   double ma20[], ma50[];
+   ArraySetAsSeries(ma20, true);
+   ArraySetAsSeries(ma50, true);
+   
+   if(CopyBuffer(MA_Handle_20, 0, 0, 3, ma20) > 0 &&
+      CopyBuffer(MA_Handle_50, 0, 0, 3, ma50) > 0)
+   {
+      double currentPrice = signal.entryPrice;
+      
+      if(currentPrice > ma20[0] && ma20[0] > ma50[0])
+      {
+         signal.direction = SIGNAL_FORCE_BUY;
+      }
+      else if(currentPrice < ma20[0] && ma20[0] < ma50[0])
+      {
+         signal.direction = SIGNAL_FORCE_SELL;
+      }
+      else
+      {
+         // Random direction for forced trading
+         signal.direction = (MathRand() % 2 == 0) ? SIGNAL_FORCE_BUY : SIGNAL_FORCE_SELL;
+      }
+      
+      CalculateSignalLevels(signal);
+   }
+   
+   return signal;
+}
+
+//+------------------------------------------------------------------+
+//| Generate Regular Signal                                         |
+//+------------------------------------------------------------------+
+TradingSignal GenerateRegularSignal()
+{
+   TradingSignal signal;
+   signal.direction = SIGNAL_NONE;
+   signal.signalTime = TimeCurrent();
+   signal.signalReason = "Regular_Trade";
+   signal.entryPrice = SymbolInfoDouble(Symbol, SYMBOL_ASK);
+   
+   // Get indicator values
+   double rsi[], ma20[], ma50[], macdMain[], macdSignal[];
+   ArraySetAsSeries(rsi, true);
+   ArraySetAsSeries(ma20, true);
+   ArraySetAsSeries(ma50, true);
+   ArraySetAsSeries(macdMain, true);
+   ArraySetAsSeries(macdSignal, true);
+   
+   if(CopyBuffer(RSI_Handle, 0, 0, 3, rsi) > 0 &&
+      CopyBuffer(MA_Handle_20, 0, 0, 3, ma20) > 0 &&
+      CopyBuffer(MA_Handle_50, 0, 0, 3, ma50) > 0 &&
+      CopyBuffer(MACD_Handle, 0, 0, 3, macdMain) > 0 &&
+      CopyBuffer(MACD_Handle, 1, 0, 3, macdSignal) > 0)
+   {
+      double currentPrice = signal.entryPrice;
+      double bullishScore = 0.0;
+      double bearishScore = 0.0;
+      
+      // RSI analysis
+      if(rsi[0] < 30) bullishScore += 30.0;
+      if(rsi[0] > 70) bearishScore += 30.0;
+      
+      // MA trend analysis
+      if(currentPrice > ma20[0] && ma20[0] > ma50[0]) bullishScore += 25.0;
+      if(currentPrice < ma20[0] && ma20[0] < ma50[0]) bearishScore += 25.0;
+      
+      // MACD analysis
+      if(macdMain[0] > macdSignal[0] && macdMain[1] <= macdSignal[1]) bullishScore += 20.0;
+      if(macdMain[0] < macdSignal[0] && macdMain[1] >= macdSignal[1]) bearishScore += 20.0;
+      
+      if(bullishScore > bearishScore && bullishScore >= 60.0)
+      {
+         signal.direction = SIGNAL_BUY;
+         signal.confidence = bullishScore;
+      }
+      else if(bearishScore > bullishScore && bearishScore >= 60.0)
+      {
+         signal.direction = SIGNAL_SELL;
+         signal.confidence = bearishScore;
+      }
+      
+      if(signal.direction != SIGNAL_NONE)
+      {
+         CalculateSignalLevels(signal);
+      }
+   }
+   
+   return signal;
+}
+
+//+------------------------------------------------------------------+
+//| Generate Recovery Signal                                        |
+//+------------------------------------------------------------------+
+TradingSignal GenerateRecoverySignal()
+{
+   TradingSignal signal;
+   signal.direction = SIGNAL_NONE;
+   signal.isRecovery = true;
+   signal.signalTime = TimeCurrent();
+   signal.signalReason = "Recovery_Trade";
+   signal.confidence = 85.0;
+   signal.entryPrice = SymbolInfoDouble(Symbol, SYMBOL_ASK);
+   
+   // Simple recovery logic
+   double ma20[];
+   ArraySetAsSeries(ma20, true);
+   
+   if(CopyBuffer(MA_Handle_20, 0, 0, 3, ma20) > 0)
+   {
+      double currentPrice = signal.entryPrice;
+      
+      if(currentPrice > ma20[0])
+      {
+         signal.direction = SIGNAL_RECOVERY_BUY;
+      }
+      else
+      {
+         signal.direction = SIGNAL_RECOVERY_SELL;
+      }
+      
+      CalculateSignalLevels(signal);
+   }
+   
+   return signal;
+}
+
+//+------------------------------------------------------------------+
+//| Generate Scalp Signal                                           |
+//+------------------------------------------------------------------+
+TradingSignal GenerateScalpSignal()
+{
+   TradingSignal signal;
+   signal.direction = SIGNAL_NONE;
+   signal.isScalp = true;
+   signal.signalTime = TimeCurrent();
+   signal.signalReason = "Scalp_Trade";
+   signal.confidence = 70.0;
+   signal.entryPrice = SymbolInfoDouble(Symbol, SYMBOL_ASK);
+   
+   // Quick scalp based on recent price movement
+   double priceData[];
+   ArraySetAsSeries(priceData, true);
+   
+   if(CopyClose(Symbol, PERIOD_M1, 0, 10, priceData) > 0)
+   {
+      double recentMove = priceData[0] - priceData[5];
+      
+      if(recentMove > 0)
+      {
+         signal.direction = SIGNAL_SCALP_BUY;
+      }
+      else
+      {
+         signal.direction = SIGNAL_SCALP_SELL;
+      }
+      
+      CalculateSignalLevels(signal);
+   }
+   
+   return signal;
+}
+
+//+------------------------------------------------------------------+
+//| Generate Trend Signal                                           |
+//+------------------------------------------------------------------+
+TradingSignal GenerateTrendSignal()
+{
+   TradingSignal signal;
+   signal.direction = SIGNAL_NONE;
+   signal.signalTime = TimeCurrent();
+   signal.signalReason = "Trend_Trade";
+   signal.confidence = 80.0;
+   signal.entryPrice = SymbolInfoDouble(Symbol, SYMBOL_ASK);
+   
+   // Trend following logic
+   double ma20[], ma50[];
+   ArraySetAsSeries(ma20, true);
+   ArraySetAsSeries(ma50, true);
+   
+   if(CopyBuffer(MA_Handle_20, 0, 0, 3, ma20) > 0 &&
+      CopyBuffer(MA_Handle_50, 0, 0, 3, ma50) > 0)
+   {
+      double currentPrice = signal.entryPrice;
+      
+      if(currentPrice > ma20[0] && ma20[0] > ma50[0])
+      {
+         signal.direction = SIGNAL_BUY;
+      }
+      else if(currentPrice < ma20[0] && ma20[0] < ma50[0])
+      {
+         signal.direction = SIGNAL_SELL;
+      }
+      
+      if(signal.direction != SIGNAL_NONE)
+      {
+         CalculateSignalLevels(signal);
+      }
+   }
+   
+   return signal;
+}
+
+//+------------------------------------------------------------------+
+//| Generate Breakout Signal                                        |
+//+------------------------------------------------------------------+
+TradingSignal GenerateBreakoutSignal()
+{
+   TradingSignal signal;
+   signal.direction = SIGNAL_NONE;
+   signal.signalTime = TimeCurrent();
+   signal.signalReason = "Breakout_Trade";
+   signal.confidence = 75.0;
+   signal.entryPrice = SymbolInfoDouble(Symbol, SYMBOL_ASK);
+   
+   // Bollinger Bands breakout
+   double bbUpper[], bbLower[];
+   ArraySetAsSeries(bbUpper, true);
+   ArraySetAsSeries(bbLower, true);
+   
+   if(CopyBuffer(BB_Handle, 1, 0, 3, bbUpper) > 0 &&
+      CopyBuffer(BB_Handle, 2, 0, 3, bbLower) > 0)
+   {
+      double currentPrice = signal.entryPrice;
+      
+      if(currentPrice > bbUpper[0])
+      {
+         signal.direction = SIGNAL_BUY;
+      }
+      else if(currentPrice < bbLower[0])
+      {
+         signal.direction = SIGNAL_SELL;
+      }
+      
+      if(signal.direction != SIGNAL_NONE)
+      {
+         CalculateSignalLevels(signal);
+      }
+   }
+   
+   return signal;
+}
+
+//+------------------------------------------------------------------+
+//| Calculate Signal Levels                                         |
+//+------------------------------------------------------------------+
+void CalculateSignalLevels(TradingSignal &signal)
+{
+   double point = SymbolInfoDouble(Symbol, SYMBOL_POINT);
+   double entryPrice = signal.entryPrice;
+   
+   // Calculate stops based on signal type
+   double stopLossPoints = StopLossPoints;
+   double takeProfitPoints = TakeProfitPoints;
+   
+   if(signal.isScalp)
+   {
+      stopLossPoints = 15.0;
+      takeProfitPoints = ScalpProfitPoints;
+   }
+   else if(signal.isRecovery)
+   {
+      stopLossPoints = 25.0;
+      takeProfitPoints = 100.0;
+   }
+   
+   // Calculate levels
+   if(signal.direction == SIGNAL_BUY || signal.direction == SIGNAL_SCALP_BUY ||
+      signal.direction == SIGNAL_FORCE_BUY || signal.direction == SIGNAL_RECOVERY_BUY)
+   {
+      signal.stopLoss = entryPrice - (stopLossPoints * point);
+      signal.takeProfit = entryPrice + (takeProfitPoints * point);
+   }
+   else
+   {
+      signal.stopLoss = entryPrice + (stopLossPoints * point);
+      signal.takeProfit = entryPrice - (takeProfitPoints * point);
+   }
+   
+   // Calculate lot size
+   signal.lotSize = CalculateLotSize(signal);
+   
+   // Calculate risk reward
+   signal.riskReward = MathAbs(signal.takeProfit - signal.entryPrice) / MathAbs(signal.entryPrice - signal.stopLoss);
+   
+   // Apply progressive profit
+   if(EnableProgressiveProfit)
+   {
+      ApplyProgressiveProfit(signal);
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Calculate Lot Size                                              |
+//+------------------------------------------------------------------+
+double CalculateLotSize(TradingSignal &signal)
+{
+   double balance = account.Balance();
+   double riskPercent = signal.isScalp ? 3.0 : RiskPercentage;
+   
+   // Apply martingale if enabled
+   if(EnableMartingale && ConsecutiveLosses > 0)
+   {
+      riskPercent *= MathPow(MartingaleMultiplier, ConsecutiveLosses);
+      riskPercent = MathMin(riskPercent, MaxRiskPercentage);
+   }
+   
+   double riskAmount = balance * (riskPercent / 100.0);
+   double stopLossPoints = MathAbs(signal.entryPrice - signal.stopLoss);
+   double tickValue = SymbolInfoDouble(Symbol, SYMBOL_TRADE_TICK_VALUE);
+   
+   double lotSize = riskAmount / (stopLossPoints * tickValue * 100000);
+   
+   // Normalize lot size
+   double minLot = SymbolInfoDouble(Symbol, SYMBOL_VOLUME_MIN);
+   double maxLot = SymbolInfoDouble(Symbol, SYMBOL_VOLUME_MAX);
+   double lotStep = SymbolInfoDouble(Symbol, SYMBOL_VOLUME_STEP);
+   
+   lotSize = MathMax(minLot, MathMin(maxLot, lotSize));
+   lotSize = MathRound(lotSize / lotStep) * lotStep;
+   
+   return lotSize;
+}
+
+//+------------------------------------------------------------------+
+//| Apply Progressive Profit                                        |
+//+------------------------------------------------------------------+
+void ApplyProgressiveProfit(TradingSignal &signal)
+{
+   if(ConsecutiveWins >= WinStreakForBonus)
+   {
+      // Apply 20x bonus
+      double currentTarget = signal.takeProfit;
+      double entryPrice = signal.entryPrice;
+      double profitDistance = MathAbs(currentTarget - entryPrice);
+      double newProfitDistance = profitDistance * BonusMultiplier;
+      
+      if(signal.direction == SIGNAL_BUY || signal.direction == SIGNAL_SCALP_BUY ||
+         signal.direction == SIGNAL_FORCE_BUY || signal.direction == SIGNAL_RECOVERY_BUY)
+      {
+         signal.takeProfit = entryPrice + newProfitDistance;
+      }
+      else
+      {
+         signal.takeProfit = entryPrice - newProfitDistance;
+      }
+      
+      signal.signalReason += "_20X_BONUS";
+      signal.confidence = 95.0;
+      
+      Print("🎰 20X BONUS PROFIT TARGET APPLIED!");
+   }
+   else if(ConsecutiveWins >= 2)
+   {
+      // Apply regular multiplier
+      double currentTarget = signal.takeProfit;
+      double entryPrice = signal.entryPrice;
+      double profitDistance = MathAbs(currentTarget - entryPrice);
+      double newProfitDistance = profitDistance * 2.0;
+      
+      if(signal.direction == SIGNAL_BUY || signal.direction == SIGNAL_SCALP_BUY ||
+         signal.direction == SIGNAL_FORCE_BUY || signal.direction == SIGNAL_RECOVERY_BUY)
+      {
+         signal.takeProfit = entryPrice + newProfitDistance;
+      }
+      else
+      {
+         signal.takeProfit = entryPrice - newProfitDistance;
+      }
+      
+      signal.signalReason += "_PROGRESSIVE";
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Execute Trading Signal                                          |
+//+------------------------------------------------------------------+
+void ExecuteTradingSignal(TradingSignal &signal)
+{
+   Print("🎯 Executing trading signal: ", signal.signalReason);
+   
+   // Capture before trade screenshot
+   if(EnableFirebaseUpload && CaptureBeforeTradeScreenshot)
+   {
+      string preTradeData = StringFormat("{\"event\":\"before_trade\",\"signal_reason\":\"%s\",\"direction\":\"%s\",\"entry_price\":%.5f,\"stop_loss\":%.5f,
+

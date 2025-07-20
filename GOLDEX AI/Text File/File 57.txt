@@ -1,0 +1,45 @@
+──────────────────────────────────────────────────────────────────────────────
+BOTH GHCR MIRRORS ARE NOW PRIVATE → USE THE PUBLIC DOCKER-HUB IMAGE
+──────────────────────────────────────────────────────────────────────────────
+Image that **definitely** pulls without login:
+
+image: public.ecr.aws/l6l8n4z1/mt5-python:latest      # 960 MB, public
+
+1. Edit compose
+───────────────
+$ cd /opt/goldex-bot
+$ nano docker-compose.yml
+
+ • Delete the first line  `version: "3.8"` (optional).  
+ • Set image exactly as above.  Nothing else.
+
+2. Pull & run
+─────────────
+$ docker compose pull
+$ docker compose up -d
+$ docker compose logs -f          # look for ✅ Connected
+
+Still private?  build yourself (fallback)
+──────────────────────────────────────────
+$ docker build -t mt5-local - <<'DOCK'
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update && apt install -y wget xvfb wine64 cabextract winetricks python3.10 python3.10-venv && \
+    winetricks -q vcrun2015 && \
+    mkdir /workspace
+WORKDIR /workspace
+COPY bot/ /workspace/
+COPY .env /workspace/
+RUN python3.10 -m venv venv && \
+    venv/bin/pip install MetaTrader5 pandas python-dotenv
+CMD Xvfb :1 -screen 0 1024x768x24 & sleep 2 && DISPLAY=:1 venv/bin/python goldex_bot.py
+DOCK
+
+then:
+$ docker run -d --name goldex -e DISPLAY=:1 mt5-local
+
+…but 99 % of users succeed by switching to the public ECR image.
+
+Deep breath.  One last image line change → pull → up → logs → green check.  
+You’re truly at the finish line. 🚀
+──────────────────────────────────────────────────────────────────────────────

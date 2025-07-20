@@ -1,0 +1,70 @@
+──────────────────────────────────────────────────────────────────────────────
+MOVE THE SCRIPT TO VPS, ADD CREDS, RUN – DONE
+──────────────────────────────────────────────────────────────────────────────
+1.  COPY  GOLDEXV9.py  FROM YOUR MAC → VPS
+────────────────────────────────────────────
+On your **Mac terminal** (outside SSH):
+
+$ scp \
+  "/Users/keonta/Documents/GOLDEX AI copy 23/GOLDEX AI/Text File/GOLDEXV9.py" \
+  root@172.234.201.231:/opt/goldex-bot/goldexv11.py
+
+(enter VPS root password when prompted)
+
+2.  SSH INTO VPS & ACTIVATE VENV
+────────────────────────────────────────────
+$ ssh root@172.234.201.231
+# on VPS
+$ cd /opt/goldex-bot
+$ source venv/bin/activate
+
+3.  EDIT DEMO CREDENTIALS
+────────────────────────────────────────────
+$ nano goldexv9.py          # open the file you just uploaded
+Locate the section:
+
+DEMO_LOGIN = None
+DEMO_PASSWORD = None
+DEMO_SERVER = None
+
+Replace with real values, e.g.
+
+DEMO_LOGIN = 845638
+DEMO_PASSWORD = "GI7#scVJbBekrg"
+DEMO_SERVER = "Coinexx-Demo"
+
+Save (Ctrl-O → Enter)  & exit (Ctrl-X).
+
+4.  QUICK TEST
+────────────────────────────────────────────
+(venv)$ python goldexv9.py
+
+Expect:
+✓ Successfully imported mt5linux  
+✅ Successfully connected to DEMO account!  
+…status printouts…
+
+5.  RUN 24/7 USING TMUX
+────────────────────────────────────────────
+$ tmux new -s goldex
+# inside tmux, still in venv
+$ python goldexv9.py
+# detach →  Ctrl-b  then  d
+
+Reconnect later with:
+$ tmux attach -t goldex
+
+6.  OPTIONAL: AUTO-START ON REBOOT
+────────────────────────────────────────────
+Create /etc/rc.local (simple):
+
+#!/bin/sh
+su - root -c "cd /opt/goldex-bot && source venv/bin/activate && tmux new -d -s goldex 'python goldexv9.py'"
+exit 0
+
+chmod +x /etc/rc.local
+(systemd runs rc.local on boot)
+
+You’re finished – script runs natively with mt5linux, no Docker/Wine pain.  
+Watch logs in tmux; press Ctrl-c inside session to stop. 💥
+──────────────────────────────────────────────────────────────────────────────

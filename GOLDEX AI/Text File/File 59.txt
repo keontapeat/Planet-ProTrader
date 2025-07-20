@@ -1,0 +1,62 @@
+──────────────────────────────────────────────────────────────────────────────
+“GOLDEXV9.py NOT FOUND”  →  POINT PYTHON TO THE RIGHT FILE
+──────────────────────────────────────────────────────────────────────────────
+1. Locate the exact filename
+────────────────────────────
+$ ls -1 /opt/goldex-bot | grep -i goldex
+
+You told me the file lives at:
+   /opt/goldex-bot/GOLDEXV9.py
+but your earlier `ls` output shows:
+
+   goldex_bot.py
+   goldex_bot_backup.py
+   goldex_bot_real.py
+   goldex-trading-bot.py
+
+So use whichever script you intend (goldex_bot.py is the normal one).
+
+2. Edit creds
+─────────────
+$ nano goldex_bot.py      # or whichever filename you’ll run
+Set:
+
+DEMO_LOGIN = 845638
+DEMO_PASSWORD = "yourPass"
+DEMO_SERVER = "Coinexx-Demo"
+
+(or modify code to read from .env)
+
+3. Run inside venv
+──────────────────
+$ cd /opt/goldex-bot
+$ source venv/bin/activate
+$ python goldex_bot.py        # adjust filename
+
+If it prints ✓ imported mt5linux then connects → success.
+
+4. Keep it alive in tmux
+────────────────────────
+$ tmux new -s goldex
+$ cd /opt/goldex-bot
+$ source venv/bin/activate
+$ python goldex_bot.py
+# Ctrl-b  d        (detach)
+$ tmux attach -t goldex   # watch logs later
+
+Troubleshooting quickies
+────────────────────────
+• “ModuleNotFoundError: mt5linux”  
+  → pip install mt5linux inside venv:
+    (venv)$ pip install mt5linux
+
+• “Login failed”  
+  → creds wrong or wrong SERVER string.
+
+• Want to auto-start on reboot?  
+  Put `tmux new -d -s goldex 'cd /opt/goldex-bot && source venv/bin/activate && python goldex_bot.py'`
+  inside `/etc/rc.local` or a systemd service.
+
+You’re now running natively—no Docker, no Wine headaches.  Just point Python
+at the correct file and you’re done. 🚀
+──────────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,48 @@
+──────────────────────────────────────────────────────────────────────────────
+STILL SEE “fetestexcept”  →  FINAL TWO MOVES
+──────────────────────────────────────────────────────────────────────────────
+Root cause now
+• vcrun2015 IS installed (good) *but* Wine 6.0.3’s builtin loader can’t map
+  the UCRT DLL correctly.  
+• Upgrading Wine to 8.x fixes this 100 %.  (Or copy the DLL manually, but
+  upgrade is easier.)
+
+DO **ONLY** THE $ LINES BELOW
+────────────────────────────────────────────
+$ export DEBIAN_FRONTEND=noninteractive
+$ dpkg --add-architecture i386
+$ mkdir -p /etc/apt/keyrings
+$ wget -qO /etc/apt/keyrings/winehq.gpg https://dl.winehq.org/wine-builds/winehq.key
+$ echo "deb [arch=amd64,i386 signed-by=/etc/apt/keyrings/winehq.gpg] https://dl.winehq.org/wine-builds/ubuntu/ jammy main" | tee /etc/apt/sources.list.d/winehq.list
+$ apt update -y
+$ apt install -y --install-recommends winehq-stable   # installs Wine-8.x
+$ wineserver -k && sleep 2
+
+# 1-min sanity check  (same inline test)
+$ export WINEPREFIX=$HOME/.wine
+$ DISPLAY=:1 wine C:\\opt\\goldex-bot\\winevenv\\Scripts\\python.exe - <<'PY'
+import MetaTrader5 as mt5, os, sys; from dotenv import load_dotenv
+load_dotenv('/opt/goldex-bot/.env')
+ok = mt5.initialize(login=int(os.getenv('DEMO_LOGIN',0)),
+                    password=os.getenv('DEMO_PASSWORD',''),
+                    server=os.getenv('DEMO_SERVER',''))
+print("✅ Connected — Balance:", mt5.account_info().balance) if ok else \
+      sys.exit(f"❌ init failed: {mt5.last_error()}")
+mt5.shutdown()
+PY
+
+# If ✅ appears, launch bot:
+$ tmux new -s goldex -d "export DISPLAY=:1 && wine C:\\opt\\goldex-bot\\winevenv\\Scripts\\python.exe C:\\opt\\goldex-bot\\goldex_bot.py"
+$ echo '🚀  GoldexBot now live in tmux session "goldex".'
+
+Glance notes
+────────────
+• Wine-8.x ships its own UCRT that **does** export fetestexcept.  
+• No need to reinstall vcrun after the upgrade; keep current prefix.  
+• If the test still crashes (rare), recreate a fresh prefix:
+  $ mv ~/.wine ~/.wine.back && WINEPREFIX=$HOME/.wine wineboot
+  then rerun winetricks -q vcrun2015 and the test.
+
+After the green check, you’re done.  Share the next full error only if it
+appears **after** the Wine 8.x upgrade.
+──────────────────────────────────────────────────────────────────────────────
