@@ -125,33 +125,46 @@ enum SharedTypes {
         }
     }
     
-    // MARK: - Trend Direction
+    // MARK: - Market Session
     
-    enum TrendDirection: String, Codable, CaseIterable {
+    enum MarketSession: String, Codable, CaseIterable {
+        case sydney = "Sydney"
+        case tokyo = "Tokyo"
+        case london = "London"
+        case newYork = "New York"
+        
+        var color: Color {
+            switch self {
+            case .sydney: return .blue
+            case .tokyo: return .red
+            case .london: return .green
+            case .newYork: return .orange
+            }
+        }
+        
+        var timeZone: String {
+            switch self {
+            case .sydney: return "AEDT"
+            case .tokyo: return "JST"
+            case .london: return "GMT"
+            case .newYork: return "EST"
+            }
+        }
+    }
+    
+    // MARK: - Market Sentiment
+    
+    enum MarketSentiment: String, Codable, CaseIterable {
         case bullish = "Bullish"
         case bearish = "Bearish"
         case neutral = "Neutral"
-        case sideways = "Sideways"
         
         var color: Color {
             switch self {
             case .bullish: return .green
             case .bearish: return .red
-            case .neutral, .sideways: return .gray
+            case .neutral: return .gray
             }
-        }
-        
-        var systemImage: String {
-            switch self {
-            case .bullish: return "arrow.up.right"
-            case .bearish: return "arrow.down.right"
-            case .neutral: return "minus"
-            case .sideways: return "arrow.right"
-            }
-        }
-        
-        var icon: String {
-            return systemImage
         }
     }
     
@@ -207,76 +220,15 @@ enum SharedTypes {
             self.lastUpdate = lastUpdate
         }
         
-        var name: String {
-            accountName
-        }
-        
-        var server: String {
-            serverName
-        }
-        
-        var accountType: AccountType {
-            isDemo ? .demo : .live
-        }
-        
-        var formattedBalance: String {
-            String(format: "$%.2f", balance)
-        }
-        
-        var formattedEquity: String {
-            String(format: "$%.2f", equity)
-        }
-        
-        var accountTypeText: String {
-            isDemo ? "Demo" : "Live"
-        }
-        
-        var accountTypeColor: Color {
-            isDemo ? .orange : .green
-        }
-        
-        var connectionStatusColor: Color {
-            isConnected ? .green : .red
-        }
-        
-        var connectionStatusText: String {
-            isConnected ? "Connected" : "Disconnected"
-        }
-    }
-    
-    // MARK: - Connected Account
-    
-    struct ConnectedAccount: Identifiable, Codable {
-        let id: UUID
-        let name: String
-        let balance: String
-        let brokerType: BrokerType
-        let isConnected: Bool
-        let lastUpdate: Date
-        
-        init(
-            id: UUID = UUID(),
-            name: String,
-            balance: String,
-            brokerType: BrokerType,
-            isConnected: Bool,
-            lastUpdate: Date
-        ) {
-            self.id = id
-            self.name = name
-            self.balance = balance
-            self.brokerType = brokerType
-            self.isConnected = isConnected
-            self.lastUpdate = lastUpdate
-        }
-        
-        var statusColor: Color {
-            isConnected ? .green : .red
-        }
-        
-        var statusText: String {
-            isConnected ? "Connected" : "Disconnected"
-        }
+        var name: String { accountName }
+        var server: String { serverName }
+        var accountType: AccountType { isDemo ? .demo : .live }
+        var formattedBalance: String { String(format: "$%.2f", balance) }
+        var formattedEquity: String { String(format: "$%.2f", equity) }
+        var accountTypeText: String { isDemo ? "Demo" : "Live" }
+        var accountTypeColor: Color { isDemo ? .orange : .green }
+        var connectionStatusColor: Color { isConnected ? .green : .red }
+        var connectionStatusText: String { isConnected ? "Connected" : "Disconnected" }
     }
     
     // MARK: - Broker Credentials
@@ -313,7 +265,7 @@ enum SharedTypes {
         
         init(
             id: UUID = UUID(),
-            timestamp: Date,
+            timestamp: Date = Date(),
             symbol: String,
             direction: TradeDirection,
             entryPrice: Double,
@@ -339,40 +291,13 @@ enum SharedTypes {
             self.isExecuted = isExecuted
         }
         
-        var formattedConfidence: String {
-            String(format: "%.1f%%", confidence * 100)
-        }
-        
-        var formattedLotSize: String {
-            String(format: "%.2f", lotSize)
-        }
+        var formattedConfidence: String { String(format: "%.1f%%", confidence * 100) }
+        var formattedLotSize: String { String(format: "%.2f", lotSize) }
         
         var riskRewardRatio: Double {
             let risk = abs(entryPrice - stopLoss)
             let reward = abs(takeProfit - entryPrice)
             return risk > 0 ? reward / risk : 0
-        }
-    }
-    
-    // MARK: - VPS Trade Result
-    
-    struct VPSTradeResult: Codable {
-        let success: Bool
-        let tradeId: String?
-        let message: String
-        let timestamp: Date
-        let executionPrice: Double?
-        
-        init(success: Bool, tradeId: String? = nil, message: String, timestamp: Date = Date(), executionPrice: Double? = nil) {
-            self.success = success
-            self.tradeId = tradeId
-            self.message = message
-            self.timestamp = timestamp
-            self.executionPrice = executionPrice
-        }
-        
-        var statusColor: Color {
-            success ? .green : .red
         }
     }
     
@@ -403,7 +328,73 @@ enum SharedTypes {
         }
     }
     
-    // MARK: - Flip Goal
+    // MARK: - Shared Trade Outcome
+    
+    struct SharedTradeOutcome: Codable {
+        let tradeId: String
+        let success: Bool
+        let profit: Double
+        let confidence: Double
+        let timestamp: Date
+        
+        init(tradeId: String, success: Bool, profit: Double, confidence: Double, timestamp: Date = Date()) {
+            self.tradeId = tradeId
+            self.success = success
+            self.profit = profit
+            self.confidence = confidence
+            self.timestamp = timestamp
+        }
+    }
+    
+    // MARK: - Flip Types
+    
+    enum FlipMode: String, Codable, CaseIterable {
+        case conservative = "Conservative"
+        case balanced = "Balanced"
+        case aggressive = "Aggressive"
+        case extreme = "Extreme"
+        
+        var expectedDuration: TimeInterval {
+            switch self {
+            case .conservative: return 7200 // 2 hours
+            case .balanced: return 3600 // 1 hour
+            case .aggressive: return 1800 // 30 minutes
+            case .extreme: return 900 // 15 minutes
+            }
+        }
+    }
+    
+    enum FlipRiskLevel: String, Codable, CaseIterable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case extreme = "Extreme"
+    }
+    
+    enum FlipStrategy: String, Codable, CaseIterable {
+        case scalping = "Scalping"
+        case swing = "Swing"
+        case dayTrading = "Day Trading"
+        case breakout = "Breakout"
+        
+        var mode: FlipMode {
+            switch self {
+            case .scalping: return .aggressive
+            case .swing: return .conservative
+            case .dayTrading: return .aggressive
+            case .breakout: return .aggressive
+            }
+        }
+        
+        var riskPerTrade: Double {
+            switch self {
+            case .scalping: return 5.0
+            case .swing: return 2.5
+            case .dayTrading: return 4.0
+            case .breakout: return 3.0
+            }
+        }
+    }
     
     struct FlipGoal: Identifiable, Codable {
         let id: UUID
@@ -456,44 +447,11 @@ enum SharedTypes {
             return totalGain > 0 ? currentGain / totalGain : 0
         }
         
-        var formattedProgress: String {
-            String(format: "%.1f%%", progress * 100)
-        }
-        
-        var formattedStartBalance: String {
-            String(format: "$%.2f", startBalance)
-        }
-        
-        var formattedTargetBalance: String {
-            String(format: "$%.2f", targetBalance)
-        }
-        
-        var formattedCurrentBalance: String {
-            String(format: "$%.2f", currentBalance)
-        }
-        
-        var progressColor: Color {
-            if progress >= 1.0 {
-                return .green
-            } else if progress >= 0.5 {
-                return .orange
-            } else {
-                return .red
-            }
-        }
-        
-        var statusText: String {
-            if progress >= 1.0 {
-                return "Completed"
-            } else if isActive {
-                return "Active"
-            } else {
-                return "Paused"
-            }
-        }
+        var formattedProgress: String { String(format: "%.1f%%", progress * 100) }
+        var formattedStartBalance: String { String(format: "$%.2f", startBalance) }
+        var formattedTargetBalance: String { String(format: "$%.2f", targetBalance) }
+        var formattedCurrentBalance: String { String(format: "$%.2f", currentBalance) }
     }
-    
-    // MARK: - Flip Signal
     
     struct FlipSignal: Identifiable, Codable {
         let id: UUID
@@ -508,7 +466,7 @@ enum SharedTypes {
         
         init(
             id: UUID = UUID(),
-            timestamp: Date,
+            timestamp: Date = Date(),
             direction: TradeDirection,
             entryPrice: Double,
             targetPrice: Double,
@@ -528,132 +486,8 @@ enum SharedTypes {
             self.isExecuted = isExecuted
         }
         
-        var formattedLotSize: String {
-            String(format: "%.2f", lotSize)
-        }
-        
-        var potentialProfit: Double {
-            let priceDiff = abs(targetPrice - entryPrice)
-            return priceDiff * lotSize * 100 // Simplified calculation
-        }
-        
-        var formattedPotentialProfit: String {
-            String(format: "$%.2f", potentialProfit)
-        }
-        
-        // Additional properties for compatibility
         var takeProfit: Double { targetPrice }
-        var expectedDuration: TimeInterval { 3600 } // 1 hour default
-    }
-    
-    // MARK: - Market Session
-    
-    enum MarketSession: String, Codable, CaseIterable {
-        case sydney = "Sydney"
-        case tokyo = "Tokyo"
-        case london = "London"
-        case newYork = "New York"
-        
-        var color: Color {
-            switch self {
-            case .sydney: return .blue
-            case .tokyo: return .red
-            case .london: return .green
-            case .newYork: return .orange
-            }
-        }
-        
-        var timeZone: String {
-            switch self {
-            case .sydney: return "AEDT"
-            case .tokyo: return "JST"
-            case .london: return "GMT"
-            case .newYork: return "EST"
-            }
-        }
-    }
-    
-    // MARK: - Missing Types for Compilation
-    
-    // MARK: - Claude AI Integration Types
-    struct ClaudeTradeData: Codable {
-        let id: String
-        let symbol: String
-        let direction: TradeDirection
-        let entryPrice: Double
-        let exitPrice: Double
-        let lotSize: Double
-        let profit: Double
-        let timestamp: Date
-        let success: Bool
-    }
-    
-    // MARK: - Flip Trading Types
-    enum FlipMode: String, Codable, CaseIterable {
-        case conservative = "Conservative"
-        case balanced = "Balanced"
-        case aggressive = "Aggressive"
-        case extreme = "Extreme"
-        
-        var expectedDuration: TimeInterval {
-            switch self {
-            case .conservative: return 7200 // 2 hours
-            case .balanced: return 3600 // 1 hour
-            case .aggressive: return 1800 // 30 minutes
-            case .extreme: return 900 // 15 minutes
-            }
-        }
-    }
-    
-    enum FlipRiskLevel: String, Codable, CaseIterable {
-        case low = "Low"
-        case medium = "Medium"
-        case high = "High"
-        case extreme = "Extreme"
-    }
-    
-    enum FlipStrategy: String, Codable, CaseIterable {
-        case scalping = "Scalping"
-        case swing = "Swing"
-        case dayTrading = "Day Trading"
-        case breakout = "Breakout"
-        
-        // Computed properties for compatibility
-        var mode: FlipMode {
-            switch self {
-            case .scalping: return .aggressive
-            case .swing: return .conservative
-            case .dayTrading: return .aggressive
-            case .breakout: return .aggressive
-            }
-        }
-        
-        var riskPerTrade: Double {
-            switch self {
-            case .scalping: return 5.0
-            case .swing: return 2.5
-            case .dayTrading: return 4.0
-            case .breakout: return 3.0
-            }
-        }
-        
-        var minConfidence: Double {
-            switch self {
-            case .scalping: return 80.0
-            case .swing: return 90.0
-            case .dayTrading: return 85.0
-            case .breakout: return 87.0
-            }
-        }
-        
-        var timeframes: [String] {
-            switch self {
-            case .scalping: return ["1M", "5M", "15M"]
-            case .swing: return ["4H", "1H", "15M"]
-            case .dayTrading: return ["1H", "15M", "5M"]
-            case .breakout: return ["15M", "5M", "1M"]
-            }
-        }
+        var expectedDuration: TimeInterval { 3600 }
     }
     
     struct FlipStatus: Codable {
@@ -695,7 +529,23 @@ enum SharedTypes {
         let winRate: Double
         let timestamp: Date
         
-        init(accountId: String, finalBalance: Double, initialBalance: Double, profit: Double, duration: TimeInterval, completedAt: Date, id: String = UUID().uuidString, flipId: String = "", startingAmount: Double? = nil, finalAmount: Double? = nil, multiplier: Double? = nil, daysToComplete: Double? = nil, totalTrades: Int = 0, winRate: Double = 0.0, timestamp: Date? = nil) {
+        init(
+            accountId: String,
+            finalBalance: Double,
+            initialBalance: Double,
+            profit: Double,
+            duration: TimeInterval,
+            completedAt: Date,
+            id: String = UUID().uuidString,
+            flipId: String = "",
+            startingAmount: Double? = nil,
+            finalAmount: Double? = nil,
+            multiplier: Double? = nil,
+            daysToComplete: Double? = nil,
+            totalTrades: Int = 0,
+            winRate: Double = 0.0,
+            timestamp: Date? = nil
+        ) {
             self.accountId = accountId
             self.finalBalance = finalBalance
             self.initialBalance = initialBalance
@@ -723,7 +573,15 @@ enum SharedTypes {
         let message: String
         let flipId: String
         
-        init(id: String, accountId: String, eventType: String, description: String, timestamp: Date, message: String? = nil, flipId: String = "") {
+        init(
+            id: String,
+            accountId: String,
+            eventType: String,
+            description: String,
+            timestamp: Date,
+            message: String? = nil,
+            flipId: String = ""
+        ) {
             self.id = id
             self.accountId = accountId
             self.eventType = eventType
@@ -750,7 +608,22 @@ enum SharedTypes {
         let afterScreenshot: String?
         let tradeResult: SharedTradeResult?
         
-        init(id: String, accountId: String, symbol: String, direction: TradeDirection, entryPrice: Double, exitPrice: Double, lotSize: Double, profit: Double, timestamp: Date, flipId: String = "", signal: AutoTradingSignal? = nil, beforeScreenshot: String? = nil, afterScreenshot: String? = nil, tradeResult: SharedTradeResult? = nil) {
+        init(
+            id: String,
+            accountId: String,
+            symbol: String,
+            direction: TradeDirection,
+            entryPrice: Double,
+            exitPrice: Double,
+            lotSize: Double,
+            profit: Double,
+            timestamp: Date,
+            flipId: String = "",
+            signal: AutoTradingSignal? = nil,
+            beforeScreenshot: String? = nil,
+            afterScreenshot: String? = nil,
+            tradeResult: SharedTradeResult? = nil
+        ) {
             self.id = id
             self.accountId = accountId
             self.symbol = symbol
@@ -769,6 +642,7 @@ enum SharedTypes {
     }
     
     // MARK: - Account Types
+    
     struct DemoAccount: Codable {
         let id: String
         let login: String
@@ -779,20 +653,59 @@ enum SharedTypes {
         let leverage: Int
         let isActive: Bool
         let createdAt: Date
+        let password: String
         
-        // Additional properties for flip mode compatibility
         var brokerType: BrokerType { .coinexx }
         var startingBalance: Double { balance }
         var currentBalance: Double { balance }
         var flipId: String { id }
         var vpsIndex: Int { 0 }
         var status: AccountStatus { isActive ? .active : .inactive }
-        var password: String { "demo_password" }
         
         enum AccountStatus: String, Codable {
             case active = "Active"
             case inactive = "Inactive"
             case initializing = "Initializing"
+        }
+        
+        init(
+            id: String,
+            login: String,
+            server: String,
+            balance: Double,
+            equity: Double,
+            currency: String = "USD",
+            leverage: Int = 500,
+            isActive: Bool = true,
+            createdAt: Date = Date(),
+            password: String = "demo_password"
+        ) {
+            self.id = id
+            self.login = login
+            self.server = server
+            self.balance = balance
+            self.equity = equity
+            self.currency = currency
+            self.leverage = leverage
+            self.isActive = isActive
+            self.createdAt = createdAt
+            self.password = password
+        }
+    }
+    
+    enum ConnectionStatus: String, Codable, CaseIterable {
+        case connecting = "Connecting"
+        case connected = "Connected"
+        case disconnected = "Disconnected"
+        case error = "Error"
+        
+        var color: Color {
+            switch self {
+            case .connected: return .green
+            case .connecting: return .orange
+            case .disconnected: return .gray
+            case .error: return .red
+            }
         }
     }
     
@@ -808,7 +721,18 @@ enum SharedTypes {
         var accountsRunning: Int
         let maxAccounts: Int
         
-        init(id: String, ipAddress: String, port: Int = 22, username: String = "", password: String = "", isConnected: Bool = false, lastPing: Date = Date(), status: ConnectionStatus = .disconnected, accountsRunning: Int = 0, maxAccounts: Int = 5) {
+        init(
+            id: String,
+            ipAddress: String,
+            port: Int = 22,
+            username: String = "",
+            password: String = "",
+            isConnected: Bool = false,
+            lastPing: Date = Date(),
+            status: ConnectionStatus = .disconnected,
+            accountsRunning: Int = 0,
+            maxAccounts: Int = 5
+        ) {
             self.id = id
             self.ipAddress = ipAddress
             self.port = port
@@ -823,6 +747,7 @@ enum SharedTypes {
     }
     
     // MARK: - Trading Types
+    
     enum TradeResult: String, Codable {
         case win = "Win"
         case loss = "Loss"
@@ -854,6 +779,42 @@ enum SharedTypes {
             case closed = "Closed"
             case cancelled = "Cancelled"
         }
+        
+        init(
+            id: String,
+            symbol: String,
+            direction: TradeDirection,
+            entryPrice: Double,
+            exitPrice: Double? = nil,
+            lotSize: Double,
+            profit: Double,
+            status: TradeStatus = .pending,
+            timestamp: Date = Date(),
+            mode: TradingMode = .auto,
+            stopLoss: Double? = nil,
+            takeProfit: Double? = nil,
+            confidence: Double = 0.5,
+            reasoning: String = "",
+            result: TradeResult? = nil,
+            profitLoss: Double? = nil
+        ) {
+            self.id = id
+            self.symbol = symbol
+            self.direction = direction
+            self.entryPrice = entryPrice
+            self.exitPrice = exitPrice
+            self.lotSize = lotSize
+            self.profit = profit
+            self.status = status
+            self.timestamp = timestamp
+            self.mode = mode
+            self.stopLoss = stopLoss
+            self.takeProfit = takeProfit
+            self.confidence = confidence
+            self.reasoning = reasoning
+            self.result = result
+            self.profitLoss = profitLoss
+        }
     }
     
     struct GoldexTrade: Codable {
@@ -877,7 +838,27 @@ enum SharedTypes {
         let profitLoss: Double
         let winProbability: Double
         
-        init(id: String, symbol: String, direction: TradeDirection, entryPrice: Double, exitPrice: Double? = nil, lotSize: Double, profit: Double, confidence: Double, timestamp: Date, entry: Double? = nil, stopLoss: Double? = nil, takeProfit: Double? = nil, result: String = "PENDING", pattern: String = "UNKNOWN", duration: TimeInterval = 0, takenAt: Date? = nil, riskPercent: Double = 0.0, profitLoss: Double = 0.0, winProbability: Double = 0.0) {
+        init(
+            id: String,
+            symbol: String,
+            direction: TradeDirection,
+            entryPrice: Double,
+            exitPrice: Double? = nil,
+            lotSize: Double,
+            profit: Double,
+            confidence: Double,
+            timestamp: Date,
+            entry: Double? = nil,
+            stopLoss: Double? = nil,
+            takeProfit: Double? = nil,
+            result: String = "PENDING",
+            pattern: String = "UNKNOWN",
+            duration: TimeInterval = 0,
+            takenAt: Date? = nil,
+            riskPercent: Double = 0.0,
+            profitLoss: Double = 0.0,
+            winProbability: Double = 0.0
+        ) {
             self.id = id
             self.symbol = symbol
             self.direction = direction
@@ -900,6 +881,14 @@ enum SharedTypes {
         }
     }
     
+    enum TradeGrade: String, Codable, CaseIterable {
+        case all = "All"
+        case elite = "Elite"
+        case good = "Good"
+        case average = "Average"
+        case poor = "Poor"
+    }
+    
     struct PlaybookTrade: Codable {
         let id: String
         let symbol: String
@@ -911,30 +900,46 @@ enum SharedTypes {
         let grade: TradeGrade
         let reasoning: String
         let timestamp: Date
-    }
-    
-    enum TradeGrade: String, Codable, CaseIterable {
-        case all = "All"
-        case elite = "Elite"
-        case good = "Good"
-        case average = "Average"
-        case poor = "Poor"
+        
+        init(
+            id: String,
+            symbol: String,
+            direction: TradeDirection,
+            entryPrice: Double,
+            exitPrice: Double,
+            lotSize: Double,
+            profit: Double,
+            grade: TradeGrade,
+            reasoning: String,
+            timestamp: Date = Date()
+        ) {
+            self.id = id
+            self.symbol = symbol
+            self.direction = direction
+            self.entryPrice = entryPrice
+            self.exitPrice = exitPrice
+            self.lotSize = lotSize
+            self.profit = profit
+            self.grade = grade
+            self.reasoning = reasoning
+            self.timestamp = timestamp
+        }
     }
     
     // MARK: - AI and Learning Types
-    struct SharedTradeOutcome: Codable {
-        let tradeId: String
-        let success: Bool
-        let profit: Double
-        let confidence: Double
-        let timestamp: Date
-    }
     
     struct AIInsights: Codable {
         let id: String
         let insights: [String]
         let confidence: Double
         let timestamp: Date
+        
+        init(id: String, insights: [String], confidence: Double, timestamp: Date = Date()) {
+            self.id = id
+            self.insights = insights
+            self.confidence = confidence
+            self.timestamp = timestamp
+        }
     }
     
     struct TradeLearningData: Codable {
@@ -943,6 +948,14 @@ enum SharedTypes {
         let outcomes: [String]
         let accuracy: Double
         let timestamp: Date
+        
+        init(id: String, patterns: [String], outcomes: [String], accuracy: Double, timestamp: Date = Date()) {
+            self.id = id
+            self.patterns = patterns
+            self.outcomes = outcomes
+            self.accuracy = accuracy
+            self.timestamp = timestamp
+        }
     }
     
     struct GoldexAILearningData: Codable {
@@ -958,7 +971,19 @@ enum SharedTypes {
         let timePerformance: [String: Double]
         let patterns: [String]
         
-        init(id: String, learningPoints: [String], accuracy: Double, tradesAnalyzed: Int, timestamp: Date, totalTrades: Int = 0, winningTrades: Int = 0, recentLosses: Int = 0, patternPerformance: [String: Double] = [:], timePerformance: [String: Double] = [:], patterns: [String] = []) {
+        init(
+            id: String,
+            learningPoints: [String],
+            accuracy: Double,
+            tradesAnalyzed: Int,
+            timestamp: Date = Date(),
+            totalTrades: Int = 0,
+            winningTrades: Int = 0,
+            recentLosses: Int = 0,
+            patternPerformance: [String: Double] = [:],
+            timePerformance: [String: Double] = [:],
+            patterns: [String] = []
+        ) {
             self.id = id
             self.learningPoints = learningPoints
             self.accuracy = accuracy
@@ -973,7 +998,42 @@ enum SharedTypes {
         }
     }
     
+    struct ClaudeTradeData: Codable {
+        let id: String
+        let symbol: String
+        let direction: TradeDirection
+        let entryPrice: Double
+        let exitPrice: Double
+        let lotSize: Double
+        let profit: Double
+        let timestamp: Date
+        let success: Bool
+        
+        init(
+            id: String,
+            symbol: String,
+            direction: TradeDirection,
+            entryPrice: Double,
+            exitPrice: Double,
+            lotSize: Double,
+            profit: Double,
+            timestamp: Date = Date(),
+            success: Bool
+        ) {
+            self.id = id
+            self.symbol = symbol
+            self.direction = direction
+            self.entryPrice = entryPrice
+            self.exitPrice = exitPrice
+            self.lotSize = lotSize
+            self.profit = profit
+            self.timestamp = timestamp
+            self.success = success
+        }
+    }
+    
     // MARK: - Signal and Storage Types
+    
     struct GoldexSignalStorage: Codable {
         let id: String
         let symbol: String
@@ -985,7 +1045,17 @@ enum SharedTypes {
         let stopLoss: Double?
         let takeProfit: Double?
         
-        init(id: String, symbol: String, direction: TradeDirection, confidence: Double, reasoning: String, timestamp: Date, entryPrice: Double, stopLoss: Double? = nil, takeProfit: Double? = nil) {
+        init(
+            id: String,
+            symbol: String,
+            direction: TradeDirection,
+            confidence: Double,
+            reasoning: String,
+            timestamp: Date = Date(),
+            entryPrice: Double,
+            stopLoss: Double? = nil,
+            takeProfit: Double? = nil
+        ) {
             self.id = id
             self.symbol = symbol
             self.direction = direction
@@ -998,16 +1068,8 @@ enum SharedTypes {
         }
     }
     
-    struct TradeSignal: Codable {
-        let id: String
-        let symbol: String
-        let direction: TradeDirection
-        let entryPrice: Double
-        let confidence: Double
-        let timestamp: Date
-    }
-    
     // MARK: - MT5 Types
+    
     struct MT5Account: Codable {
         let login: String
         let password: String
@@ -1021,18 +1083,30 @@ enum SharedTypes {
         let leverage: Int
         let isConnected: Bool
         
-        init(login: String, password: String, server: String, company: String, isConnected: Bool = false, balance: Double, equity: Double, margin: Double = 0.0, freeMargin: Double? = nil, currency: String = "USD", leverage: Int = 500) {
+        init(
+            login: String,
+            password: String,
+            server: String,
+            company: String,
+            balance: Double,
+            equity: Double,
+            margin: Double = 0.0,
+            freeMargin: Double? = nil,
+            currency: String = "USD",
+            leverage: Int = 500,
+            isConnected: Bool = false
+        ) {
             self.login = login
             self.password = password
             self.server = server
             self.company = company
-            self.isConnected = isConnected
             self.balance = balance
             self.equity = equity
             self.margin = margin
             self.freeMargin = freeMargin ?? balance
             self.currency = currency
             self.leverage = leverage
+            self.isConnected = isConnected
         }
     }
     
@@ -1049,8 +1123,32 @@ enum SharedTypes {
         let takeProfit: Double
         let comment: String
         
-        var type: TradeDirection {
-            return direction
+        var type: TradeDirection { return direction }
+        
+        init(
+            ticket: String,
+            symbol: String,
+            direction: TradeDirection,
+            volume: Double,
+            openPrice: Double,
+            currentPrice: Double,
+            profit: Double,
+            openTime: Date = Date(),
+            stopLoss: Double = 0.0,
+            takeProfit: Double = 0.0,
+            comment: String = ""
+        ) {
+            self.ticket = ticket
+            self.symbol = symbol
+            self.direction = direction
+            self.volume = volume
+            self.openPrice = openPrice
+            self.currentPrice = currentPrice
+            self.profit = profit
+            self.openTime = openTime
+            self.stopLoss = stopLoss
+            self.takeProfit = takeProfit
+            self.comment = comment
         }
     }
     
@@ -1060,275 +1158,17 @@ enum SharedTypes {
         let bid: Double
         let ask: Double
         let spread: Double
-    }
-    
-    // MARK: - Performance and Analytics Types
-    struct PerformanceMetrics: Codable {
-        let totalTrades: Int
-        let winRate: Double
-        let totalProfit: Double
-        let averageWin: Double
-        let averageLoss: Double
-        let profitFactor: Double
         
-        static let sample = PerformanceMetrics(
-            totalTrades: 100,
-            winRate: 0.85,
-            totalProfit: 1250.0,
-            averageWin: 45.0,
-            averageLoss: -25.0,
-            profitFactor: 2.5
-        )
-    }
-    
-    enum InsightPriority: String, Codable, CaseIterable {
-        case low = "Low"
-        case medium = "Medium"
-        case high = "High"
-        case critical = "Critical"
-    }
-    
-    struct AIInsight: Codable {
-        let id: String
-        let title: String
-        let description: String
-        let priority: InsightPriority
-        let timestamp: Date
-        
-        static let sample = AIInsight(
-            id: "1",
-            title: "Market Opportunity",
-            description: "Strong bullish signal detected",
-            priority: .high,
-            timestamp: Date()
-        )
-    }
-    
-    // MARK: - Dashboard Types
-    struct ActiveFlip: Codable {
-        let id: String
-        let accountId: String
-        let startBalance: Double
-        let currentBalance: Double
-        let targetBalance: Double
-        let progress: Double
-        let isActive: Bool
-    }
-    
-    struct AutoTradingStatus: Codable {
-        let isActive: Bool
-        let mode: TradingMode
-        let confidence: Double
-        let tradesThisSession: Int
-        let profit: Double
-        
-        static let sample = AutoTradingStatus(
-            isActive: true,
-            mode: .auto,
-            confidence: 0.92,
-            tradesThisSession: 15,
-            profit: 245.0
-        )
-    }
-    
-    struct TradingSession: Codable {
-        let id: String
-        let name: String
-        let startTime: Date
-        let endTime: Date
-        let isActive: Bool
-        let volume: Double
-    }
-    
-    struct RecentActivity: Codable {
-        let id: String
-        let description: String
-        let type: ActivityType
-        let timestamp: Date
-        
-        enum ActivityType: String, Codable {
-            case trade = "Trade"
-            case signal = "Signal"
-            case analysis = "Analysis"
-            case alert = "Alert"
+        init(name: String, description: String, bid: Double, ask: Double, spread: Double) {
+            self.name = name
+            self.description = description
+            self.bid = bid
+            self.ask = ask
+            self.spread = spread
         }
     }
     
-    enum MarketSentiment: String, Codable, CaseIterable {
-        case bullish = "Bullish"
-        case bearish = "Bearish"
-        case neutral = "Neutral"
-    }
-    
-    // MARK: - Missing Firebase Performance Types
-    struct GoldexPatternPerformance: Codable {
-        let id: String
-        let patternName: String
-        let winRate: Double
-        let totalTrades: Int
-        let averageProfit: Double
-        let timestamp: Date
-    }
-    
-    struct GoldexTimePerformance: Codable {
-        let id: String
-        let timeSession: String
-        let winRate: Double
-        let totalProfit: Double
-        let tradesExecuted: Int
-        let timestamp: Date
-    }
-    
-    // MARK: - Additional Trading Types
-    
-    struct EASignal: Identifiable, Codable {
-        let id: String
-        let timestamp: Date
-        let symbol: String
-        let direction: TradeDirection
-        let confidence: Double
-        let reasoning: String
-        let entryPrice: Double
-        let stopLoss: Double?
-        let takeProfit: Double?
-        let timeframe: String
-        let priority: SignalPriority
-        let isExecuted: Bool
-        
-        init(
-            id: String = UUID().uuidString,
-            timestamp: Date = Date(),
-            symbol: String,
-            direction: TradeDirection,
-            confidence: Double,
-            reasoning: String,
-            entryPrice: Double,
-            stopLoss: Double? = nil,
-            takeProfit: Double? = nil,
-            timeframe: String = "1H",
-            priority: SignalPriority = .medium,
-            isExecuted: Bool = false
-        ) {
-            self.id = id
-            self.timestamp = timestamp
-            self.symbol = symbol
-            self.direction = direction
-            self.confidence = confidence
-            self.reasoning = reasoning
-            self.entryPrice = entryPrice
-            self.stopLoss = stopLoss
-            self.takeProfit = takeProfit
-            self.timeframe = timeframe
-            self.priority = priority
-            self.isExecuted = isExecuted
-        }
-        
-        var formattedConfidence: String {
-            return String(format: "%.1f%%", confidence * 100)
-        }
-        
-        var riskRewardRatio: Double {
-            guard let sl = stopLoss, let tp = takeProfit else { return 0.0 }
-            let risk = abs(entryPrice - sl)
-            let reward = abs(tp - entryPrice)
-            return risk > 0 ? reward / risk : 0.0
-        }
-    }
-    
-    enum SignalPriority: String, Codable, CaseIterable {
-        case low = "Low"
-        case medium = "Medium"
-        case high = "High"
-        case urgent = "Urgent"
-        
-        var color: Color {
-            switch self {
-            case .low: return .gray
-            case .medium: return .blue
-            case .high: return .orange
-            case .urgent: return .red
-            }
-        }
-        
-        var weight: Double {
-            switch self {
-            case .low: return 0.25
-            case .medium: return 0.5
-            case .high: return 0.75
-            case .urgent: return 1.0
-            }
-        }
-    }
-    
-    struct TradingPosition: Identifiable, Codable {
-        let id: String
-        let symbol: String
-        let direction: TradeDirection
-        let openPrice: Double
-        let currentPrice: Double
-        let lotSize: Double
-        let floatingPnL: Double
-        let openTime: Date
-        let stopLoss: Double?
-        let takeProfit: Double?
-        let comment: String
-        let magic: Int
-        
-        init(
-            id: String = UUID().uuidString,
-            symbol: String,
-            direction: TradeDirection,
-            openPrice: Double,
-            currentPrice: Double,
-            lotSize: Double,
-            floatingPnL: Double,
-            openTime: Date = Date(),
-            stopLoss: Double? = nil,
-            takeProfit: Double? = nil,
-            comment: String = "",
-            magic: Int = 0
-        ) {
-            self.id = id
-            self.symbol = symbol
-            self.direction = direction
-            self.openPrice = openPrice
-            self.currentPrice = currentPrice
-            self.lotSize = lotSize
-            self.floatingPnL = floatingPnL
-            self.openTime = openTime
-            self.stopLoss = stopLoss
-            self.takeProfit = takeProfit
-            self.comment = comment
-            self.magic = magic
-        }
-        
-        var formattedPnL: String {
-            let sign = floatingPnL >= 0 ? "+" : ""
-            return "\(sign)$\(String(format: "%.2f", floatingPnL))"
-        }
-        
-        var pnlColor: Color {
-            return floatingPnL >= 0 ? .green : .red
-        }
-        
-        var priceDifference: Double {
-            return currentPrice - openPrice
-        }
-        
-        var pips: Double {
-            return abs(priceDifference) * 10000 // Simplified pip calculation
-        }
-        
-        var duration: TimeInterval {
-            return Date().timeIntervalSince(openTime)
-        }
-        
-        var formattedDuration: String {
-            let hours = Int(duration) / 3600
-            let minutes = Int(duration) % 3600 / 60
-            return "\(hours)h \(minutes)m"
-        }
-    }
+    // MARK: - EAStats and Performance
     
     struct EAStats: Codable {
         var totalSignals: Int
@@ -1358,7 +1198,6 @@ enum SharedTypes {
         }
         
         mutating func updateStats() {
-            // Recalculate derived metrics
             winRate = totalSignals > 0 ? Double(winningSignals) / Double(totalSignals) : 0.0
             averageWin = winningSignals > 0 ? totalProfit / Double(winningSignals) : 0.0
             averageLoss = losingSignals > 0 ? totalLoss / Double(losingSignals) : 0.0
@@ -1387,429 +1226,137 @@ enum SharedTypes {
         var formattedProfitFactor: String {
             return String(format: "%.2f", profitFactor)
         }
-        
-        var performanceGrade: TradeGrade {
-            if winRate >= 0.7 && profitFactor >= 2.0 {
-                return .elite
-            } else if winRate >= 0.6 && profitFactor >= 1.5 {
-                return .good
-            } else if winRate >= 0.5 && profitFactor >= 1.2 {
-                return .average
-            } else {
-                return .poor
-            }
-        }
     }
     
-    enum PerformanceGrade: String, Codable, CaseIterable {
-        case excellent = "Excellent"
-        case good = "Good"
-        case average = "Average"
-        case poor = "Poor"
-        case terrible = "Terrible"
-        
-        var color: Color {
-            switch self {
-            case .excellent: return .green
-            case .good: return .mint
-            case .average: return .yellow
-            case .poor: return .orange
-            case .terrible: return .red
-            }
-        }
-        
-        var score: Double {
-            switch self {
-            case .excellent: return 1.0
-            case .good: return 0.8
-            case .average: return 0.6
-            case .poor: return 0.4
-            case .terrible: return 0.2
-            }
-        }
-        
-        var systemImage: String {
-            switch self {
-            case .excellent: return "star.fill"
-            case .good: return "star.leadinghalf.filled"
-            case .average: return "star"
-            case .poor: return "star.slash"
-            case .terrible: return "xmark.circle"
-            }
-        }
-    }
+    // MARK: - Family Mode Types
     
-    // MARK: - Learning Capability Types
-    enum LearningCapability: String, Codable, CaseIterable {
-        // Price Action Capabilities
-        case priceAction = "Price Action"
-        case volumeAnalysis = "Volume Analysis"
-        case microstructure = "Microstructure"
-        
-        // Technical Analysis Capabilities
-        case trendAnalysis = "Trend Analysis"
-        case supportResistance = "Support Resistance"
-        case patternRecognition = "Pattern Recognition"
-        case chartPatterns = "Chart Patterns"
-        case candlesticks = "Candlesticks"
-        
-        // Market Structure Capabilities
-        case orderFlow = "Order Flow"
-        case marketStructure = "Market Structure"
-        case liquidity = "Liquidity"
-        
-        // Sentiment & Psychology Capabilities
-        case sentiment = "Sentiment"
-        case extremes = "Extremes"
-        case meanReversion = "Mean Reversion"
-        case behaviorAnalysis = "Behavior Analysis"
-        case emotionalPatterns = "Emotional Patterns"
-        case marketPsychology = "Market Psychology"
-        
-        // News & Events Capabilities
-        case newsAnalysis = "News Analysis"
-        case eventTrading = "Event Trading"
-        case volatility = "Volatility"
-        case socialMedia = "Social Media"
-        case positioning = "Positioning"
-        
-        // Risk & Portfolio Capabilities
-        case riskAssessment = "Risk Assessment"
-        case portfolioManagement = "Portfolio Management"
-        case correlation = "Correlation"
-        
-        // Fundamental Analysis
-        case fundamentals = "Fundamentals"
-        
-        var description: String {
-            switch self {
-            case .priceAction: return "Analyzing price movements and market action"
-            case .volumeAnalysis: return "Understanding volume patterns and flow"
-            case .microstructure: return "Market microstructure and order book analysis"
-            case .trendAnalysis: return "Identifying and following market trends"
-            case .supportResistance: return "Key support and resistance level identification"
-            case .patternRecognition: return "Advanced pattern recognition capabilities"
-            case .chartPatterns: return "Classic chart pattern analysis"
-            case .candlesticks: return "Japanese candlestick pattern expertise"
-            case .orderFlow: return "Order flow and institutional activity tracking"
-            case .marketStructure: return "Understanding market structure shifts"
-            case .liquidity: return "Liquidity analysis and pool identification"
-            case .sentiment: return "Market sentiment and crowd psychology"
-            case .extremes: return "Identifying market extremes and reversals"
-            case .meanReversion: return "Mean reversion strategy implementation"
-            case .behaviorAnalysis: return "Trader behavior pattern analysis"
-            case .emotionalPatterns: return "Emotional market cycle recognition"
-            case .marketPsychology: return "Advanced market psychology insights"
-            case .newsAnalysis: return "News impact analysis and trading"
-            case .eventTrading: return "Event-driven trading strategies"
-            case .volatility: return "Volatility analysis and exploitation"
-            case .socialMedia: return "Social media sentiment tracking"
-            case .positioning: return "Market positioning analysis"
-            case .riskAssessment: return "Advanced risk assessment capabilities"
-            case .portfolioManagement: return "Portfolio optimization and management"
-            case .correlation: return "Asset correlation analysis"
-            case .fundamentals: return "Fundamental analysis expertise"
-            }
-        }
-        
-        var category: LearningCategory {
-            switch self {
-            case .priceAction, .volumeAnalysis, .microstructure:
-                return .priceAction
-            case .trendAnalysis, .supportResistance, .patternRecognition, .chartPatterns, .candlesticks:
-                return .technical
-            case .orderFlow, .marketStructure, .liquidity:
-                return .institutional
-            case .sentiment, .extremes, .meanReversion, .behaviorAnalysis, .emotionalPatterns, .marketPsychology:
-                return .psychology
-            case .newsAnalysis, .eventTrading, .volatility, .socialMedia, .positioning:
-                return .news
-            case .riskAssessment, .portfolioManagement, .correlation:
-                return .risk
-            case .fundamentals:
-                return .fundamental
-            }
-        }
-    }
-    
-    // MARK: - Learning Categories
-    enum LearningCategory: String, Codable, CaseIterable {
-        case priceAction = "Price Action"
-        case technical = "Technical Analysis"
-        case institutional = "Institutional"
-        case psychology = "Psychology"
-        case news = "News & Events"
-        case risk = "Risk Management"
-        case fundamental = "Fundamental"
-        
-        var color: Color {
-            switch self {
-            case .priceAction: return .blue
-            case .technical: return .green
-            case .institutional: return .purple
-            case .psychology: return .orange
-            case .news: return .red
-            case .risk: return .gray
-            case .fundamental: return .indigo
-            }
-        }
-        
-        var systemImage: String {
-            switch self {
-            case .priceAction: return "chart.xyaxis.line"
-            case .technical: return "waveform.path.ecg"
-            case .institutional: return "building.columns"
-            case .psychology: return "brain.head.profile"
-            case .news: return "newspaper"
-            case .risk: return "shield.checkerboard"
-            case .fundamental: return "doc.text.magnifyingglass"
-            }
-        }
-    }
-    
-    // MARK: - Missing Connection Status Types  
-    enum ConnectionStatus: String, Codable, CaseIterable {
-        case connecting = "Connecting"
-        case connected = "Connected" 
-        case disconnected = "Disconnected"
-        case error = "Error"
-        
-        var color: Color {
-            switch self {
-            case .connected: return .green
-            case .connecting: return .orange
-            case .disconnected: return .gray
-            case .error: return .red
-            }
-        }
-    }
-    
-    // MARK: - Missing ProTrader Bot Army Types
-    
-    struct GoldDataPoint: Identifiable, Codable {
+    struct FamilyMemberProfile: Identifiable, Codable {
         let id = UUID()
-        let date: Date
-        let open: Double
-        let high: Double
-        let low: Double
-        let close: Double
-        let volume: Double?
+        let name: String
+        let age: Int
+        let role: MemberRole
+        let experienceLevel: ExperienceLevel
+        let goals: [String]
+        let progress: Double
+        let avatar: String
+        let permissions: [Permission]
+        let tradingExperience: ExperienceLevel
+        let preferences: TradingPreferences
+        let achievements: [String]
+        let joinDate: Date
+        var isActive: Bool
         
-        var timestamp: Date { date }
+        enum MemberRole: String, CaseIterable, Codable {
+            case parent = "Parent"
+            case child = "Child"
+            case teen = "Teen"
+            case adult = "Adult"
+            
+            var maxAllowedRisk: Double {
+                switch self {
+                case .parent: return 1.0
+                case .child: return 0.1
+                case .teen: return 0.3
+                case .adult: return 0.8
+                }
+            }
+        }
         
-        init(date: Date, open: Double, high: Double, low: Double, close: Double, volume: Double? = nil) {
-            self.date = date
-            self.open = open
-            self.high = high
-            self.low = low
-            self.close = close
-            self.volume = volume
+        enum ExperienceLevel: String, CaseIterable, Codable {
+            case beginner = "Beginner"
+            case intermediate = "Intermediate"
+            case advanced = "Advanced"
+            case expert = "Expert"
+        }
+        
+        enum Permission: String, CaseIterable, Codable {
+            case viewPortfolio = "View Portfolio"
+            case makeTrades = "Make Trades"
+            case manageSettings = "Manage Settings"
+            case viewReports = "View Reports"
+            case createBots = "Create Bots"
+        }
+        
+        init(
+            name: String,
+            age: Int,
+            role: MemberRole,
+            experienceLevel: ExperienceLevel,
+            goals: [String],
+            progress: Double,
+            avatar: String,
+            permissions: [Permission],
+            tradingExperience: ExperienceLevel,
+            preferences: TradingPreferences,
+            achievements: [String],
+            joinDate: Date,
+            isActive: Bool
+        ) {
+            self.name = name
+            self.age = age
+            self.role = role
+            self.experienceLevel = experienceLevel
+            self.goals = goals
+            self.progress = progress
+            self.avatar = avatar
+            self.permissions = permissions
+            self.tradingExperience = tradingExperience
+            self.preferences = preferences
+            self.achievements = achievements
+            self.joinDate = joinDate
+            self.isActive = isActive
         }
     }
     
-    class TrainingResults: ObservableObject {
-        @Published var botsTrained: Int = 0
-        @Published var dataPointsProcessed: Int = 0
-        @Published var totalXPGained: Double = 0
-        @Published var totalConfidenceGained: Double = 0
-        @Published var newEliteBots: Int = 0
-        @Published var newGodlikeBots: Int = 0
-        @Published var trainingTime: Double = 0
-        @Published var errors: [String] = []
-        @Published var patterns: [String] = []
-        @Published var startTime: Date = Date()
-        @Published var endTime: Date?
+    struct TradingPreferences: Codable {
+        let riskTolerance: Double
+        let favoriteStrategies: [String]
+        let preferredMarkets: [String]
         
-        var summary: String {
-            """
-            🚀 Training Complete!
-            
-            📊 Bots Trained: \(botsTrained)
-            📈 Data Points: \(dataPointsProcessed)
-            ⭐ Total XP Gained: \(Int(totalXPGained))
-            🧠 Confidence Boost: \(String(format: "%.2f%%", totalConfidenceGained))
-            👑 New Godlike Bots: \(newGodlikeBots)
-            💎 New Elite Bots: \(newEliteBots)
-            ⏱️ Training Time: \(String(format: "%.2f", trainingTime))s
-            
-            Your ProTrader army just evolved to the next level!
-            """
+        init(riskTolerance: Double, favoriteStrategies: [String], preferredMarkets: [String]) {
+            self.riskTolerance = riskTolerance
+            self.favoriteStrategies = favoriteStrategies
+            self.preferredMarkets = preferredMarkets
         }
-        
-        init() {}
     }
     
-    struct LearningSession: Codable, Identifiable {
-        let id = UUID()
+    // MARK: - Enhanced Learning Session
+    
+    struct EnhancedLearningSession: Codable {
         let timestamp: Date
         let dataPoints: Int
         let xpGained: Double
         let confidenceGained: Double
-        let patterns: [String]
-        let duration: TimeInterval
+        let patternsDiscovered: [String]
+        let aiEngineUsed: String
+        let marketConditions: String
+        let tradingOpportunities: [String]
+        let riskAssessment: String
         
-        init(timestamp: Date = Date(), dataPoints: Int, xpGained: Double, confidenceGained: Double, patterns: [String] = [], duration: TimeInterval = 0) {
+        init(
+            timestamp: Date,
+            dataPoints: Int,
+            xpGained: Double,
+            confidenceGained: Double,
+            patternsDiscovered: [String],
+            aiEngineUsed: String,
+            marketConditions: Any,
+            tradingOpportunities: Any,
+            riskAssessment: Any
+        ) {
             self.timestamp = timestamp
             self.dataPoints = dataPoints
             self.xpGained = xpGained
             self.confidenceGained = confidenceGained
-            self.patterns = patterns
-            self.duration = duration
+            self.patternsDiscovered = patternsDiscovered
+            self.aiEngineUsed = aiEngineUsed
+            self.marketConditions = String(describing: marketConditions)
+            self.tradingOpportunities = (tradingOpportunities as? [String]) ?? []
+            self.riskAssessment = String(describing: riskAssessment)
         }
     }
     
-    struct ProTraderBot: Identifiable, Codable {
-        let id = UUID()
-        let botNumber: Int
-        let name: String
-        var xp: Double
-        var confidence: Double
-        let strategy: TradingStrategy
-        var wins: Int
-        var losses: Int
-        var totalTrades: Int
-        var profitLoss: Double
-        var learningHistory: [LearningSession]
-        var lastTraining: Date?
-        var isActive: Bool
-        let specialization: BotSpecialization
-        
-        var winRate: Double {
-            guard totalTrades > 0 else { return 0 }
-            return (Double(wins) / Double(totalTrades)) * 100
-        }
-        
-        var confidenceLevel: String {
-            switch confidence {
-            case 0.95...: return "GODLIKE"
-            case 0.85..<0.95: return "ELITE"
-            case 0.75..<0.85: return "VETERAN"
-            case 0.65..<0.75: return "EXPERIENCED"
-            case 0.55..<0.65: return "TRAINED"
-            default: return "ROOKIE"
-            }
-        }
-        
-        init(botNumber: Int, name: String, xp: Double = 0, confidence: Double = 0.5, strategy: TradingStrategy, wins: Int = 0, losses: Int = 0, totalTrades: Int = 0, profitLoss: Double = 0, learningHistory: [LearningSession] = [], lastTraining: Date? = nil, isActive: Bool = true, specialization: BotSpecialization) {
-            self.botNumber = botNumber
-            self.name = name
-            self.xp = xp
-            self.confidence = confidence
-            self.strategy = strategy
-            self.wins = wins
-            self.losses = losses
-            self.totalTrades = totalTrades
-            self.profitLoss = profitLoss
-            self.learningHistory = learningHistory
-            self.lastTraining = lastTraining
-            self.isActive = isActive
-            self.specialization = specialization
-        }
-    }
-    
-    enum TradingStrategy: String, CaseIterable, Codable {
-        case scalping = "Scalping"
-        case dayTrading = "Day Trading"
-        case swingTrading = "Swing Trading"
-        case momentum = "Momentum"
-        case meanReversion = "Mean Reversion"
-        case breakout = "Breakout"
-        case trendFollowing = "Trend Following"
-        case arbitrage = "Arbitrage"
-        case gridTrading = "Grid Trading"
-        case neuralNetwork = "Neural Network"
-        case sentimentAnalysis = "Sentiment Analysis"
-        case technicalAnalysis = "Technical Analysis"
-        case fundamentalAnalysis = "Fundamental Analysis"
-        case quantitative = "Quantitative"
-        case highFrequency = "High Frequency"
-    }
-    
-    enum BotSpecialization: String, CaseIterable, Codable {
-        case technical = "Technical Analysis"
-        case fundamental = "Fundamental Analysis"
-        case sentiment = "Sentiment Analysis"
-        case risk = "Risk Management"
-        case volume = "Volume Analysis"
-        case momentum = "Momentum Trading"
-        case scalping = "Scalping Expert"
-        case longTerm = "Long-term Strategy"
-        case volatility = "Volatility Trading"
-        case correlation = "Correlation Analysis"
-        case macroeconomic = "Macroeconomic Analysis"
-        case newsTrading = "News Trading"
-        case algorithmicHFT = "High-Frequency Trading"
-        case patternRecognition = "Pattern Recognition"
-        case aiPrediction = "AI Prediction"
-    }
-    
-    struct ArmyStats {
-        let activeBots: Int
-        let overallWinRate: Double
-        let totalProfitLoss: Double
-        let averageConfidence: Double
-        let totalXP: Double
-        let godlikeBots: Int
-        let eliteBots: Int
-        let veteranBots: Int
-        let rookieBots: Int
-        
-        init(activeBots: Int = 0, overallWinRate: Double = 0, totalProfitLoss: Double = 0, averageConfidence: Double = 0, totalXP: Double = 0, godlikeBots: Int = 0, eliteBots: Int = 0, veteranBots: Int = 0, rookieBots: Int = 0) {
-            self.activeBots = activeBots
-            self.overallWinRate = overallWinRate
-            self.totalProfitLoss = totalProfitLoss
-            self.averageConfidence = averageConfidence
-            self.totalXP = totalXP
-            self.godlikeBots = godlikeBots
-            self.eliteBots = eliteBots
-            self.veteranBots = veteranBots
-            self.rookieBots = rookieBots
-        }
-    }
-    
-    class CSVImporter: ObservableObject {
-        @Published var isImporting = false
-        @Published var progress: Double = 0.0
-        @Published var lastImportedData: [GoldDataPoint] = []
-        @Published var importStatus: String = ""
-        
-        func importData(from content: String) async throws -> [GoldDataPoint] {
-            return []
-        }
-    }
-    
-    // MARK: - VPS Integration Types
-    
-    struct VPSConfig: Codable {
-        let host: String
-        let username: String
-        let keyPath: String
-        let mt5Path: String
-        let dataPath: String
-        let isConnected: Bool
-        
-        init(host: String, username: String, keyPath: String, mt5Path: String = "/root/.wine/drive_c/Program Files/MetaTrader 5", dataPath: String = "/root/mt5_data", isConnected: Bool = false) {
-            self.host = host
-            self.username = username
-            self.keyPath = keyPath
-            self.mt5Path = mt5Path
-            self.dataPath = dataPath
-            self.isConnected = isConnected
-        }
-    }
-    
-    struct MT5Credentials: Codable {
-        let login: String
-        let server: String
-        let password: String
-        
-        init(login: String, server: String, password: String) {
-            self.login = login
-            self.server = server
-            self.password = password
-        }
-    }
-}
+} // MARK: - End of SharedTypes Enum
 
 // MARK: - Sample Data Extensions
 
@@ -1840,125 +1387,13 @@ extension SharedTypes.TradingAccountDetails {
     ]
 }
 
-extension SharedTypes.FlipGoal {
-    static let sampleGoals: [SharedTypes.FlipGoal] = [
-        SharedTypes.FlipGoal(
-            startBalance: 1000.0,
-            targetBalance: 10000.0,
-            startDate: Date().addingTimeInterval(-86400 * 7),
-            targetDate: Date().addingTimeInterval(86400 * 23),
-            currentBalance: 2450.0
-        ),
-        SharedTypes.FlipGoal(
-            startBalance: 500.0,
-            targetBalance: 2000.0,
-            startDate: Date().addingTimeInterval(-86400 * 3),
-            targetDate: Date().addingTimeInterval(86400 * 12),
-            currentBalance: 750.0
-        )
-    ]
-}
-
-// MARK: - Preview Provider
-
-struct SharedTypesPreview: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                // Account Preview
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Sample Trading Account")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Account:")
-                                .fontWeight(.medium)
-                            Spacer()
-                            Text("123456")
-                        }
-                        
-                        HStack {
-                            Text("Broker:")
-                                .fontWeight(.medium)
-                            Spacer()
-                            Text("Coinexx")
-                                .foregroundColor(.orange)
-                        }
-                        
-                        HStack {
-                            Text("Balance:")
-                                .fontWeight(.medium)
-                            Spacer()
-                            Text("$1000.50")
-                        }
-                        
-                        HStack {
-                            Text("Status:")
-                                .fontWeight(.medium)
-                            Spacer()
-                            Text("Connected")
-                                .foregroundColor(.green)
-                        }
-                    }
-                }
-                .padding()
-                .background(.ultraThinMaterial)
-                .cornerRadius(12)
-                
-                // Flip Goal Preview
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Sample Flip Goal")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Start:")
-                                .fontWeight(.medium)
-                            Spacer()
-                            Text("$1000.00")
-                        }
-                        
-                        HStack {
-                            Text("Target:")
-                                .fontWeight(.medium)
-                            Spacer()
-                            Text("$10000.00")
-                        }
-                        
-                        HStack {
-                            Text("Current:")
-                                .fontWeight(.medium)
-                            Spacer()
-                            Text("$2500.00")
-                        }
-                        
-                        HStack {
-                            Text("Progress:")
-                                .fontWeight(.medium)
-                            Spacer()
-                            Text("25.0%")
-                                .foregroundColor(.orange)
-                        }
-                    }
-                }
-                .padding()
-                .background(.ultraThinMaterial)
-                .cornerRadius(12)
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Shared Types")
-            .navigationBarTitleDisplayMode(.inline)
-        }
+#Preview {
+    VStack {
+        Text("SharedTypes Preview")
+            .font(.title)
+        
+        Text("Types available: TradeDirection, BrokerType, TradingMode")
+            .font(.caption)
     }
-}
-
-struct SharedTypes_Previews: PreviewProvider {
-    static var previews: some View {
-        SharedTypesPreview.previews
-    }
+    .padding()
 }
