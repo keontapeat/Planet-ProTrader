@@ -46,24 +46,14 @@ private struct StarParticles: View {
     var body: some View {
         TimelineView(.animation) { timeline in
             Canvas { context, _ in
-                let now = timeline.date.timeIntervalSince1970
+                let now = timeline.date.timeIntervalSinceReferenceDate
                 for i in 0..<count {
-                    let time = times[safe: i] ?? now
-                    let p = positions[safe: i] ?? .zero
-                    let offsetY = CGFloat(sin(now * speed + time * speed + Double(i))) * 12 + CGFloat(now * speed * 8)
-                    let newPoint = CGPoint(
-                        x: p.x,
-                        y: (p.y + offsetY).truncatingRemainder(dividingBy: size.height + 12)
-                    )
-                    var star = context.resolveSymbol(id: i) ?? Path(ellipseIn: CGRect(origin: .zero, size: CGSize(width: radius, height: radius)))
-                    context.fill(
-                        star.offsetBy(dx: newPoint.x, dy: newPoint.y),
-                        with: .color(color)
-                    )
-                }
-            } symbols: {
-                ForEach(0..<count, id: \.self) { _ in
-                    Path(ellipseIn: CGRect(origin: .zero, size: CGSize(width: radius, height: radius)))
+                    let baseTime = times[safe: i] ?? now
+                    let basePos = positions[safe: i] ?? .zero
+                    let yDrift = CGFloat((now + baseTime) * speed).truncatingRemainder(dividingBy: (size.height + 18))
+                    let finalY = (basePos.y + yDrift).truncatingRemainder(dividingBy: size.height + 18)
+                    let starRect = CGRect(x: basePos.x, y: finalY, width: radius, height: radius)
+                    context.fill(Path(ellipseIn: starRect), with: .color(color))
                 }
             }
         }
@@ -79,6 +69,6 @@ private struct StarParticles: View {
 // Safe subscript to avoid out-of-bounds
 fileprivate extension Array {
     subscript(safe idx: Int) -> Element? {
-        return indices.contains(idx) ? self[idx] : nil
+        indices.contains(idx) ? self[idx] : nil
     }
 }
