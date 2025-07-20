@@ -21,12 +21,14 @@ class OpusAutodebugService: ObservableObject {
     
     @Published var hyperEngine = OpusMarkDouglasHyperEngine()
     
-    private let anthropicAPIKey = "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"
+    private var anthropicAPIKey: String {
+        return ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"] ?? ""
+    }
     private let apiURL = "https://api.anthropic.com/v1/messages"
     
     private var debugTimer: Timer?
     private var timer: Timer?
-    private let projectPath = "/Users/keonta/Documents/GOLDEX AI copy 23.backup.1752876581"
+    private let projectPath = "/Users/keonta/Documents/Planet ProTrader"
     
     struct OpusFix: Identifiable, Codable {
         let id = UUID()
