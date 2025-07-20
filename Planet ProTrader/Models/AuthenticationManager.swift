@@ -1,6 +1,6 @@
 //
 //  AuthenticationManager.swift
-//  GOLDEX AI
+//  Planet ProTrader
 //
 //  Created by AI Assistant on 1/25/25.
 //
@@ -12,7 +12,7 @@ import FirebaseFirestore
 
 @MainActor
 class AuthenticationManager: ObservableObject {
-    @Published var user: User?
+    @Published var user: FirebaseAuth.User?
     @Published var isAuthenticated = false
     @Published var isLoading = false
     @Published var errorMessage = ""
@@ -109,7 +109,7 @@ class AuthenticationManager: ObservableObject {
         isLoading = false
     }
     
-    private func createUserProfile(user: User, username: String) async throws {
+    private func createUserProfile(user: FirebaseAuth.User, username: String) async throws {
         let userData: [String: Any] = [
             "uid": user.uid,
             "username": username,
@@ -131,7 +131,7 @@ class AuthenticationManager: ObservableObject {
         try await db.collection("users").document(user.uid).setData(userData)
     }
     
-    private func updateUserProfile(user: User) async throws {
+    private func updateUserProfile(user: FirebaseAuth.User) async throws {
         let updateData: [String: Any] = [
             "lastLoginAt": Date(),
             "isOnline": true
@@ -160,9 +160,7 @@ extension AuthenticationManager {
     }
 }
 
-/*
 #Preview {
-    ContentView()
+    ProfileView()
         .environmentObject(AuthenticationManager())
 }
-*/
