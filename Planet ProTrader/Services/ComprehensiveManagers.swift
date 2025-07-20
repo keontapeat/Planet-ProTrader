@@ -177,21 +177,6 @@ struct Reward: Identifiable, Codable {
     ]
 }
 
-// MARK: - Missing View Components
-struct ProTraderBotView: View {
-    var body: some View {
-        Text("ProTrader Bot View")
-            .navigationTitle("ProTrader")
-    }
-}
-
-struct ProfileView: View {
-    var body: some View {
-        Text("Profile View")
-            .navigationTitle("Profile")
-    }
-}
-
 // MARK: - Haptic Feedback Manager
 class HapticFeedbackManager {
     static let shared = HapticFeedbackManager()
@@ -214,6 +199,7 @@ class HapticFeedbackManager {
     }
 }
 
+// MARK: - Payment Management
 @MainActor
 class LocalPaymentManager: ObservableObject {
     @Published var availableMethods: [PaymentMethod] = []
