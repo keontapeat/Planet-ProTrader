@@ -2,6 +2,7 @@ import SwiftUI
 import Foundation
 
 struct MainTabView: View {
+    @EnvironmentObject private var authManager: AuthenticationManager
     @StateObject private var opusManager = OpusAutodebugService()
     @State private var showingOpusInterface = false
     @State private var selectedTab = 0
@@ -21,58 +22,52 @@ struct MainTabView: View {
             .ignoresSafeArea()
             
             TabView(selection: $selectedTab) {
-                NavigationStack {
-                    HomeView()
-                        .navigationBarTitleDisplayMode(.large)
-                }
-                .tabItem {
-                    Image(systemName: selectedTab == 0 ? "house.fill" : "house")
-                    Text("Home")
-                }
-                .tag(0)
+                // Home Tab
+                HomeDashboardView()
+                    .tabItem {
+                        Image(systemName: "house.fill")
+                        Text("Home")
+                    }
+                    .tag(0)
                 
-                NavigationStack {
-                    ModernBotView()
-                        .navigationBarTitleDisplayMode(.large)
-                }
-                .tabItem {
-                    Image(systemName: selectedTab == 1 ? "robot.2.fill" : "robot.2")
-                    Text("AI Bots")
-                }
-                .tag(1)
+                // Trading Tab
+                ProfessionalChartView()
+                    .tabItem {
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                        Text("Trading")
+                    }
+                    .tag(1)
                 
-                NavigationStack {
-                    SimpleOpusView()
-                        .navigationBarTitleDisplayMode(.large)
-                }
-                .tabItem {
-                    Image(systemName: selectedTab == 2 ? "brain.head.profile.fill" : "brain.head.profile")
-                    Text("OPUS")
-                }
-                .tag(2)
+                // Bots Tab
+                ModernBotView()
+                    .tabItem {
+                        Image(systemName: "brain.head.profile")
+                        Text("Bots")
+                    }
+                    .tag(2)
                 
-                NavigationStack {
-                    FeedMeView()
-                        .navigationBarTitleDisplayMode(.large)
-                }
-                .tabItem {
-                    Image(systemName: selectedTab == 3 ? "sparkles" : "sparkle")
-                    Text("Feed AI")
-                }
-                .tag(3)
+                // Claude Integration Tab (NEW!)
+                ClaudeIntegrationDashboard()
+                    .tabItem {
+                        Image(systemName: "cpu")
+                        Text("Claude AI")
+                    }
+                    .tag(3)
                 
-                NavigationStack {
-                    ProfileView()
-                        .navigationBarTitleDisplayMode(.large)
-                }
-                .tabItem {
-                    Image(systemName: selectedTab == 4 ? "person.fill" : "person")
-                    Text("Profile")
-                }
-                .tag(4)
+                // Profile Tab
+                ProfileView()
+                    .tabItem {
+                        Image(systemName: "person.circle.fill")
+                        Text("Profile")
+                    }
+                    .tag(4)
             }
             .accentColor(DesignSystem.primaryGold)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedTab)
+            .onAppear {
+                setupOpusSystem()
+                setupTabBarAppearance()
+            }
             
             // Floating OPUS Status Indicator
             VStack {
@@ -98,9 +93,6 @@ struct MainTabView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
-        .onAppear {
-            setupOpusSystem()
-        }
         .animation(.easeInOut, value: showingOpusInterface)
     }
     
@@ -111,6 +103,15 @@ struct MainTabView: View {
                 opusManager.unleashOpusPower()
             }
         }
+    }
+    
+    private func setupTabBarAppearance() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor.systemBackground.withAlphaComponent(0.95)
+        
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
 }
 
