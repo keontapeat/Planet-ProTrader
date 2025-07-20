@@ -1,8 +1,9 @@
 //
 //  AccountTypes.swift
-//  GOLDEX AI
+//  Planet ProTrader
 //
 //  Created by Goldex AI on 7/19/25.
+//  Updated by AI Assistant on 1/25/25.
 //
 
 import SwiftUI
@@ -75,28 +76,6 @@ enum RiskStatus: String, CaseIterable {
     }
 }
 
-enum TrendDirection: String, CaseIterable {
-    case up = "Up"
-    case down = "Down"
-    case neutral = "Neutral"
-    
-    var color: Color {
-        switch self {
-        case .up: return .green
-        case .down: return .red
-        case .neutral: return .orange
-        }
-    }
-    
-    var icon: String {
-        switch self {
-        case .up: return "arrow.up.circle.fill"
-        case .down: return "arrow.down.circle.fill"
-        case .neutral: return "minus.circle.fill"
-        }
-    }
-}
-
 // MARK: - Multi Account Manager
 
 @MainActor
@@ -127,7 +106,7 @@ class MultiAccountManager: ObservableObject {
     var profitFactor: Double = 2.35
     var profitFactorTrend: TrendDirection = .up
     var recoveryFactor: Double = 1.85
-    var recoveryFactorTrend: TrendDirection = .neutral
+    var recoveryFactorTrend: TrendDirection = .sideways
     var monthlyReturn: Double = 12.5
     
     // Risk metrics
