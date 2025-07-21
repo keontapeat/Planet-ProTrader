@@ -7,14 +7,33 @@
 
 import Foundation
 import SwiftUI
-import MasterSharedTypes
+
+// MARK: - Trade Direction Enum
+enum TradeDirection: String, Codable, CaseIterable {
+    case buy = "BUY"
+    case sell = "SELL"
+    
+    var color: Color {
+        switch self {
+        case .buy: return .green
+        case .sell: return .red
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .buy: return "arrow.up.circle.fill"
+        case .sell: return "arrow.down.circle.fill"
+        }
+    }
+}
 
 // MARK: - Real-Time Trade (FIXED CODABLE)
 struct RealTimeTrade: Identifiable, Codable {
     let id: UUID
     let ticket: String
     let symbol: String
-    let direction: MasterSharedTypes.TradeDirection
+    let direction: TradeDirection
     let openPrice: Double
     let currentPrice: Double
     let lotSize: Double
@@ -23,7 +42,7 @@ struct RealTimeTrade: Identifiable, Codable {
     
     init(ticket: String,
          symbol: String,
-         direction: MasterSharedTypes.TradeDirection,
+         direction: TradeDirection,
          openPrice: Double,
          currentPrice: Double,
          lotSize: Double,

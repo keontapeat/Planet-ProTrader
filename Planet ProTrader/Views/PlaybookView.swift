@@ -50,39 +50,10 @@ struct PlaybookView: View {
                 tradingFloorBackground
                     .ignoresSafeArea()
                 
-                VStack(spacing: 0) {
-                    // LEGENDARY Header
-                    legendaryPlaybookHeader
-                    
-                    // Performance Dashboard
-                    performanceDashboard
-                    
-                    // Premium Tab Navigation
-                    premiumTabNavigation
-                    
-                    // Main Content
-                    TabView(selection: $selectedTab) {
-                        // Live Trades Tab
-                        liveTradesTab
-                            .tag(PlaybookSection.live)
-                        
-                        // Journal Tab
-                        journalTab
-                            .tag(PlaybookSection.journal)
-                        
-                        // Grades Tab
-                        gradesTab
-                            .tag(PlaybookSection.grades)
-                        
-                        // Psychology Tab
-                        psychologyTab
-                            .tag(PlaybookSection.psychology)
-                        
-                        // Statistics Tab
-                        statisticsTab
-                            .tag(PlaybookSection.statistics)
-                    }
-                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                if playbookEngine.isLoading {
+                    loadingView
+                } else {
+                    mainContent
                 }
             }
             .navigationBarHidden(true)
@@ -103,10 +74,56 @@ struct PlaybookView: View {
                 handlePhotoSelection(newPhotos)
             }
             .onAppear {
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
+                withAnimation(DesignSystem.springAnimation.delay(0.1)) {
                     animateOnAppear = true
                 }
             }
+            .alert("Error", isPresented: .constant(playbookEngine.errorMessage != nil)) {
+                Button("OK") {
+                    playbookEngine.errorMessage = nil
+                }
+            } message: {
+                Text(playbookEngine.errorMessage ?? "")
+            }
+        }
+    }
+    
+    // MARK: - Main Content
+    
+    private var mainContent: some View {
+        VStack(spacing: 0) {
+            // LEGENDARY Header
+            legendaryPlaybookHeader
+            
+            // Performance Dashboard
+            performanceDashboard
+            
+            // Premium Tab Navigation
+            premiumTabNavigation
+            
+            // Main Content
+            TabView(selection: $selectedTab) {
+                liveTradesTab.tag(PlaybookSection.live)
+                journalTab.tag(PlaybookSection.journal)
+                gradesTab.tag(PlaybookSection.grades)
+                psychologyTab.tag(PlaybookSection.psychology)
+                statisticsTab.tag(PlaybookSection.statistics)
+            }
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+        }
+    }
+    
+    // MARK: - Loading View
+    
+    private var loadingView: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+                .scaleEffect(2.0)
+                .tint(DesignSystem.primaryGold)
+            
+            Text("Loading Trading Data...")
+                .font(DesignSystem.headlineFont)
+                .foregroundColor(.white)
         }
     }
     
@@ -132,7 +149,7 @@ struct PlaybookView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("THE PLAYBOOK™")
-                        .font(.system(size: 28, weight: .black, design: .rounded))
+                        .font(DesignSystem.titleFont)
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [DesignSystem.primaryGold, .white, DesignSystem.primaryGold],
@@ -165,6 +182,7 @@ struct PlaybookView: View {
                             .fill(DesignSystem.primaryGold)
                     )
                 }
+                .buttonStyle(.plain)
             }
             
             // Live Trading Status
@@ -197,6 +215,7 @@ struct PlaybookView: View {
         .padding()
         .scaleEffect(animateOnAppear ? 1.0 : 0.8)
         .opacity(animateOnAppear ? 1.0 : 0.0)
+        .animation(DesignSystem.springAnimation, value: animateOnAppear)
     }
     
     // MARK: - Performance Dashboard
@@ -238,7 +257,7 @@ struct PlaybookView: View {
         .padding(.horizontal)
         .scaleEffect(animateOnAppear ? 1.0 : 0.9)
         .opacity(animateOnAppear ? 1.0 : 0.0)
-        .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2), value: animateOnAppear)
+        .animation(DesignSystem.springAnimation.delay(0.2), value: animateOnAppear)
     }
     
     // MARK: - Premium Tab Navigation
@@ -248,7 +267,7 @@ struct PlaybookView: View {
             HStack(spacing: 8) {
                 ForEach(PlaybookSection.allCases, id: \.self) { section in
                     Button(action: {
-                        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                        withAnimation(DesignSystem.springAnimation) {
                             selectedTab = section
                         }
                     }) {
@@ -264,16 +283,16 @@ struct PlaybookView: View {
                         .frame(minWidth: 80)
                         .padding(.vertical, 12)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: DesignSystem.cornerRadius)
                                 .fill(selectedTab == section ? DesignSystem.primaryGold.opacity(0.2) : .clear)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
+                                    RoundedRectangle(cornerRadius: DesignSystem.cornerRadius)
                                         .stroke(selectedTab == section ? DesignSystem.primaryGold : .clear, lineWidth: 2)
                                 )
                         )
                         .scaleEffect(selectedTab == section ? 1.05 : 1.0)
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal)
@@ -281,7 +300,7 @@ struct PlaybookView: View {
         .padding(.vertical, 8)
     }
     
-    // MARK: - Live Trades Tab
+    // MARK: - Tab Views
     
     private var liveTradesTab: some View {
         ScrollView {
@@ -296,7 +315,13 @@ struct PlaybookView: View {
                     )
                 }
                 
-                if filteredTrades.isEmpty {
+                if filteredTrades.isEmpty && !searchText.isEmpty {
+                    EmptyStateView(
+                        title: "No Matching Trades",
+                        subtitle: "Try adjusting your search criteria",
+                        action: { searchText = "" }
+                    )
+                } else if playbookEngine.trades.isEmpty {
                     EmptyStateView(
                         title: "No Trades Yet",
                         subtitle: "Start documenting your trading journey",
@@ -308,8 +333,6 @@ struct PlaybookView: View {
         }
     }
     
-    // MARK: - Journal Tab
-    
     private var journalTab: some View {
         ScrollView {
             VStack(spacing: 20) {
@@ -320,12 +343,18 @@ struct PlaybookView: View {
                         JournalEntryCard(entry: entry)
                     }
                 }
+                
+                if playbookEngine.journalEntries.isEmpty {
+                    EmptyStateView(
+                        title: "No Journal Entries",
+                        subtitle: "Add a trade to generate your first entry",
+                        action: { showingTradeEntry = true }
+                    )
+                }
             }
             .padding()
         }
     }
-    
-    // MARK: - Grades Tab
     
     private var gradesTab: some View {
         ScrollView {
@@ -345,13 +374,10 @@ struct PlaybookView: View {
         }
     }
     
-    // MARK: - Psychology Tab
-    
     private var psychologyTab: some View {
         ScrollView {
             VStack(spacing: 20) {
                 PsychologyDashboard(markDouglasEngine: markDouglasEngine)
-                
                 TradingPsychologyInsights(
                     trades: playbookEngine.trades,
                     markDouglasEngine: markDouglasEngine
@@ -361,13 +387,10 @@ struct PlaybookView: View {
         }
     }
     
-    // MARK: - Statistics Tab
-    
     private var statisticsTab: some View {
         ScrollView {
             VStack(spacing: 20) {
                 ComprehensiveStats(engine: playbookEngine)
-                
                 AdvancedAnalytics(engine: playbookEngine)
             }
             .padding()
@@ -381,9 +404,9 @@ struct PlaybookView: View {
         
         if !searchText.isEmpty {
             trades = trades.filter { trade in
-                trade.symbol.lowercased().contains(searchText.lowercased()) ||
-                trade.setupDescription.lowercased().contains(searchText.lowercased()) ||
-                trade.emotionalState.lowercased().contains(searchText.lowercased())
+                trade.symbol.localizedCaseInsensitiveContains(searchText) ||
+                trade.setupDescription.localizedCaseInsensitiveContains(searchText) ||
+                trade.emotionalState.localizedCaseInsensitiveContains(searchText)
             }
         }
         
@@ -393,273 +416,21 @@ struct PlaybookView: View {
     // MARK: - Helper Methods
     
     private func handlePhotoSelection(_ photos: [PhotosPickerItem]) {
-        // Handle screenshot uploads
+        guard !photos.isEmpty else { return }
+        
         Task {
-            for photo in photos {
-                if let data = try? await photo.loadTransferable(type: Data.self) {
-                    // Process screenshot and add to current trade
-                    print("Screenshot uploaded: \(data.count) bytes")
+            do {
+                for photo in photos {
+                    if let data = try await photo.loadTransferable(type: Data.self) {
+                        print("Screenshot uploaded: \(data.count) bytes")
+                        // Process screenshot and add to current trade
+                    }
                 }
+            } catch {
+                playbookEngine.errorMessage = "Failed to load photos: \(error.localizedDescription)"
             }
         }
         selectedPhotos.removeAll()
-    }
-}
-
-// MARK: - Legendary Playbook Engine
-
-@MainActor
-class LegendaryPlaybookEngine: ObservableObject {
-    @Published var trades: [PlaybookTrade] = []
-    @Published var journalEntries: [JournalEntry] = []
-    @Published var isAutoLogging = true
-    
-    init() {
-        loadSampleData()
-    }
-    
-    // MARK: - Computed Statistics
-    
-    var winRate: Double {
-        let wins = trades.filter { $0.result == .win }.count
-        return trades.isEmpty ? 0.0 : Double(wins) / Double(trades.count)
-    }
-    
-    var profitFactor: Double {
-        let grossProfit = trades.filter { $0.result == .win }.reduce(0) { $0 + $1.pnl }
-        let grossLoss = abs(trades.filter { $0.result == .loss }.reduce(0) { $0 + $1.pnl })
-        return grossLoss == 0 ? 0 : grossProfit / grossLoss
-    }
-    
-    var averageRMultiple: Double {
-        return trades.isEmpty ? 0.0 : trades.reduce(0) { $0 + $1.rMultiple } / Double(trades.count)
-    }
-    
-    var eliteTrades: Int {
-        return trades.filter { $0.grade == .elite }.count
-    }
-    
-    // MARK: - Trade Management
-    
-    func addTrade(_ trade: PlaybookTrade) {
-        trades.append(trade)
-        
-        // Auto-generate journal entry
-        if isAutoLogging {
-            generateJournalEntry(for: trade)
-        }
-    }
-    
-    private func generateJournalEntry(for trade: PlaybookTrade) {
-        let entry = JournalEntry(
-            id: UUID().uuidString,
-            timestamp: trade.timestamp,
-            type: .tradeAnalysis,
-            title: "Auto-Generated: \(trade.symbol) Trade",
-            content: generateAutoAnalysis(for: trade),
-            emotionalRating: trade.emotionalRating,
-            markDouglasLesson: generateMarkDouglasLesson(for: trade)
-        )
-        journalEntries.append(entry)
-    }
-    
-    private func generateAutoAnalysis(for trade: PlaybookTrade) -> String {
-        let outcome = trade.result == .win ? "successful" : "unsuccessful"
-        return """
-        Trade Analysis - \(trade.symbol):
-        
-        Setup: \(trade.setupDescription)
-        Entry: \(String(format: "%.2f", trade.entryPrice))
-        Exit: \(String(format: "%.2f", trade.exitPrice ?? 0))
-        Result: \(outcome) (\(String(format: "%.1fR", trade.rMultiple)))
-        
-        What went right: \(trade.result == .win ? "Proper execution of setup" : "Followed risk management rules")
-        What could improve: \(generateImprovementSuggestion(for: trade))
-        
-        Emotional state: \(trade.emotionalState)
-        Grade: \(trade.grade.rawValue)
-        """
-    }
-    
-    private func generateMarkDouglasLesson(for trade: PlaybookTrade) -> String {
-        let lessons = [
-            "Every trade outcome is independent - this doesn't predict the next trade",
-            "Focus on executing your process, not the outcome",
-            "Maintain emotional equilibrium regardless of results",
-            "Think in probabilities, not certainties",
-            "Trust your edge and execute consistently"
-        ]
-        return lessons.randomElement()!
-    }
-    
-    private func generateImprovementSuggestion(for trade: PlaybookTrade) -> String {
-        switch trade.grade {
-        case .elite:
-            return "Perfect execution - maintain this standard"
-        case .good:
-            return "Good trade - minor timing improvements possible"
-        case .average:
-            return "Consider better entry timing and risk management"
-        case .poor:
-            return "Review setup criteria and emotional state before entry"
-        case .all:
-            return "Continue learning and developing skills"
-        }
-    }
-    
-    private func loadSampleData() {
-        trades = [
-            PlaybookTrade(
-                id: UUID().uuidString,
-                symbol: "XAUUSD",
-                direction: .buy,
-                entryPrice: 2674.50,
-                exitPrice: 2682.25,
-                stopLoss: 2668.00,
-                takeProfit: 2690.00,
-                lotSize: 0.01,
-                pnl: 77.50,
-                rMultiple: 1.2,
-                result: .win,
-                grade: .elite,
-                setupDescription: "Perfect institutional order flow confluence at London open",
-                emotionalState: "Calm and confident",
-                timestamp: Date().addingTimeInterval(-3600),
-                beforeScreenshot: nil,
-                duringScreenshot: nil,
-                afterScreenshot: nil,
-                emotionalRating: 5
-            ),
-            PlaybookTrade(
-                id: UUID().uuidString,
-                symbol: "XAUUSD",
-                direction: .sell,
-                entryPrice: 2680.00,
-                exitPrice: 2675.50,
-                stopLoss: 2685.00,
-                takeProfit: 2670.00,
-                lotSize: 0.01,
-                pnl: 45.00,
-                rMultiple: 0.9,
-                result: .win,
-                grade: .good,
-                setupDescription: "Clean resistance rejection with volume confirmation",
-                emotionalState: "Patient and disciplined",
-                timestamp: Date().addingTimeInterval(-7200),
-                beforeScreenshot: nil,
-                duringScreenshot: nil,
-                afterScreenshot: nil,
-                emotionalRating: 4
-            )
-        ]
-        
-        journalEntries = [
-            JournalEntry(
-                id: UUID().uuidString,
-                timestamp: Date(),
-                type: .dailyReview,
-                title: "Daily Review - Excellent Progress",
-                content: "Today I executed two high-quality setups with perfect discipline. The Mark Douglas principles are becoming second nature.",
-                emotionalRating: 5,
-                markDouglasLesson: "Consistency comes from within, not from the markets"
-            )
-        ]
-    }
-}
-
-// MARK: - Data Models
-
-struct PlaybookTrade: Identifiable {
-    let id: String
-    let symbol: String
-    let direction: SharedTypes.TradeDirection
-    let entryPrice: Double
-    var exitPrice: Double?
-    let stopLoss: Double
-    let takeProfit: Double
-    let lotSize: Double
-    var pnl: Double
-    var rMultiple: Double
-    var result: TradeResult
-    var grade: TradeGrade
-    let setupDescription: String
-    let emotionalState: String
-    let timestamp: Date
-    var beforeScreenshot: UIImage?
-    var duringScreenshot: UIImage?
-    var afterScreenshot: UIImage?
-    let emotionalRating: Int // 1-5 scale
-    
-    enum TradeResult: String, CaseIterable {
-        case win = "WIN"
-        case loss = "LOSS"
-        case breakeven = "BREAKEVEN"
-        case running = "RUNNING"
-        
-        var color: Color {
-            switch self {
-            case .win: return .green
-            case .loss: return .red
-            case .breakeven: return .orange
-            case .running: return .blue
-            }
-        }
-    }
-}
-
-enum TradeGrade: String, CaseIterable {
-    case all = "ALL"
-    case elite = "A+ ELITE"
-    case good = "A GOOD"
-    case average = "B AVERAGE"
-    case poor = "C POOR"
-    
-    var color: Color {
-        switch self {
-        case .all: return .gray
-        case .elite: return .purple
-        case .good: return .green
-        case .average: return .orange
-        case .poor: return .red
-        }
-    }
-    
-    var description: String {
-        switch self {
-        case .all: return "All trades"
-        case .elite: return "Perfect execution, Mark Douglas would be proud"
-        case .good: return "Solid trade with minor improvements possible"
-        case .average: return "Acceptable but needs refinement"
-        case .poor: return "Learning opportunity, review psychology"
-        }
-    }
-}
-
-struct JournalEntry: Identifiable {
-    let id: String
-    let timestamp: Date
-    let type: EntryType
-    let title: String
-    let content: String
-    let emotionalRating: Int
-    let markDouglasLesson: String
-    
-    enum EntryType: String, CaseIterable {
-        case tradeAnalysis = "TRADE ANALYSIS"
-        case dailyReview = "DAILY REVIEW"
-        case psychologyNote = "PSYCHOLOGY NOTE"
-        case marketObservation = "MARKET OBSERVATION"
-        case improvement = "IMPROVEMENT PLAN"
-        
-        var icon: String {
-            switch self {
-            case .tradeAnalysis: return "chart.line.uptrend.xyaxis"
-            case .dailyReview: return "calendar"
-            case .psychologyNote: return "brain.head.profile"
-            case .marketObservation: return "eye"
-            case .improvement: return "arrow.up.circle"
-            }
-        }
     }
 }
 
@@ -712,10 +483,10 @@ struct PerformanceCard: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: DesignSystem.cornerRadius)
                 .fill(.ultraThinMaterial)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: DesignSystem.cornerRadius)
                         .stroke(color.opacity(0.3), lineWidth: 1)
                 )
         )
@@ -800,20 +571,9 @@ struct LegendaryTradeCard: View {
                     )
                 }
                 
-                // Screenshot indicators
+                // Timestamp
                 HStack {
-                    Text("Screenshots:")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.white.opacity(0.6))
-                    
-                    HStack(spacing: 4) {
-                        ScreenshotIndicator(hasScreenshot: trade.beforeScreenshot != nil, label: "Before")
-                        ScreenshotIndicator(hasScreenshot: trade.duringScreenshot != nil, label: "During")
-                        ScreenshotIndicator(hasScreenshot: trade.afterScreenshot != nil, label: "After")
-                    }
-                    
                     Spacer()
-                    
                     Text(timeAgo(trade.timestamp))
                         .font(.system(size: 10, weight: .medium))
                         .foregroundColor(.white.opacity(0.5))
@@ -829,19 +589,20 @@ struct LegendaryTradeCard: View {
                     )
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
     }
     
     private func timeAgo(_ date: Date) -> String {
         let interval = Date().timeIntervalSince(date)
         
-        if interval < 60 {
+        switch interval {
+        case ..<60:
             return "Now"
-        } else if interval < 3600 {
+        case 60..<3600:
             return "\(Int(interval / 60))m ago"
-        } else if interval < 86400 {
+        case 3600..<86400:
             return "\(Int(interval / 3600))h ago"
-        } else {
+        default:
             let days = Int(interval / 86400)
             return "\(days)d ago"
         }
@@ -862,23 +623,6 @@ struct MetricView: View {
             Text(value)
                 .font(.system(size: 12, weight: .bold, design: .monospaced))
                 .foregroundColor(color)
-        }
-    }
-}
-
-struct ScreenshotIndicator: View {
-    let hasScreenshot: Bool
-    let label: String
-    
-    var body: some View {
-        HStack(spacing: 2) {
-            Circle()
-                .fill(hasScreenshot ? .green : .red)
-                .frame(width: 6, height: 6)
-            
-            Text(label)
-                .font(.system(size: 8, weight: .medium))
-                .foregroundColor(.white.opacity(0.6))
         }
     }
 }
@@ -914,39 +658,120 @@ struct EmptyStateView: View {
                 RoundedRectangle(cornerRadius: 20)
                     .fill(DesignSystem.primaryGold)
             )
+            .buttonStyle(.plain)
         }
         .padding(.top, 50)
     }
 }
 
+// MARK: - Sheet Views
+
 struct TradeEntrySheet: View {
     let engine: LegendaryPlaybookEngine
     @Environment(\.dismiss) private var dismiss
     
+    // Form state
+    @State private var symbol = "XAUUSD"
+    @State private var direction: TradeDirection = .buy
+    @State private var entryPrice = ""
+    @State private var stopLoss = ""
+    @State private var takeProfit = ""
+    @State private var lotSize = ""
+    @State private var setupDescription = ""
+    @State private var emotionalState = ""
+    @State private var emotionalRating = 3
+    
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    Text("Quick Trade Entry")
-                        .font(.title)
-                        .padding()
+        NavigationStack {
+            Form {
+                Section("Trade Details") {
+                    TextField("Symbol", text: $symbol)
                     
-                    Text("Advanced trade entry form coming soon...")
-                        .foregroundColor(.secondary)
+                    Picker("Direction", selection: $direction) {
+                        ForEach(TradeDirection.allCases, id: \.self) { direction in
+                            Text(direction.rawValue).tag(direction)
+                        }
+                    }
+                    .pickerStyle(.segmented)
                     
-                    Spacer()
+                    TextField("Entry Price", text: $entryPrice)
+                        .keyboardType(.decimalPad)
+                    
+                    TextField("Stop Loss", text: $stopLoss)
+                        .keyboardType(.decimalPad)
+                    
+                    TextField("Take Profit", text: $takeProfit)
+                        .keyboardType(.decimalPad)
+                    
+                    TextField("Lot Size", text: $lotSize)
+                        .keyboardType(.decimalPad)
+                }
+                
+                Section("Analysis") {
+                    TextField("Setup Description", text: $setupDescription, axis: .vertical)
+                        .lineLimit(3...6)
+                    
+                    TextField("Emotional State", text: $emotionalState)
+                    
+                    Stepper("Emotional Rating: \(emotionalRating)/5", value: $emotionalRating, in: 1...5)
                 }
             }
             .navigationTitle("New Trade")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        saveTrade()
+                    }
+                    .disabled(!isFormValid)
+                }
             }
         }
+    }
+    
+    private var isFormValid: Bool {
+        !symbol.isEmpty && 
+        !entryPrice.isEmpty && 
+        !stopLoss.isEmpty && 
+        !takeProfit.isEmpty && 
+        !lotSize.isEmpty &&
+        !setupDescription.isEmpty
+    }
+    
+    private func saveTrade() {
+        guard let entryPriceValue = Double(entryPrice),
+              let stopLossValue = Double(stopLoss),
+              let takeProfitValue = Double(takeProfit),
+              let lotSizeValue = Double(lotSize) else {
+            return
+        }
+        
+        let trade = PlaybookTrade(
+            id: UUID().uuidString,
+            symbol: symbol.uppercased(),
+            direction: direction,
+            entryPrice: entryPriceValue,
+            stopLoss: stopLossValue,
+            takeProfit: takeProfitValue,
+            lotSize: lotSizeValue,
+            pnl: 0,
+            rMultiple: 0,
+            result: .running,
+            grade: .average,
+            setupDescription: setupDescription,
+            emotionalState: emotionalState.isEmpty ? "Neutral" : emotionalState,
+            timestamp: Date(),
+            emotionalRating: emotionalRating
+        )
+        
+        engine.addTrade(trade)
+        dismiss()
     }
 }
 
@@ -956,19 +781,103 @@ struct TradeDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    Text("Trade Details")
-                        .font(.title)
-                        .padding()
+                    // Trade Header
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text(trade.symbol)
+                                .font(.system(size: 32, weight: .black))
+                                .foregroundColor(.white)
+                            
+                            Text(trade.direction.rawValue)
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.black)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(trade.direction.color)
+                                )
+                        }
+                        
+                        Text(trade.grade.rawValue)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(trade.grade.color)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(trade.grade.color.opacity(0.2))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(trade.grade.color, lineWidth: 1)
+                                    )
+                            )
+                    }
+                    .padding()
                     
-                    Text("Comprehensive trade analysis coming soon...")
-                        .foregroundColor(.secondary)
+                    // Performance Summary
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
+                        DetailMetricCard(title: "P&L", value: "$\(String(format: "%.2f", trade.pnl))", color: trade.pnl > 0 ? .green : .red)
+                        DetailMetricCard(title: "R-Multiple", value: "\(String(format: "%.1fR", trade.rMultiple))", color: trade.rMultiple > 0 ? .green : .red)
+                        DetailMetricCard(title: "Entry Price", value: String(format: "%.2f", trade.entryPrice), color: .blue)
+                        DetailMetricCard(title: "Exit Price", value: trade.exitPrice != nil ? String(format: "%.2f", trade.exitPrice!) : "Running", color: trade.result.color)
+                        DetailMetricCard(title: "Stop Loss", value: String(format: "%.2f", trade.stopLoss), color: .red)
+                        DetailMetricCard(title: "Take Profit", value: String(format: "%.2f", trade.takeProfit), color: .green)
+                    }
+                    .padding(.horizontal)
+                    
+                    // Trade Analysis
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Setup Analysis")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                        
+                        Text(trade.setupDescription)
+                            .font(.body)
+                            .foregroundColor(.white.opacity(0.8))
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(.ultraThinMaterial)
+                            )
+                        
+                        HStack {
+                            Text("Emotional State:")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            
+                            Spacer()
+                            
+                            Text(trade.emotionalState)
+                                .font(.body)
+                                .foregroundColor(.blue)
+                        }
+                        
+                        HStack {
+                            Text("Emotional Rating:")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            
+                            Spacer()
+                            
+                            HStack(spacing: 4) {
+                                ForEach(1...5, id: \.self) { rating in
+                                    Image(systemName: rating <= trade.emotionalRating ? "star.fill" : "star")
+                                        .foregroundColor(rating <= trade.emotionalRating ? .yellow : .gray)
+                                }
+                            }
+                        }
+                    }
+                    .padding()
                     
                     Spacer()
                 }
             }
+            .background(Color.black.ignoresSafeArea())
             .navigationTitle("Trade Analysis")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -976,21 +885,87 @@ struct TradeDetailSheet: View {
                     Button("Done") {
                         dismiss()
                     }
+                    .foregroundColor(DesignSystem.primaryGold)
                 }
             }
         }
     }
 }
 
-// MARK: - Additional Supporting Views (Placeholders for now)
+struct DetailMetricCard: View {
+    let title: String
+    let value: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.7))
+            
+            Text(value)
+                .font(.system(size: 18, weight: .bold, design: .monospaced))
+                .foregroundColor(color)
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(color.opacity(0.3), lineWidth: 1)
+                )
+        )
+    }
+}
+
+// MARK: - Placeholder Supporting Views
 
 struct JournalStatsHeader: View {
     let engine: LegendaryPlaybookEngine
     
     var body: some View {
-        Text("Journal Statistics")
-            .font(.headline)
-            .padding()
+        VStack(spacing: 12) {
+            Text("Journal Statistics")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+            
+            HStack(spacing: 20) {
+                VStack {
+                    Text("\(engine.journalEntries.count)")
+                        .font(.system(size: 24, weight: .black))
+                        .foregroundColor(DesignSystem.primaryGold)
+                    Text("Entries")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                
+                VStack {
+                    Text("\(Int(engine.winRate * 100))%")
+                        .font(.system(size: 24, weight: .black))
+                        .foregroundColor(.green)
+                    Text("Win Rate")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                
+                VStack {
+                    Text("\(engine.eliteTrades)")
+                        .font(.system(size: 24, weight: .black))
+                        .foregroundColor(.purple)
+                    Text("Elite Trades")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+        )
     }
 }
 
@@ -998,16 +973,65 @@ struct JournalEntryCard: View {
     let entry: JournalEntry
     
     var body: some View {
-        VStack {
-            Text(entry.title)
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: entry.type.icon)
+                    .font(.title2)
+                    .foregroundColor(DesignSystem.primaryGold)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(entry.title)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Text(entry.type.rawValue)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.6))
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 4) {
+                    HStack(spacing: 2) {
+                        ForEach(1...5, id: \.self) { rating in
+                            Image(systemName: rating <= entry.emotionalRating ? "star.fill" : "star")
+                                .font(.caption)
+                                .foregroundColor(rating <= entry.emotionalRating ? .yellow : .gray)
+                        }
+                    }
+                    
+                    Text(entry.timestamp, style: .time)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.5))
+                }
+            }
+            
             Text(entry.content)
                 .font(.body)
+                .foregroundColor(.white.opacity(0.8))
+                .lineLimit(4)
+            
+            if !entry.markDouglasLesson.isEmpty {
+                HStack {
+                    Image(systemName: "brain.head.profile")
+                        .foregroundColor(.purple)
+                    
+                    Text("Mark Douglas: \(entry.markDouglasLesson)")
+                        .font(.caption)
+                        .foregroundColor(.purple.opacity(0.8))
+                        .italic()
+                }
+                .padding(.top, 4)
+            }
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 16)
                 .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(DesignSystem.primaryGold.opacity(0.2), lineWidth: 1)
+                )
         )
     }
 }
@@ -1016,9 +1040,39 @@ struct GradeDistributionChart: View {
     let engine: LegendaryPlaybookEngine
     
     var body: some View {
-        Text("Grade Distribution Chart")
-            .font(.headline)
-            .padding()
+        VStack(spacing: 16) {
+            Text("Grade Distribution")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+            
+            HStack(spacing: 8) {
+                ForEach(TradeGrade.allCases.filter { $0 != .all }, id: \.self) { grade in
+                    let count = engine.trades.filter { $0.grade == grade }.count
+                    let percentage = engine.trades.isEmpty ? 0 : Double(count) / Double(engine.trades.count)
+                    
+                    VStack(spacing: 8) {
+                        Rectangle()
+                            .fill(grade.color)
+                            .frame(width: 40, height: max(20, percentage * 100))
+                            .cornerRadius(4)
+                        
+                        Text(grade.rawValue.components(separatedBy: " ").first ?? "")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                        
+                        Text("\(count)")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(grade.color)
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+        )
     }
 }
 
@@ -1027,12 +1081,120 @@ struct GradeBreakdownCard: View {
     let trades: [PlaybookTrade]
     
     var body: some View {
-        VStack {
-            Text(grade.rawValue)
-                .font(.headline)
-                .foregroundColor(grade.color)
-            Text("\(trades.count) trades")
-                .font(.body)
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(grade.rawValue)
+                    .font(.headline)
+                    .foregroundColor(grade.color)
+                
+                Text(grade.description)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.7))
+                    .lineLimit(2)
+            }
+            
+            Spacer()
+            
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("\(trades.count)")
+                    .font(.system(size: 24, weight: .black))
+                    .foregroundColor(grade.color)
+                
+                Text("trades")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.6))
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(grade.color.opacity(0.3), lineWidth: 1)
+                )
+        )
+    }
+}
+
+struct PsychologyDashboard: View {
+    let markDouglasEngine: PlanetMarkDouglasEngine
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Psychology Dashboard")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+            
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
+                PsychologyMetricCard(
+                    title: "Probabilistic Thinking",
+                    value: markDouglasEngine.probabilisticThinking,
+                    color: .blue
+                )
+                
+                PsychologyMetricCard(
+                    title: "Discipline Score",
+                    value: markDouglasEngine.disciplineScore,
+                    color: .purple
+                )
+                
+                PsychologyMetricCard(
+                    title: "Consistency",
+                    value: markDouglasEngine.consistencyLevel,
+                    color: .green
+                )
+                
+                PsychologyMetricCard(
+                    title: "Risk Acceptance",
+                    value: markDouglasEngine.riskAcceptance,
+                    color: .orange
+                )
+            }
+            
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Mark Douglas Insight")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                
+                Text(markDouglasEngine.getMarkDouglasInsight())
+                    .font(.body)
+                    .foregroundColor(.white.opacity(0.8))
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(.ultraThinMaterial)
+                    )
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+        )
+    }
+}
+
+struct PsychologyMetricCard: View {
+    let title: String
+    let value: Double
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.7))
+                .multilineTextAlignment(.center)
+            
+            Text("\(Int(value * 100))%")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(color)
+            
+            ProgressView(value: value)
+                .progressViewStyle(LinearProgressViewStyle(tint: color))
+                .scaleEffect(y: 2)
         }
         .padding()
         .background(
@@ -1042,24 +1204,61 @@ struct GradeBreakdownCard: View {
     }
 }
 
-struct PsychologyDashboard: View {
-    let markDouglasEngine: PlanetMarkDouglasEngine
-    
-    var body: some View {
-        Text("Psychology Dashboard")
-            .font(.headline)
-            .padding()
-    }
-}
-
 struct TradingPsychologyInsights: View {
     let trades: [PlaybookTrade]
     let markDouglasEngine: PlanetMarkDouglasEngine
     
     var body: some View {
-        Text("Psychology Insights")
-            .font(.headline)
-            .padding()
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Trading Psychology Insights")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Current Emotional State")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                
+                HStack {
+                    Circle()
+                        .fill(markDouglasEngine.currentEmotionalState.color)
+                        .frame(width: 12, height: 12)
+                    
+                    Text(markDouglasEngine.currentEmotionalState.rawValue)
+                        .font(.body)
+                        .foregroundColor(markDouglasEngine.currentEmotionalState.color)
+                    
+                    Spacer()
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(.ultraThinMaterial)
+                )
+            }
+            
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Mark Douglas Fundamental")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                
+                Text(markDouglasEngine.getFundamental())
+                    .font(.body)
+                    .foregroundColor(.white.opacity(0.8))
+                    .italic()
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(.ultraThinMaterial)
+                    )
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+        )
     }
 }
 
@@ -1067,9 +1266,26 @@ struct ComprehensiveStats: View {
     let engine: LegendaryPlaybookEngine
     
     var body: some View {
-        Text("Comprehensive Statistics")
-            .font(.headline)
-            .padding()
+        VStack(spacing: 16) {
+            Text("Comprehensive Statistics")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+            
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
+                StatCard(title: "Total Trades", value: "\(engine.trades.count)", color: .blue)
+                StatCard(title: "Win Rate", value: "\(Int(engine.winRate * 100))%", color: .green)
+                StatCard(title: "Profit Factor", value: String(format: "%.2f", engine.profitFactor), color: .purple)
+                StatCard(title: "Avg R-Multiple", value: String(format: "%.2fR", engine.averageRMultiple), color: .orange)
+            }
+            
+            // Additional stats can be added here
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+        )
     }
 }
 
@@ -1077,12 +1293,57 @@ struct AdvancedAnalytics: View {
     let engine: LegendaryPlaybookEngine
     
     var body: some View {
-        Text("Advanced Analytics")
-            .font(.headline)
-            .padding()
+        VStack(spacing: 16) {
+            Text("Advanced Analytics")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+            
+            Text("Detailed analytics dashboard coming soon...")
+                .font(.body)
+                .foregroundColor(.white.opacity(0.7))
+                .padding()
+            
+            // Placeholder for advanced charts and analytics
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+        )
+    }
+}
+
+struct StatCard: View {
+    let title: String
+    let value: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.7))
+                .multilineTextAlignment(.center)
+            
+            Text(value)
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(color)
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(color.opacity(0.3), lineWidth: 1)
+                )
+        )
     }
 }
 
 #Preview {
     PlaybookView()
+        .preferredColorScheme(.dark)
 }

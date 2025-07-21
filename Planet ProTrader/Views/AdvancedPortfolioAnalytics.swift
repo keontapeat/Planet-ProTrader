@@ -14,34 +14,19 @@ struct AdvancedPortfolioAnalytics: View {
     @State private var selectedMetric: PerformanceMetricType = .totalReturn
     @State private var showingDetailedBreakdown = false
     @State private var animateCharts = false
+    @State private var isLoading = false
+    @State private var errorMessage: String?
     
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Performance Overview Cards
-                    performanceOverview
-                    
-                    // Main Performance Chart
-                    performanceChart
-                    
-                    // Bot Performance Leaderboard
-                    botPerformanceSection
-                    
-                    // Risk Analytics
-                    riskAnalyticsSection
-                    
-                    // Trading Statistics
-                    tradingStatsSection
-                    
-                    // Correlation Matrix
-                    correlationMatrixSection
-                    
-                    // Performance Attribution
-                    performanceAttributionSection
+        NavigationStack {
+            ZStack {
+                if isLoading {
+                    loadingView
+                } else if let errorMessage = errorMessage {
+                    errorView(errorMessage)
+                } else {
+                    mainContent
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
             }
             .background(Color(.systemBackground))
             .navigationTitle("📊 Portfolio Analytics")
@@ -49,29 +34,79 @@ struct AdvancedPortfolioAnalytics: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Export") {
-                        // Export analytics report
-                        ToastManager.shared.showSuccess("Analytics report exported!")
+                        exportAnalytics()
                     }
                     .foregroundColor(DesignSystem.primaryGold)
                 }
             }
-        }
-        .onAppear {
-            analyticsManager.loadAnalytics()
-            withAnimation(.easeInOut(duration: 1.5)) {
-                animateCharts = true
+            .onAppear {
+                loadAnalyticsData()
             }
         }
+    }
+    
+    // MARK: - Main Content
+    
+    private var mainContent: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                performanceOverview
+                performanceChart
+                botPerformanceSection
+                riskAnalyticsSection
+                tradingStatsSection
+                correlationMatrixSection
+                performanceAttributionSection
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+        }
+    }
+    
+    // MARK: - Loading & Error States
+    
+    private var loadingView: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+                .scaleEffect(1.5)
+                .progressViewStyle(CircularProgressViewStyle(tint: DesignSystem.primaryGold))
+            
+            Text("Loading Analytics...")
+                .font(.headline)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    private func errorView(_ message: String) -> some View {
+        VStack(spacing: 20) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 50))
+                .foregroundColor(.red)
+            
+            Text("Error Loading Analytics")
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            Text(message)
+                .font(.body)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+            
+            Button("Retry") {
+                loadAnalyticsData()
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(DesignSystem.primaryGold)
+        }
+        .padding()
     }
     
     // MARK: - Performance Overview
     
     private var performanceOverview: some View {
         VStack(spacing: 16) {
-            // Period selector
             periodSelector
             
-            // Key metrics cards
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
                 metricCard(
                     title: "Total Return",
@@ -115,8 +150,8 @@ struct AdvancedPortfolioAnalytics: View {
             }
         }
         .pickerStyle(SegmentedPickerStyle())
-        .onChange(of: selectedPeriod) { _ in
-            analyticsManager.updatePeriod(selectedPeriod)
+        .onChange(of: selectedPeriod) { _, newValue in
+            analyticsManager.updatePeriod(newValue)
         }
     }
     
@@ -175,60 +210,70 @@ struct AdvancedPortfolioAnalytics: View {
                 .pickerStyle(MenuPickerStyle())
             }
             
-            Chart(analyticsManager.performanceData) { data in
-                LineMark(
-                    x: .value("Date", data.date),
-                    y: .value("Value", data.value)
-                )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.green, DesignSystem.primaryGold],
-                        startPoint: .leading,
-                        endPoint: .trailing
+            if analyticsManager.performanceData.isEmpty {
+                Text("No performance data available")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .frame(height: 200)
+                    .frame(maxWidth: .infinity)
+                    .background(Color(.systemGray6).opacity(0.3))
+                    .cornerRadius(12)
+            } else {
+                Chart(analyticsManager.performanceData) { data in
+                    LineMark(
+                        x: .value("Date", data.date),
+                        y: .value("Value", data.value)
                     )
-                )
-                .lineStyle(StrokeStyle(lineWidth: 3))
-                
-                AreaMark(
-                    x: .value("Date", data.date),
-                    y: .value("Value", data.value)
-                )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.green.opacity(0.3), DesignSystem.primaryGold.opacity(0.1)],
-                        startPoint: .top,
-                        endPoint: .bottom
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.green, DesignSystem.primaryGold],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-                )
-            }
-            .frame(height: 200)
-            .chartXAxis {
-                AxisMarks(values: .automatic) { value in
-                    AxisGridLine()
-                    AxisTick()
-                    AxisValueLabel {
-                        if let date = value.as(Date.self) {
-                            Text(date.formatted(.dateTime.month().day()))
-                                .font(.caption)
+                    .lineStyle(StrokeStyle(lineWidth: 3))
+                    
+                    AreaMark(
+                        x: .value("Date", data.date),
+                        y: .value("Value", data.value)
+                    )
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.green.opacity(0.3), DesignSystem.primaryGold.opacity(0.1)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                }
+                .frame(height: 200)
+                .chartXAxis {
+                    AxisMarks(values: .automatic) { value in
+                        AxisGridLine()
+                        AxisTick()
+                        AxisValueLabel {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(.dateTime.month().day()))
+                                    .font(.caption)
+                            }
                         }
                     }
                 }
-            }
-            .chartYAxis {
-                AxisMarks(values: .automatic) { value in
-                    AxisGridLine()
-                    AxisTick()
-                    AxisValueLabel {
-                        if let amount = value.as(Double.self) {
-                            Text(amount.formatted(.currency(code: "USD")))
-                                .font(.caption)
+                .chartYAxis {
+                    AxisMarks(values: .automatic) { value in
+                        AxisGridLine()
+                        AxisTick()
+                        AxisValueLabel {
+                            if let amount = value.as(Double.self) {
+                                Text(amount.formatted(.currency(code: "USD")))
+                                    .font(.caption)
+                            }
                         }
                     }
                 }
+                .padding()
+                .background(Color(.systemGray6).opacity(0.3))
+                .cornerRadius(12)
             }
-            .padding()
-            .background(Color(.systemGray6).opacity(0.3))
-            .cornerRadius(12)
         }
     }
     
@@ -251,11 +296,24 @@ struct AdvancedPortfolioAnalytics: View {
                 .foregroundColor(DesignSystem.primaryGold)
             }
             
-            LazyVStack(spacing: 8) {
-                ForEach(Array(analyticsManager.botPerformances.enumerated()), id: \.element.id) { index, bot in
-                    botPerformanceRow(bot: bot, rank: index + 1)
+            if analyticsManager.botPerformances.isEmpty {
+                Text("No bot performance data available")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding()
+                    .background(Color(.systemGray6).opacity(0.3))
+                    .cornerRadius(12)
+            } else {
+                LazyVStack(spacing: 8) {
+                    ForEach(Array(analyticsManager.botPerformances.enumerated()), id: \.element.id) { index, bot in
+                        botPerformanceRow(bot: bot, rank: index + 1)
+                    }
                 }
             }
+        }
+        .sheet(isPresented: $showingDetailedBreakdown) {
+            BotPerformanceDetailSheet(bots: analyticsManager.botPerformances)
         }
     }
     
@@ -305,7 +363,7 @@ struct AdvancedPortfolioAnalytics: View {
         .overlay(
             RoundedRectangle(cornerRadius: 10)
                 .stroke(rankColor(rank).opacity(0.3), lineWidth: 1)
-            )
+        )
     }
     
     private func rankColor(_ rank: Int) -> Color {
@@ -430,14 +488,24 @@ struct AdvancedPortfolioAnalytics: View {
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
             
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 8) {
-                ForEach(analyticsManager.correlationMatrix, id: \.pair) { correlation in
-                    correlationCell(correlation: correlation)
+            if analyticsManager.correlationMatrix.isEmpty {
+                Text("No correlation data available")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding()
+                    .background(Color(.systemGray6).opacity(0.3))
+                    .cornerRadius(12)
+            } else {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 8) {
+                    ForEach(analyticsManager.correlationMatrix, id: \.pair) { correlation in
+                        correlationCell(correlation: correlation)
+                    }
                 }
+                .padding()
+                .background(Color(.systemGray6).opacity(0.3))
+                .cornerRadius(12)
             }
-            .padding()
-            .background(Color(.systemGray6).opacity(0.3))
-            .cornerRadius(12)
         }
     }
     
@@ -464,16 +532,12 @@ struct AdvancedPortfolioAnalytics: View {
     }
     
     private func correlationColor(_ value: Double) -> Color {
-        if value > 0.7 {
-            return .green
-        } else if value > 0.3 {
-            return .blue
-        } else if value > -0.3 {
-            return .gray
-        } else if value > -0.7 {
-            return .orange
-        } else {
-            return .red
+        switch value {
+        case 0.7...1.0: return .green
+        case 0.3..<0.7: return .blue
+        case -0.3..<0.3: return .gray
+        case -0.7..<(-0.3): return .orange
+        default: return .red
         }
     }
     
@@ -486,35 +550,150 @@ struct AdvancedPortfolioAnalytics: View {
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
             
-            Chart(analyticsManager.attributionData) { data in
-                BarMark(
-                    x: .value("Contribution", data.contribution),
-                    y: .value("Source", data.source)
-                )
-                .foregroundStyle(data.contribution >= 0 ? .green : .red)
-            }
-            .frame(height: 200)
-            .chartXAxis {
-                AxisMarks { value in
-                    AxisGridLine()
-                    AxisTick()
-                    AxisValueLabel {
-                        if let contribution = value.as(Double.self) {
-                            Text(contribution.formatted(.percent))
-                                .font(.caption)
+            if analyticsManager.attributionData.isEmpty {
+                Text("No attribution data available")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .frame(height: 200)
+                    .frame(maxWidth: .infinity)
+                    .background(Color(.systemGray6).opacity(0.3))
+                    .cornerRadius(12)
+            } else {
+                Chart(analyticsManager.attributionData) { data in
+                    BarMark(
+                        x: .value("Contribution", data.contribution),
+                        y: .value("Source", data.source)
+                    )
+                    .foregroundStyle(data.contribution >= 0 ? .green : .red)
+                }
+                .frame(height: 200)
+                .chartXAxis {
+                    AxisMarks { value in
+                        AxisGridLine()
+                        AxisTick()
+                        AxisValueLabel {
+                            if let contribution = value.as(Double.self) {
+                                Text(contribution.formatted(.percent))
+                                    .font(.caption)
+                            }
                         }
                     }
                 }
+                .padding()
+                .background(Color(.systemGray6).opacity(0.3))
+                .cornerRadius(12)
             }
-            .padding()
-            .background(Color(.systemGray6).opacity(0.3))
-            .cornerRadius(12)
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func loadAnalyticsData() {
+        isLoading = true
+        errorMessage = nil
+        
+        Task {
+            do {
+                try await analyticsManager.loadAnalytics()
+                await MainActor.run {
+                    isLoading = false
+                    withAnimation(.easeInOut(duration: 1.5)) {
+                        animateCharts = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+    
+    private func exportAnalytics() {
+        // Export analytics report
+        Task {
+            await MainActor.run {
+                ToastManager.shared.showSuccess("Analytics report exported!")
+            }
         }
     }
 }
 
-// MARK: - Portfolio Analytics Manager
+// MARK: - Performance Metric Type (FIXED - MISSING ENUM!)
 
+enum PerformanceMetricType: String, CaseIterable {
+    case totalReturn = "Total Return"
+    case sharpeRatio = "Sharpe Ratio"
+    case maxDrawdown = "Max Drawdown"
+    case profitLoss = "Profit & Loss"
+    case winRate = "Win Rate"
+    case volatility = "Volatility"
+    case roi = "ROI"
+    
+    var displayName: String { rawValue }
+}
+
+// MARK: - Bot Performance Detail Sheet
+
+struct BotPerformanceDetailSheet: View {
+    let bots: [BotPerformance]
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            List(Array(bots.enumerated()), id: \.element.id) { index, bot in
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("#\(index + 1)")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Circle().fill(Color.blue))
+                        
+                        Text(bot.name)
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        Spacer()
+                        
+                        Text(bot.profitLoss.formatted(.currency(code: "USD")))
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(bot.profitLoss >= 0 ? .green : .red)
+                    }
+                    
+                    HStack {
+                        Label("Win Rate: \(Int(bot.winRate * 100))%", systemImage: "target")
+                        Spacer()
+                        Label("\(bot.totalTrades) trades", systemImage: "chart.bar")
+                    }
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    
+                    ProgressView(value: bot.winRate)
+                        .progressViewStyle(LinearProgressViewStyle(tint: .green))
+                }
+                .padding(.vertical, 8)
+            }
+            .navigationTitle("Bot Performance Details")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Portfolio Analytics Manager (REFACTORED)
+
+@MainActor
 class PortfolioAnalyticsManager: ObservableObject {
     @Published var totalReturn: String = "$0.00"
     @Published var totalReturnChange: String = "+0.0%"
@@ -545,19 +724,26 @@ class PortfolioAnalyticsManager: ObservableObject {
     @Published var worstTrade: Double = 0.0
     @Published var profitFactor: Double = 0.0
     
-    func loadAnalytics() {
-        // Simulate loading analytics data
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.updateAnalytics()
-        }
+    private let dataService: AnalyticsDataService
+    
+    init(dataService: AnalyticsDataService = AnalyticsDataService()) {
+        self.dataService = dataService
+    }
+    
+    func loadAnalytics() async throws {
+        // Simulate network delay
+        try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        
+        await updateAnalytics()
     }
     
     func updatePeriod(_ period: AnalyticsPeriod) {
-        // Update analytics based on selected period
-        updateAnalytics()
+        Task {
+            await updateAnalytics(for: period)
+        }
     }
     
-    private func updateAnalytics() {
+    private func updateAnalytics(for period: AnalyticsPeriod = .thisMonth) async {
         // Update key metrics
         totalReturn = "$12,450.75"
         totalReturnChange = "+23.4%"
@@ -584,18 +770,18 @@ class PortfolioAnalyticsManager: ObservableObject {
         profitFactor = 2.68
         
         // Generate performance data
-        generatePerformanceData()
-        generateBotPerformances()
-        generateCorrelationMatrix()
-        generateAttributionData()
+        await generatePerformanceData()
+        await generateBotPerformances()
+        await generateCorrelationMatrix()
+        await generateAttributionData()
     }
     
-    private func generatePerformanceData() {
+    private func generatePerformanceData() async {
         let calendar = Calendar.current
         let today = Date()
         
-        performanceData = (0...30).map { day in
-            let date = calendar.date(byAdding: .day, value: -day, to: today) ?? today
+        performanceData = (0...30).compactMap { day in
+            guard let date = calendar.date(byAdding: .day, value: -day, to: today) else { return nil }
             let baseValue = 10000.0
             let growth = Double(30 - day) * 50 + Double.random(in: -200...400)
             
@@ -603,7 +789,7 @@ class PortfolioAnalyticsManager: ObservableObject {
         }.reversed()
     }
     
-    private func generateBotPerformances() {
+    private func generateBotPerformances() async {
         botPerformances = [
             BotPerformance(
                 name: "Quantum AI Pro",
@@ -636,7 +822,7 @@ class PortfolioAnalyticsManager: ObservableObject {
         ]
     }
     
-    private func generateCorrelationMatrix() {
+    private func generateCorrelationMatrix() async {
         let pairs = ["EUR/USD", "GBP/USD", "USD/JPY", "USD/CHF", "AUD/USD", "USD/CAD", "NZD/USD", "XAU/USD"]
         
         correlationMatrix = pairs.map { pair in
@@ -644,7 +830,7 @@ class PortfolioAnalyticsManager: ObservableObject {
         }
     }
     
-    private func generateAttributionData() {
+    private func generateAttributionData() async {
         attributionData = [
             AttributionData(source: "Trend Following", contribution: 0.15),
             AttributionData(source: "Scalping", contribution: 0.08),
@@ -655,7 +841,22 @@ class PortfolioAnalyticsManager: ObservableObject {
     }
 }
 
-// MARK: - Supporting Models
+// MARK: - Analytics Data Service (NEW - DEPENDENCY INJECTION)
+
+class AnalyticsDataService {
+    func fetchAnalyticsData() async throws -> AnalyticsData {
+        // In real app, this would make API calls
+        throw NSError(domain: "NotImplemented", code: 0, userInfo: [NSLocalizedDescriptionKey: "Analytics data service not implemented"])
+    }
+}
+
+struct AnalyticsData {
+    let performanceMetrics: [String: Any]
+    let riskMetrics: [String: Any]
+    let tradingStats: [String: Any]
+}
+
+// MARK: - Supporting Models (UNCHANGED)
 
 enum AnalyticsPeriod: String, CaseIterable {
     case thisWeek = "This Week"
@@ -693,6 +894,8 @@ struct AttributionData: Identifiable {
     let source: String
     let contribution: Double
 }
+
+// MARK: - Preview
 
 #Preview {
     AdvancedPortfolioAnalytics()
