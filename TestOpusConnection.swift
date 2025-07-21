@@ -12,7 +12,7 @@ print("=====================================")
 
 // Save API key to keychain
 let keychain = KeychainService()
-let apiKey = "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"
+let apiKey = "SECURE_API_KEY_FROM_KEYCHAIN"
 
 keychain.save(key: "anthropic_api_key", value: apiKey)
 print("✅ API Key saved to keychain!")

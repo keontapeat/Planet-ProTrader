@@ -152,7 +152,7 @@ Provide the best SwiftUI code or solution possible.
 
 if __name__ == "__main__":
     # Example usage:
-    API_KEY = "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"  # Replace with your real key or pass from env
+    API_KEY = "SECURE_API_KEY_FROM_KEYCHAIN"  # Replace with your real key or pass from env
 
     ai = GoldexSwiftUIAI(API_KEY)
 

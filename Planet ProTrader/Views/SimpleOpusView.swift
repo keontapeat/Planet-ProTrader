@@ -16,7 +16,7 @@ struct SimpleOpusView: View {
     @State private var currentStatus = "Ready to unleash Opus power!"
     @State private var recentFixes: [String] = []
     
-    private let anthropicAPIKey = "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"
+    private let anthropicAPIKey = "SECURE_API_KEY_FROM_KEYCHAIN"
     
     var body: some View {
         NavigationStack {
