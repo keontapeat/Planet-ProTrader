@@ -1,586 +1,509 @@
 //
 //  BotCommunicationTypes.swift
-//  GOLDEX AI
+//  Planet ProTrader
 //
-//  Created by AI Assistant on 7/19/25.
+//  Created by AI Assistant on 1/25/25.
 //
 
-import SwiftUI
 import Foundation
+import SwiftUI
 
-// MARK: - Bot Communication System
+// MARK: - Bot Communication Types
 
-struct BotChatMessage: Identifiable, Codable {
-    let id: String
-    let botId: String
-    let botName: String
-    let content: String
-    let timestamp: Date
-    let confidence: Double
-    let messageType: MessageType
-    let priority: MessagePriority
-    let tags: [String]
-    let replyToId: String?
-    let reactions: [MessageReaction]
-    let isFromUser: Bool
+enum BotCommunicationTypes {
     
-    init(
-        id: String = UUID().uuidString,
-        botId: String,
-        botName: String,
-        content: String,
-        timestamp: Date = Date(),
-        confidence: Double,
-        messageType: MessageType,
-        priority: MessagePriority = .medium,
-        tags: [String] = [],
-        replyToId: String? = nil,
-        reactions: [MessageReaction] = [],
-        isFromUser: Bool
-    ) {
-        self.id = id
-        self.botId = botId
-        self.botName = botName
-        self.content = content
-        self.timestamp = timestamp
-        self.confidence = confidence
-        self.messageType = messageType
-        self.priority = priority
-        self.tags = tags
-        self.replyToId = replyToId
-        self.reactions = reactions
-        self.isFromUser = isFromUser
-    }
+    // MARK: - Bot Chat Message
     
-    var formattedTimestamp: String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: timestamp)
-    }
-    
-    var formattedConfidence: String {
-        return String(format: "%.1f%%", confidence * 100)
-    }
-    
-    var confidenceColor: Color {
-        switch confidence {
-        case 0.8...:
-            return .green
-        case 0.6..<0.8:
-            return .orange
-        default:
-            return .red
-        }
-    }
-    
-    var hasSpecialContent: Bool {
-        return content.contains("trades") || content.contains("P&L") || content.contains("analysis")
-    }
-}
-
-// MARK: - Message Types
-
-enum MessageType: String, Codable, CaseIterable {
-    case analysis = "Analysis"
-    case alert = "Alert"
-    case discussion = "Discussion"
-    case signal = "Signal"
-    case warning = "Warning"
-    case insight = "Insight"
-    case question = "Question"
-    case recommendation = "Recommendation"
-    case report = "Report"
-    case celebration = "Celebration"
-    
-    var description: String {
-        switch self {
-        case .analysis: return "Technical or fundamental analysis"
-        case .alert: return "Important market alert"
-        case .discussion: return "General discussion message"
-        case .signal: return "Trading signal or opportunity"
-        case .warning: return "Risk warning or caution"
-        case .insight: return "Market insight or observation"
-        case .question: return "Question for other bots"
-        case .recommendation: return "Strategic recommendation"
-        case .report: return "Performance or status report"
-        case .celebration: return "Success celebration"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .analysis: return .blue
-        case .alert: return .red
-        case .discussion: return .gray
-        case .signal: return .green
-        case .warning: return .orange
-        case .insight: return .purple
-        case .question: return .cyan
-        case .recommendation: return .indigo
-        case .report: return .brown
-        case .celebration: return .yellow
-        }
-    }
-    
-    var systemImage: String {
-        switch self {
-        case .analysis: return "chart.xyaxis.line"
-        case .alert: return "exclamationmark.triangle.fill"
-        case .discussion: return "bubble.left.and.bubble.right.fill"
-        case .signal: return "bolt.fill"
-        case .warning: return "exclamationmark.shield.fill"
-        case .insight: return "lightbulb.fill"
-        case .question: return "questionmark.circle.fill"
-        case .recommendation: return "hand.thumbsup.fill"
-        case .report: return "doc.text.fill"
-        case .celebration: return "party.popper.fill"
-        }
-    }
-}
-
-// MARK: - Message Priority
-
-enum MessagePriority: String, Codable, CaseIterable {
-    case low = "Low"
-    case medium = "Medium"
-    case high = "High"
-    case urgent = "Urgent"
-    case critical = "Critical"
-    
-    var weight: Int {
-        switch self {
-        case .low: return 1
-        case .medium: return 2
-        case .high: return 3
-        case .urgent: return 4
-        case .critical: return 5
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .low: return .gray
-        case .medium: return .blue
-        case .high: return .orange
-        case .urgent: return .red
-        case .critical: return .pink
-        }
-    }
-    
-    var shouldNotify: Bool {
-        return weight >= 3
-    }
-}
-
-// MARK: - Message Reactions
-
-struct MessageReaction: Identifiable, Codable {
-    let id: String
-    let botId: String
-    let reactionType: ReactionType
-    let timestamp: Date
-    
-    init(
-        id: String = UUID().uuidString,
-        botId: String,
-        reactionType: ReactionType,
-        timestamp: Date = Date()
-    ) {
-        self.id = id
-        self.botId = botId
-        self.reactionType = reactionType
-        self.timestamp = timestamp
-    }
-}
-
-enum ReactionType: String, Codable, CaseIterable {
-    case agree = "👍"
-    case disagree = "👎"
-    case insightful = "💡"
-    case accurate = "🎯"
-    case questionable = "🤔"
-    case celebrate = "🎉"
-    case caution = "⚠️"
-    case fire = "🔥"
-    
-    var description: String {
-        switch self {
-        case .agree: return "Agree"
-        case .disagree: return "Disagree"
-        case .insightful: return "Insightful"
-        case .accurate: return "Accurate"
-        case .questionable: return "Questionable"
-        case .celebrate: return "Celebrate"
-        case .caution: return "Caution"
-        case .fire: return "Hot Take"
-        }
-    }
-}
-
-// MARK: - Bot Discussion
-
-struct BotDiscussion: Identifiable, Codable {
-    let id: String
-    let topic: String
-    let participants: [String]
-    let startTime: Date
-    var endTime: Date?
-    var messages: [BotChatMessage]
-    let discussionType: DiscussionType
-    let priority: MessagePriority
-    var status: DiscussionStatus
-    var consensusReached: Bool
-    var finalConsensus: String?
-    
-    init(
-        id: String = UUID().uuidString,
-        topic: String,
-        participants: [String],
-        startTime: Date = Date(),
-        endTime: Date? = nil,
-        messages: [BotChatMessage] = [],
-        discussionType: DiscussionType = .general,
-        priority: MessagePriority = .medium,
-        status: DiscussionStatus = .active,
-        consensusReached: Bool = false,
-        finalConsensus: String? = nil
-    ) {
-        self.id = id
-        self.topic = topic
-        self.participants = participants
-        self.startTime = startTime
-        self.endTime = endTime
-        self.messages = messages
-        self.discussionType = discussionType
-        self.priority = priority
-        self.status = status
-        self.consensusReached = consensusReached
-        self.finalConsensus = finalConsensus
-    }
-    
-    var duration: TimeInterval {
-        return (endTime ?? Date()).timeIntervalSince(startTime)
-    }
-    
-    var participantCount: Int {
-        return participants.count
-    }
-    
-    var messageCount: Int {
-        return messages.count
-    }
-    
-    var averageConfidence: Double {
-        guard !messages.isEmpty else { return 0.0 }
-        let totalConfidence = messages.reduce(0.0) { $0 + $1.confidence }
-        return totalConfidence / Double(messages.count)
-    }
-    
-    mutating func addMessage(_ message: BotChatMessage) {
-        messages.append(message)
+    struct BotChatMessage: Identifiable, Codable {
+        let id: UUID
+        let botId: String
+        let botName: String
+        let message: String
+        let timestamp: Date
+        let messageType: MessageType
+        let confidence: Double
+        let topic: String
+        let reactionCount: Int
+        let isHighlighted: Bool
         
-        // Check for consensus if we have enough messages
-        if messages.count >= 3 && !consensusReached {
-            checkForConsensus()
-        }
-    }
-    
-    mutating func endDiscussion(consensus: String? = nil) {
-        status = .completed
-        endTime = Date()
-        finalConsensus = consensus
-        consensusReached = consensus != nil
-    }
-    
-    private mutating func checkForConsensus() {
-        // Simple consensus detection based on similar messages or high confidence
-        let highConfidenceMessages = messages.filter { $0.confidence > 0.8 }
-        
-        if highConfidenceMessages.count >= 2 {
-            // Look for similar content or agreement
-            let agreementKeywords = ["agree", "correct", "yes", "exactly", "right"]
-            let agreements = messages.filter { message in
-                agreementKeywords.contains { message.content.lowercased().contains($0) }
+        enum MessageType: String, Codable, CaseIterable {
+            case analysis = "Analysis"
+            case prediction = "Prediction"
+            case warning = "Warning"
+            case celebration = "Celebration"
+            case discussion = "Discussion"
+            case insight = "Insight"
+            
+            var color: Color {
+                switch self {
+                case .analysis: return .blue
+                case .prediction: return .purple
+                case .warning: return .orange
+                case .celebration: return .green
+                case .discussion: return .gray
+                case .insight: return DesignSystem.primaryGold
+                }
             }
             
-            if agreements.count >= 2 {
-                consensusReached = true
-                finalConsensus = "Consensus reached on \(topic)"
+            var icon: String {
+                switch self {
+                case .analysis: return "magnifyingglass.circle"
+                case .prediction: return "crystal.ball"
+                case .warning: return "exclamationmark.triangle"
+                case .celebration: return "party.popper"
+                case .discussion: return "bubble.left.and.bubble.right"
+                case .insight: return "lightbulb"
+                }
+            }
+        }
+        
+        init(
+            id: UUID = UUID(),
+            botId: String,
+            botName: String,
+            message: String,
+            timestamp: Date = Date(),
+            messageType: MessageType = .discussion,
+            confidence: Double = 0.5,
+            topic: String = "General",
+            reactionCount: Int = 0,
+            isHighlighted: Bool = false
+        ) {
+            self.id = id
+            self.botId = botId
+            self.botName = botName
+            self.message = message
+            self.timestamp = timestamp
+            self.messageType = messageType
+            self.confidence = confidence
+            self.topic = topic
+            self.reactionCount = reactionCount
+            self.isHighlighted = isHighlighted
+        }
+        
+        static let sampleMessages: [BotChatMessage] = [
+            BotChatMessage(
+                botId: "bot_001",
+                botName: "Elite Scalper",
+                message: "Strong bullish momentum detected on XAUUSD. RSI showing oversold conditions with potential reversal.",
+                messageType: .analysis,
+                confidence: 0.87,
+                topic: "Market Analysis",
+                reactionCount: 5
+            ),
+            BotChatMessage(
+                botId: "bot_002", 
+                botName: "Swing Master",
+                message: "Congratulations! Successfully closed position with +245 pips profit. Risk management protocols worked perfectly.",
+                messageType: .celebration,
+                confidence: 1.0,
+                topic: "Trade Results",
+                reactionCount: 12,
+                isHighlighted: true
+            )
+        ]
+    }
+    
+    // MARK: - Bot Discussion
+    
+    struct BotDiscussion: Identifiable, Codable {
+        let id: UUID
+        let title: String
+        let participants: [String]
+        let messages: [BotChatMessage]
+        let createdAt: Date
+        let isActive: Bool
+        let category: DiscussionCategory
+        
+        enum DiscussionCategory: String, CaseIterable, Codable {
+            case marketAnalysis = "Market Analysis"
+            case tradeReview = "Trade Review"
+            case strategy = "Strategy"
+            case learning = "Learning"
+            case general = "General"
+            
+            var color: Color {
+                switch self {
+                case .marketAnalysis: return .blue
+                case .tradeReview: return .green
+                case .strategy: return .purple
+                case .learning: return .orange
+                case .general: return .gray
+                }
+            }
+            
+            var icon: String {
+                switch self {
+                case .marketAnalysis: return "chart.line.uptrend.xyaxis"
+                case .tradeReview: return "checkmark.circle.fill"
+                case .strategy: return "brain.head.profile"
+                case .learning: return "graduationcap.fill"
+                case .general: return "bubble.left.and.bubble.right.fill"
+                }
+            }
+        }
+        
+        init(
+            id: UUID = UUID(),
+            title: String,
+            participants: [String],
+            messages: [BotChatMessage] = [],
+            createdAt: Date = Date(),
+            isActive: Bool = true,
+            category: DiscussionCategory = .general
+        ) {
+            self.id = id
+            self.title = title
+            self.participants = participants
+            self.messages = messages
+            self.createdAt = createdAt
+            self.isActive = isActive
+            self.category = category
+        }
+        
+        var lastMessage: BotChatMessage? {
+            messages.sorted { $0.timestamp > $1.timestamp }.first
+        }
+        
+        var messageCount: Int {
+            messages.count
+        }
+        
+        static let sampleDiscussions: [BotDiscussion] = [
+            BotDiscussion(
+                title: "XAUUSD Analysis - Bullish Breakout",
+                participants: ["Elite Scalper", "Swing Master", "Grid Bot"],
+                messages: BotChatMessage.sampleMessages,
+                category: .marketAnalysis
+            ),
+            BotDiscussion(
+                title: "Risk Management Best Practices",
+                participants: ["Risk Manager Bot", "Conservative Trader"],
+                category: .strategy
+            )
+        ]
+    }
+    
+    // MARK: - Bot Performance Metrics
+    
+    struct BotPerformanceMetrics: Identifiable, Codable {
+        let id: UUID
+        let botId: String
+        let botName: String
+        let totalTrades: Int
+        let winningTrades: Int
+        let losingTrades: Int
+        let totalProfit: Double
+        let averageWin: Double
+        let averageLoss: Double
+        let winRate: Double
+        let profitFactor: Double
+        let maxDrawdown: Double
+        let sharpeRatio: Double
+        let lastUpdated: Date
+        
+        init(
+            id: UUID = UUID(),
+            botId: String,
+            botName: String,
+            totalTrades: Int,
+            winningTrades: Int,
+            losingTrades: Int,
+            totalProfit: Double,
+            averageWin: Double,
+            averageLoss: Double,
+            winRate: Double,
+            profitFactor: Double,
+            maxDrawdown: Double,
+            sharpeRatio: Double,
+            lastUpdated: Date = Date()
+        ) {
+            self.id = id
+            self.botId = botId
+            self.botName = botName
+            self.totalTrades = totalTrades
+            self.winningTrades = winningTrades
+            self.losingTrades = losingTrades
+            self.totalProfit = totalProfit
+            self.averageWin = averageWin
+            self.averageLoss = averageLoss
+            self.winRate = winRate
+            self.profitFactor = profitFactor
+            self.maxDrawdown = maxDrawdown
+            self.sharpeRatio = sharpeRatio
+            self.lastUpdated = lastUpdated
+        }
+        
+        var formattedWinRate: String {
+            String(format: "%.1f%%", winRate * 100)
+        }
+        
+        var formattedProfitFactor: String {
+            String(format: "%.2f", profitFactor)
+        }
+        
+        var formattedTotalProfit: String {
+            String(format: "$%.2f", totalProfit)
+        }
+        
+        static let sampleMetrics: [BotPerformanceMetrics] = [
+            BotPerformanceMetrics(
+                botId: "bot_001",
+                botName: "Elite Scalper",
+                totalTrades: 156,
+                winningTrades: 127,
+                losingTrades: 29,
+                totalProfit: 2847.50,
+                averageWin: 35.20,
+                averageLoss: -18.70,
+                winRate: 0.814,
+                profitFactor: 2.65,
+                maxDrawdown: -345.20,
+                sharpeRatio: 1.87
+            ),
+            BotPerformanceMetrics(
+                botId: "bot_002",
+                botName: "Swing Master", 
+                totalTrades: 89,
+                winningTrades: 67,
+                losingTrades: 22,
+                totalProfit: 1923.80,
+                averageWin: 42.10,
+                averageLoss: -21.40,
+                winRate: 0.753,
+                profitFactor: 2.12,
+                maxDrawdown: -287.60,
+                sharpeRatio: 1.64
+            )
+        ]
+    }
+    
+    // MARK: - Bot Status
+    
+    enum BotStatus: String, CaseIterable, Codable {
+        case active = "Active"
+        case inactive = "Inactive"
+        case learning = "Learning"
+        case analyzing = "Analyzing"
+        case trading = "Trading"
+        case paused = "Paused"
+        case error = "Error"
+        
+        var color: Color {
+            switch self {
+            case .active, .trading: return .green
+            case .inactive, .paused: return .gray
+            case .learning, .analyzing: return .blue
+            case .error: return .red
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .active: return "play.circle.fill"
+            case .inactive: return "pause.circle.fill"
+            case .learning: return "brain.head.profile"
+            case .analyzing: return "magnifyingglass.circle"
+            case .trading: return "arrow.up.arrow.down.circle.fill"
+            case .paused: return "pause.circle"
+            case .error: return "exclamationmark.triangle.fill"
             }
         }
     }
-}
-
-// MARK: - Discussion Types
-
-enum DiscussionType: String, Codable, CaseIterable {
-    case general = "General"
-    case marketAnalysis = "Market Analysis"
-    case riskAssessment = "Risk Assessment"
-    case patternDiscussion = "Pattern Discussion"
-    case performanceReview = "Performance Review"
-    case strategyDebate = "Strategy Debate"
-    case newsReaction = "News Reaction"
-    case emergencyAlert = "Emergency Alert"
     
-    var description: String {
-        switch self {
-        case .general: return "General discussion"
-        case .marketAnalysis: return "Market condition analysis"
-        case .riskAssessment: return "Risk evaluation discussion"
-        case .patternDiscussion: return "Pattern recognition debate"
-        case .performanceReview: return "Performance analysis"
-        case .strategyDebate: return "Strategy discussion"
-        case .newsReaction: return "News impact discussion"
-        case .emergencyAlert: return "Emergency situation"
+    // MARK: - Bot Configuration
+    
+    struct BotConfiguration: Codable {
+        let botId: String
+        let name: String
+        let strategy: String
+        let riskLevel: Double
+        let maxDrawdown: Double
+        let tradingHours: String
+        let symbols: [String]
+        let lotSize: Double
+        let stopLoss: Double
+        let takeProfit: Double
+        let isAutoTrading: Bool
+        let notificationsEnabled: Bool
+        
+        init(
+            botId: String,
+            name: String,
+            strategy: String,
+            riskLevel: Double = 0.02,
+            maxDrawdown: Double = 0.05,
+            tradingHours: String = "24/7",
+            symbols: [String] = ["XAUUSD"],
+            lotSize: Double = 0.01,
+            stopLoss: Double = 20.0,
+            takeProfit: Double = 30.0,
+            isAutoTrading: Bool = false,
+            notificationsEnabled: Bool = true
+        ) {
+            self.botId = botId
+            self.name = name
+            self.strategy = strategy
+            self.riskLevel = riskLevel
+            self.maxDrawdown = maxDrawdown
+            self.tradingHours = tradingHours
+            self.symbols = symbols
+            self.lotSize = lotSize
+            self.stopLoss = stopLoss
+            self.takeProfit = takeProfit
+            self.isAutoTrading = isAutoTrading
+            self.notificationsEnabled = notificationsEnabled
         }
+        
+        static let sampleConfigurations: [BotConfiguration] = [
+            BotConfiguration(
+                botId: "bot_001",
+                name: "Elite Scalper",
+                strategy: "Scalping",
+                riskLevel: 0.01,
+                symbols: ["XAUUSD", "EURUSD"]
+            ),
+            BotConfiguration(
+                botId: "bot_002",
+                name: "Swing Master",
+                strategy: "Swing Trading",
+                riskLevel: 0.03,
+                symbols: ["GBPUSD", "USDJPY"]
+            )
+        ]
     }
     
-    var color: Color {
-        switch self {
-        case .general: return .gray
-        case .marketAnalysis: return .blue
-        case .riskAssessment: return .orange
-        case .patternDiscussion: return .green
-        case .performanceReview: return .purple
-        case .strategyDebate: return .indigo
-        case .newsReaction: return .red
-        case .emergencyAlert: return .pink
+    // MARK: - Bot Alert
+    
+    struct BotAlert: Identifiable, Codable {
+        let id: UUID
+        let botId: String
+        let botName: String
+        let alertType: AlertType
+        let message: String
+        let timestamp: Date
+        let priority: Priority
+        let isRead: Bool
+        let actionRequired: Bool
+        
+        enum AlertType: String, CaseIterable, Codable {
+            case tradeOpportunity = "Trade Opportunity"
+            case riskWarning = "Risk Warning"
+            case systemError = "System Error"
+            case performanceUpdate = "Performance Update"
+            case marketNews = "Market News"
+            
+            var icon: String {
+                switch self {
+                case .tradeOpportunity: return "chart.line.uptrend.xyaxis"
+                case .riskWarning: return "exclamationmark.triangle"
+                case .systemError: return "xmark.circle"
+                case .performanceUpdate: return "chart.bar"
+                case .marketNews: return "newspaper"
+                }
+            }
         }
-    }
-}
-
-// MARK: - Discussion Status
-
-enum DiscussionStatus: String, Codable, CaseIterable {
-    case active = "Active"
-    case paused = "Paused"
-    case completed = "Completed"
-    case archived = "Archived"
-    
-    var color: Color {
-        switch self {
-        case .active: return .green
-        case .paused: return .orange
-        case .completed: return .blue
-        case .archived: return .gray
+        
+        enum Priority: String, CaseIterable, Codable {
+            case low = "Low"
+            case medium = "Medium"
+            case high = "High"
+            case critical = "Critical"
+            
+            var color: Color {
+                switch self {
+                case .low: return .green
+                case .medium: return .orange
+                case .high: return .red
+                case .critical: return .purple
+                }
+            }
         }
-    }
-}
-
-// MARK: - Consensus Signal
-
-struct ConsensusSignal: Identifiable, Codable {
-    let id: String
-    let direction: SharedTypes.TradeDirection
-    let confidence: Double
-    let participatingBots: [String]
-    let reasoning: String
-    let timestamp: Date
-    let symbol: String
-    let entryPrice: Double?
-    let stopLoss: Double?
-    let takeProfit: Double?
-    let timeframe: String
-    let consensusStrength: ConsensusStrength
-    let voteBreakdown: VoteBreakdown
-    let riskLevel: TradingTypes.RiskLevel
-    
-    init(
-        id: String = UUID().uuidString,
-        direction: SharedTypes.TradeDirection,
-        confidence: Double,
-        participatingBots: [String],
-        reasoning: String,
-        timestamp: Date = Date(),
-        symbol: String = "UNKNOWN",
-        entryPrice: Double? = nil,
-        stopLoss: Double? = nil,
-        takeProfit: Double? = nil,
-        timeframe: String = "1H",
-        consensusStrength: ConsensusStrength = .moderate,
-        voteBreakdown: VoteBreakdown = VoteBreakdown(),
-        riskLevel: TradingTypes.RiskLevel = .medium
-    ) {
-        self.id = id
-        self.direction = direction
-        self.confidence = confidence
-        self.participatingBots = participatingBots
-        self.reasoning = reasoning
-        self.timestamp = timestamp
-        self.symbol = symbol
-        self.entryPrice = entryPrice
-        self.stopLoss = stopLoss
-        self.takeProfit = takeProfit
-        self.timeframe = timeframe
-        self.consensusStrength = consensusStrength
-        self.voteBreakdown = voteBreakdown
-        self.riskLevel = riskLevel
-    }
-    
-    var formattedConfidence: String {
-        return String(format: "%.1f%%", confidence * 100)
-    }
-    
-    var participantCount: Int {
-        return participatingBots.count
-    }
-    
-    var isStrongConsensus: Bool {
-        return confidence > 0.8 && participantCount >= 5
-    }
-    
-    var shouldExecute: Bool {
-        return isStrongConsensus && riskLevel != .high
-    }
-}
-
-// MARK: - Consensus Strength
-
-enum ConsensusStrength: String, Codable, CaseIterable {
-    case weak = "Weak"
-    case moderate = "Moderate"
-    case strong = "Strong"
-    case unanimous = "Unanimous"
-    
-    var threshold: Double {
-        switch self {
-        case .weak: return 0.5
-        case .moderate: return 0.7
-        case .strong: return 0.85
-        case .unanimous: return 0.95
+        
+        init(
+            id: UUID = UUID(),
+            botId: String,
+            botName: String,
+            alertType: AlertType,
+            message: String,
+            timestamp: Date = Date(),
+            priority: Priority = .medium,
+            isRead: Bool = false,
+            actionRequired: Bool = false
+        ) {
+            self.id = id
+            self.botId = botId
+            self.botName = botName
+            self.alertType = alertType
+            self.message = message
+            self.timestamp = timestamp
+            self.priority = priority
+            self.isRead = isRead
+            self.actionRequired = actionRequired
         }
-    }
-    
-    var color: Color {
-        switch self {
-        case .weak: return .red
-        case .moderate: return .orange
-        case .strong: return .green
-        case .unanimous: return .blue
-        }
-    }
-    
-    var description: String {
-        switch self {
-        case .weak: return "Limited agreement among bots"
-        case .moderate: return "Moderate agreement with some dissent"
-        case .strong: return "Strong agreement with high confidence"
-        case .unanimous: return "Complete agreement across all bots"
-        }
+        
+        static let sampleAlerts: [BotAlert] = [
+            BotAlert(
+                botId: "bot_001",
+                botName: "Elite Scalper",
+                alertType: .tradeOpportunity,
+                message: "Strong buy signal detected on XAUUSD with 87% confidence",
+                priority: .high,
+                actionRequired: true
+            ),
+            BotAlert(
+                botId: "bot_002",
+                botName: "Risk Manager",
+                alertType: .riskWarning,
+                message: "Daily drawdown limit approaching: 4.2% of 5% maximum",
+                priority: .medium
+            )
+        ]
     }
 }
 
-// MARK: - Vote Breakdown
+// MARK: - Performance Extension
 
-struct VoteBreakdown: Codable {
-    var bullishVotes: Int
-    var bearishVotes: Int
-    var neutralVotes: Int
-    var abstainVotes: Int
-    
-    init(
-        bullishVotes: Int = 0,
-        bearishVotes: Int = 0,
-        neutralVotes: Int = 0,
-        abstainVotes: Int = 0
-    ) {
-        self.bullishVotes = bullishVotes
-        self.bearishVotes = bearishVotes
-        self.neutralVotes = neutralVotes
-        self.abstainVotes = abstainVotes
+extension BotCommunicationTypes.BotPerformanceMetrics {
+    var performanceGrade: String {
+        switch winRate {
+        case 0.8...: return "Elite"
+        case 0.7..<0.8: return "Excellent"
+        case 0.6..<0.7: return "Good"
+        case 0.5..<0.6: return "Average"
+        default: return "Needs Improvement"
+        }
     }
     
-    var totalVotes: Int {
-        return bullishVotes + bearishVotes + neutralVotes + abstainVotes
-    }
-    
-    var bullishPercentage: Double {
-        guard totalVotes > 0 else { return 0.0 }
-        return Double(bullishVotes) / Double(totalVotes)
-    }
-    
-    var bearishPercentage: Double {
-        guard totalVotes > 0 else { return 0.0 }
-        return Double(bearishVotes) / Double(totalVotes)
-    }
-    
-    var neutralPercentage: Double {
-        guard totalVotes > 0 else { return 0.0 }
-        return Double(neutralVotes) / Double(totalVotes)
-    }
-    
-    var dominantSentiment: String {
-        let max = Swift.max(bullishVotes, bearishVotes, neutralVotes)
-        if max == bullishVotes { return "Bullish" }
-        if max == bearishVotes { return "Bearish" }
-        return "Neutral"
-    }
-}
-
-// MARK: - Global Bot Stats
-
-struct GlobalBotStats: Codable {
-    let totalBots: Int
-    let activeBots: Int
-    let learningBots: Int
-    let tradingBots: Int
-    let averagePerformance: Double
-    let totalTrades: Int
-    let overallWinRate: Double
-    let generation: Int
-    let totalDiscussions: Int
-    let activeDiscussions: Int
-    let consensusSignals: Int
-    let lastUpdated: Date
-    
-    init(
-        totalBots: Int = 0,
-        activeBots: Int = 0,
-        learningBots: Int = 0,
-        tradingBots: Int = 0,
-        averagePerformance: Double = 0.0,
-        totalTrades: Int = 0,
-        overallWinRate: Double = 0.0,
-        generation: Int = 1,
-        totalDiscussions: Int = 0,
-        activeDiscussions: Int = 0,
-        consensusSignals: Int = 0,
-        lastUpdated: Date = Date()
-    ) {
-        self.totalBots = totalBots
-        self.activeBots = activeBots
-        self.learningBots = learningBots
-        self.tradingBots = tradingBots
-        self.averagePerformance = averagePerformance
-        self.totalTrades = totalTrades
-        self.overallWinRate = overallWinRate
-        self.generation = generation
-        self.totalDiscussions = totalDiscussions
-        self.activeDiscussions = activeDiscussions
-        self.consensusSignals = consensusSignals
-        self.lastUpdated = lastUpdated
-    }
-    
-    var formattedWinRate: String {
-        return String(format: "%.1f%%", overallWinRate * 100)
-    }
-    
-    var formattedPerformance: String {
-        return String(format: "%.2f", averagePerformance)
-    }
-    
-    var botEfficiency: Double {
-        guard totalBots > 0 else { return 0.0 }
-        return Double(activeBots) / Double(totalBots)
-    }
-    
-    var communicationActivity: Double {
-        guard totalBots > 0 else { return 0.0 }
-        return Double(activeDiscussions) / Double(totalBots)
+    var gradeColor: Color {
+        switch performanceGrade {
+        case "Elite": return DesignSystem.primaryGold
+        case "Excellent": return .green
+        case "Good": return .blue
+        case "Average": return .orange
+        default: return .red
+        }
     }
 }
 
 #Preview {
-    Text("Bot Communication Types")
+    VStack {
+        Text("Bot Communication Types")
+            .font(.title.bold())
+        
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Available Types:")
+                .font(.headline)
+            
+            Text("• BotChatMessage")
+            Text("• BotDiscussion") 
+            Text("• BotPerformanceMetrics")
+            Text("• BotStatus")
+            Text("• BotConfiguration")
+            Text("• BotAlert")
+        }
+        .font(.caption)
+        .foregroundColor(.secondary)
+    }
+    .padding()
 }

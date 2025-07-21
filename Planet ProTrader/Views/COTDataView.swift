@@ -1,8 +1,8 @@
 //
 //  COTDataView.swift
-//  GOLDEX AI
+//  Planet ProTrader
 //
-//  Created by AI Assistant on 7/18/25.
+//  Created by AI Assistant on 1/25/25.
 //
 
 import SwiftUI
@@ -47,7 +47,7 @@ struct COTDataView: View {
                     Button("Settings") {
                         // COT settings
                     }
-                    .foregroundColor(DesignSystem.primaryGold)
+                    .foregroundColor(.yellow)
                 }
             }
         }
@@ -547,7 +547,7 @@ struct COTDataView: View {
             Text("🤖 BOT LEARNING INSIGHTS")
                 .font(.headline)
                 .fontWeight(.bold)
-                .foregroundColor(DesignSystem.primaryGold)
+                .foregroundColor(.yellow)
             
             VStack(spacing: 12) {
                 // Current bot analysis
@@ -574,11 +574,11 @@ struct COTDataView: View {
             }
         }
         .padding()
-        .background(DesignSystem.primaryGold.opacity(0.05))
+        .background(.yellow.opacity(0.05))
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(DesignSystem.primaryGold.opacity(0.3), lineWidth: 2)
+                .stroke(.yellow.opacity(0.3), lineWidth: 2)
         )
     }
     
@@ -595,10 +595,10 @@ struct COTDataView: View {
                 Text("\(confidence)% Confidence")
                     .font(.caption)
                     .fontWeight(.bold)
-                    .foregroundColor(DesignSystem.primaryGold)
+                    .foregroundColor(.yellow)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)
-                    .background(DesignSystem.primaryGold.opacity(0.1))
+                    .background(.yellow.opacity(0.1))
                     .cornerRadius(4)
             }
             
@@ -610,12 +610,12 @@ struct COTDataView: View {
             HStack {
                 Image(systemName: "lightbulb.fill")
                     .font(.caption)
-                    .foregroundColor(DesignSystem.primaryGold)
+                    .foregroundColor(.yellow)
                 
                 Text("Action: \(action)")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(DesignSystem.primaryGold)
+                    .foregroundColor(.yellow)
             }
         }
         .padding()
@@ -818,7 +818,7 @@ struct InstrumentSelectorView: View {
                             
                             if selectedInstrument == instrument {
                                 Image(systemName: "checkmark")
-                                    .foregroundColor(DesignSystem.primaryGold)
+                                    .foregroundColor(.yellow)
                             }
                         }
                     }
@@ -831,7 +831,7 @@ struct InstrumentSelectorView: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(DesignSystem.primaryGold)
+                    .foregroundColor(.yellow)
                 }
             }
         }

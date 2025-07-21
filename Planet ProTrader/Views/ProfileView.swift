@@ -130,31 +130,46 @@ struct ProfileView: View {
                     icon: "bell.fill",
                     title: "Notifications",
                     subtitle: "Trading alerts and updates"
-                )
+                ) {
+                    // Handle notifications tap
+                    print("Notifications tapped")
+                }
                 
                 SettingsRow(
                     icon: "shield.fill",
                     title: "Security",
                     subtitle: "Password and authentication"
-                )
+                ) {
+                    // Handle security tap
+                    print("Security tapped")
+                }
                 
                 SettingsRow(
                     icon: "chart.bar.fill",
                     title: "Trading Preferences",
                     subtitle: "Risk settings and strategies"
-                )
+                ) {
+                    // Handle trading preferences tap
+                    print("Trading preferences tapped")
+                }
                 
                 SettingsRow(
                     icon: "questionmark.circle.fill",
                     title: "Help & Support",
                     subtitle: "FAQs and customer support"
-                )
+                ) {
+                    // Handle help tap
+                    print("Help & Support tapped")
+                }
                 
                 SettingsRow(
                     icon: "info.circle.fill",
                     title: "About",
                     subtitle: "Version and legal information"
-                )
+                ) {
+                    // Handle about tap
+                    print("About tapped")
+                }
             }
         }
     }
@@ -185,7 +200,9 @@ struct ProfileView: View {
         .alert("Sign Out", isPresented: $showingSignOut) {
             Button("Cancel", role: .cancel) { }
             Button("Sign Out", role: .destructive) {
-                authManager.signOut()
+                Task {
+                    authManager.signOut()
+                }
             }
         } message: {
             Text("Are you sure you want to sign out?")
@@ -193,8 +210,9 @@ struct ProfileView: View {
     }
 }
 
-
 #Preview {
-    ProfileView()
-        .environmentObject(AuthenticationManager())
+    NavigationStack {
+        ProfileView()
+            .environmentObject(AuthenticationManager.shared)
+    }
 }

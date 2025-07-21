@@ -46,21 +46,13 @@ struct MainTabView: View {
                     }
                     .tag(2)
                 
-                // Claude Integration Tab (NEW!)
-                ClaudeIntegrationDashboard()
-                    .tabItem {
-                        Image(systemName: "cpu")
-                        Text("Claude AI")
-                    }
-                    .tag(3)
-                
                 // Profile Tab
                 ProfileView()
                     .tabItem {
                         Image(systemName: "person.circle.fill")
                         Text("Profile")
                     }
-                    .tag(4)
+                    .tag(3)
             }
             .accentColor(DesignSystem.primaryGold)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedTab)
@@ -69,7 +61,7 @@ struct MainTabView: View {
                 setupTabBarAppearance()
             }
             
-            // Floating OPUS Status Indicator
+            // Floating OPUS AI Assistant - Available from any tab
             VStack {
                 HStack {
                     OpusFloatingButton(
@@ -97,7 +89,7 @@ struct MainTabView: View {
     }
     
     private func setupOpusSystem() {
-        // Initialize OPUS AI System with delay
+        // Initialize OPUS AI System with delay for smooth startup
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                 opusManager.unleashOpusPower()
@@ -110,15 +102,22 @@ struct MainTabView: View {
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = UIColor.systemBackground.withAlphaComponent(0.95)
         
+        // Enhanced tab bar styling
+        appearance.stackedLayoutAppearance.selected.iconColor = UIColor(DesignSystem.primaryGold)
+        appearance.stackedLayoutAppearance.selected.titleTextAttributes = [
+            .foregroundColor: UIColor(DesignSystem.primaryGold)
+        ]
+        
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
     }
 }
 
-// MARK: - Modern OPUS Floating Button Component
+// MARK: - Enhanced OPUS Floating Button Component
 struct OpusFloatingButton: View {
     let isActive: Bool
     @Binding var showingInterface: Bool
+    @State private var isHovered = false
     
     var body: some View {
         Button(action: {
@@ -134,6 +133,8 @@ struct OpusFloatingButton: View {
                         LinearGradient(colors: [.orange, .yellow], startPoint: .topLeading, endPoint: .bottomTrailing) :
                         LinearGradient(colors: [.gray, .gray], startPoint: .topLeading, endPoint: .bottomTrailing)
                     )
+                    .scaleEffect(isActive ? 1.1 : 1.0)
+                    .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: isActive)
                 
                 if isActive {
                     Circle()
@@ -149,12 +150,12 @@ struct OpusFloatingButton: View {
                         )
                 }
                 
-                Text("OPUS AI")
+                Text("AI Assistant")
                     .font(.system(size: 12, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 25)
                     .fill(.ultraThinMaterial)
@@ -163,24 +164,29 @@ struct OpusFloatingButton: View {
                         RoundedRectangle(cornerRadius: 25)
                             .stroke(
                                 LinearGradient(
-                                    colors: isActive ? [.orange.opacity(0.3), .yellow.opacity(0.3)] : [.clear],
+                                    colors: isActive ? [.orange.opacity(0.4), .yellow.opacity(0.4)] : [.gray.opacity(0.2)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
-                                lineWidth: 1
+                                lineWidth: 1.5
                             )
                     )
             )
         }
         .buttonStyle(.plain)
-        .scaleEffect(showingInterface ? 0.95 : 1.0)
+        .scaleEffect(showingInterface ? 0.95 : (isHovered ? 1.05 : 1.0))
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: showingInterface)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isHovered)
+        .onHover { hovering in
+            isHovered = hovering
+        }
     }
 }
 
-// MARK: - Modern Bot View (Replacing SimpleBotView)
+// MARK: - Enhanced Modern Bot View
 struct ModernBotView: View {
     @State private var selectedBotCategory = 0
+    @State private var showingBotCreator = false
     private let botCategories = ["Active", "Learning", "Archived"]
     
     var body: some View {
@@ -190,8 +196,20 @@ struct ModernBotView: View {
                     // Header Statistics
                     ModernStatsCard()
                     
-                    // Category Picker
-                    BotCategoryPicker(selection: $selectedBotCategory, categories: botCategories)
+                    // Category Picker with Create Bot Button
+                    HStack {
+                        BotCategoryPicker(selection: $selectedBotCategory, categories: botCategories)
+                        
+                        Spacer()
+                        
+                        Button(action: {
+                            showingBotCreator = true
+                        }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(DesignSystem.primaryGold)
+                        }
+                    }
                     
                     // Bot Grid
                     LazyVGrid(columns: [
@@ -218,24 +236,37 @@ struct ModernBotView: View {
             .navigationBarTitleDisplayMode(.large)
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
         }
+        .sheet(isPresented: $showingBotCreator) {
+            BotCreatorView()
+        }
     }
 }
 
-// MARK: - Modern Stats Card Component
+// MARK: - Enhanced Modern Stats Card Component
 struct ModernStatsCard: View {
+    @State private var animateStats = false
+    
     var body: some View {
         UltraPremiumCard {
             VStack(spacing: 20) {
                 HStack {
-                    Text("Portfolio Overview")
-                        .font(.title2.bold())
-                        .foregroundColor(.primary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Portfolio Overview")
+                            .font(.title2.bold())
+                            .foregroundColor(.primary)
+                        
+                        Text("Last updated: \(Date(), format: .dateTime.hour().minute())")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                     
                     Spacer()
                     
                     Image(systemName: "chart.line.uptrend.xyaxis")
                         .font(.title2)
                         .foregroundStyle(.green)
+                        .scaleEffect(animateStats ? 1.1 : 1.0)
+                        .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: animateStats)
                 }
                 
                 HStack(spacing: 0) {
@@ -269,25 +300,32 @@ struct ModernStatsCard: View {
             }
             .padding(20)
         }
+        .onAppear {
+            animateStats = true
+        }
     }
 }
 
-// MARK: - Stat Item Component
+// MARK: - Enhanced Stat Item Component
 struct StatItem: View {
     let value: String
     let label: String
     let color: Color
     let icon: String
+    @State private var animateValue = false
     
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundStyle(color)
+                .scaleEffect(animateValue ? 1.1 : 1.0)
+                .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: animateValue)
             
             Text(value)
                 .font(.title2.bold())
                 .foregroundColor(color)
+                .opacity(animateValue ? 1.0 : 0.7)
             
             Text(label)
                 .font(.caption)
@@ -295,10 +333,15 @@ struct StatItem: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.8).delay(Double.random(in: 0.1...0.5))) {
+                animateValue = true
+            }
+        }
     }
 }
 
-// MARK: - Bot Category Picker
+// MARK: - Enhanced Bot Category Picker
 struct BotCategoryPicker: View {
     @Binding var selection: Int
     let categories: [String]
@@ -315,30 +358,33 @@ struct BotCategoryPicker: View {
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(selection == index ? .white : .primary)
                         .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
+                        .padding(.vertical, 12)
                         .background(
                             RoundedRectangle(cornerRadius: 20)
                                 .fill(selection == index ? DesignSystem.primaryGold : Color.clear)
+                                .shadow(color: selection == index ? DesignSystem.primaryGold.opacity(0.3) : .clear, radius: 4)
                         )
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(4)
+        .padding(6)
         .background(
             RoundedRectangle(cornerRadius: 25)
-                .fill(Color(.tertiarySystemGroupedBackground))
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.1), radius: 4)
         )
     }
 }
 
-// MARK: - Modern Bot Card
+// MARK: - Enhanced Modern Bot Card
 struct ModernBotCard: View {
     let botName: String
     let strategy: String
     let profit: Double
     let isActive: Bool
     let winRate: Int
+    @State private var cardHovered = false
     
     var body: some View {
         UltraPremiumCard {
@@ -364,6 +410,8 @@ struct ModernBotCard: View {
                         Circle()
                             .fill(isActive ? .green : .gray)
                             .frame(width: 8, height: 8)
+                            .scaleEffect(isActive ? 1.2 : 1.0)
+                            .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: isActive)
                         
                         Text(isActive ? "LIVE" : "OFF")
                             .font(.system(size: 8, weight: .bold))
@@ -372,6 +420,7 @@ struct ModernBotCard: View {
                 }
                 
                 Divider()
+                    .opacity(0.5)
                 
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
@@ -396,15 +445,71 @@ struct ModernBotCard: View {
                             .foregroundColor(.blue)
                     }
                 }
+                
+                // Quick action buttons
+                HStack(spacing: 8) {
+                    Button(action: {}) {
+                        Text(isActive ? "Pause" : "Start")
+                            .font(.caption.bold())
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 4)
+                            .background(isActive ? .orange : .green)
+                            .clipShape(Capsule())
+                    }
+                    
+                    Spacer()
+                    
+                    Button(action: {}) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
             .padding(16)
+        }
+        .scaleEffect(cardHovered ? 1.02 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: cardHovered)
+        .onHover { hovering in
+            cardHovered = hovering
         }
     }
 }
 
-// MARK: - Preview
+// MARK: - Bot Creator View
+struct BotCreatorView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Create New Trading Bot")
+                    .font(.largeTitle.bold())
+                    .padding()
+                
+                Text("Bot creation interface coming soon...")
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+            }
+            .navigationTitle("New Bot")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Previews
 #Preview {
     MainTabView()
+        .environmentObject(AuthenticationManager.shared)
 }
 
 #Preview("Modern Bot View") {
@@ -417,4 +522,5 @@ struct ModernBotCard: View {
         OpusFloatingButton(isActive: false, showingInterface: .constant(false))
     }
     .padding()
+    .background(Color(.systemGroupedBackground))
 }

@@ -2,45 +2,7 @@ import SwiftUI
 import Foundation
 import Combine
 
-// MARK: - Authentication Manager
-@MainActor
-class AuthenticationManager: ObservableObject {
-    @Published var isAuthenticated = false
-    @Published var currentUser: User?
-    @Published var isLoading = false
-    
-    struct User: Codable {
-        let id: String
-        let username: String
-        let email: String
-        let displayName: String
-        let avatar: URL?
-        let isPremium: Bool
-    }
-    
-    func signIn(username: String, password: String) async {
-        isLoading = true
-        defer { isLoading = false }
-        
-        // Simulate authentication
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
-        
-        currentUser = User(
-            id: UUID().uuidString,
-            username: username,
-            email: "\(username)@example.com",
-            displayName: username,
-            avatar: nil,
-            isPremium: true
-        )
-        isAuthenticated = true
-    }
-    
-    func signOut() {
-        currentUser = nil
-        isAuthenticated = false
-    }
-}
+// MARK: - REMOVE: Duplicate Authentication Manager (causing conflicts)
 
 // MARK: - Gamification Engine
 @MainActor
@@ -148,7 +110,7 @@ struct Reward: Identifiable, Codable {
     let description: String
     let type: RewardType
     let value: Int
-    let rarity: ConsolidatedTypes.BotRarityLevel
+    let rarity: BotRarityLevel
     
     enum RewardType: String, CaseIterable, Codable {
         case xp = "XP"

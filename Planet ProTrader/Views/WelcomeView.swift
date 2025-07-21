@@ -3,12 +3,13 @@
 //  GOLDEX AI
 //
 //  Created by AI Assistant on 7/13/25.
+//  Fixed Preview ambiguity issue
 //
 
 import SwiftUI
 
 struct WelcomeView: View {
-    @StateObject private var authManager = AuthenticationManager()
+    @EnvironmentObject private var authManager: AuthenticationManager
     @State private var username = ""
     @State private var password = ""
     @State private var showingSignUp = false
@@ -238,7 +239,55 @@ struct WelcomeFeatureCard: View {
     }
 }
 
-#Preview {
-    WelcomeView()
-        .preferredColorScheme(.light)
+// MARK: - Preview Provider (Fixed ambiguous Preview)
+struct WelcomeView_Previews: PreviewProvider {
+    static var previews: some View {
+        WelcomeView()
+            .environmentObject(PreviewAuthenticationManager())
+            .preferredColorScheme(.light)
+    }
+}
+
+// MARK: - Preview Authentication Manager
+class PreviewAuthenticationManager: ObservableObject {
+    @Published var isAuthenticated = false
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+    @Published var user: User?
+    
+    func signIn(username: String, password: String) async {
+        await MainActor.run {
+            isLoading = true
+        }
+        
+        // Simulate network delay
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        
+        await MainActor.run {
+            isLoading = false
+            isAuthenticated = true
+        }
+    }
+    
+    func signOut() {
+        isAuthenticated = false
+        user = nil
+    }
+    
+    func signUp(username: String, email: String, password: String) async {
+        await signIn(username: username, password: password)
+    }
+}
+
+// MARK: - Mock User for Preview
+struct User: Codable {
+    let id: String
+    let username: String
+    let email: String
+    
+    init(id: String = "preview-user", username: String = "demo", email: String = "demo@goldex.ai") {
+        self.id = id
+        self.username = username
+        self.email = email
+    }
 }

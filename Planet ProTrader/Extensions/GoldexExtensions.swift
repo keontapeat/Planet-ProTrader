@@ -17,7 +17,7 @@ extension Color {
 }
 
 // MARK: - Essential Trading Direction Extensions  
-extension SharedTypes.TradeDirection {
+extension TradeDirection {
     var goldexDisplayName: String {
         switch self {
         case .buy, .long: return "BUY"
@@ -41,7 +41,7 @@ extension SharedTypes.TradeDirection {
 }
 
 // MARK: - Essential Trading Mode Extensions
-extension SharedTypes.TradingMode {
+extension TradingMode {
     var goldexIcon: String {
         switch self {
         case .manual: return "hand.point.up.braille"

@@ -4,7 +4,9 @@
 //
 //  Created by Keonta  on 7/17/25.
 //
+
 import Foundation
+import SwiftUI
 import Combine
 
 class PlanetProTraderAIManager: ObservableObject {
@@ -276,17 +278,16 @@ enum APIError: Error {
 
 #Preview {
     VStack {
-        Text("Planet ProTrader AI Manager")
-            .font(.title)
-            .padding()
+        Text("Goldex AI Manager")
+            .font(.title.bold())
         
-        Text("Advanced Trading Bot Control")
-            .font(.headline)
-            .foregroundStyle(.secondary)
-        
-        Text("Real-time VPS Integration")
+        Text("AI-powered trading intelligence")
             .font(.caption)
-            .foregroundStyle(.tertiary)
+            .foregroundColor(.secondary)
+        
+        Text("Status: Active")
+            .font(.subheadline)
+            .foregroundColor(.green)
     }
     .padding()
 }

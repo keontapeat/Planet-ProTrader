@@ -752,41 +752,53 @@ struct ProfessionalChartView: View {
     
     private func chartContent(geometry: GeometryProxy, isFullScreen: Bool = false) -> some View {
         ZStack {
-            // Grid lines
+            // Grid lines (lazy loaded)
             if chartSettings.showGrid {
-                chartGrid(geometry: geometry, isFullScreen: isFullScreen)
+                LazyVStack { // Use LazyVStack for better performance
+                    chartGrid(geometry: geometry, isFullScreen: isFullScreen)
+                }
             }
             
-            // Candlestick chart
-            candlestickChart(geometry: geometry, isFullScreen: isFullScreen)
+            // OPTIMIZED: Candlestick chart with view limiting
+            LazyHStack(spacing: 0) {
+                ForEach(Array(chartData.visibleCandleData.enumerated()), id: \.element.id) { index, candle in
+                    candlestickView(candle: candle, width: geometry.size.width, height: chartHeight, index: index)
+                }
+            }
+            .scaleEffect(x: zoomScale, y: 1.0, anchor: .center)
+            .offset(dragOffset)
             
-            // Volume bars (if enabled)
-            if chartSettings.showVolume {
+            // Volume bars (conditional loading)
+            if chartSettings.showVolume && !chartData.isLoadingData {
                 volumeBars(geometry: geometry, isFullScreen: isFullScreen)
             }
             
-            // Technical indicators
-            technicalIndicators(geometry: geometry, isFullScreen: isFullScreen)
+            // OPTIMIZED: Load technical indicators after main chart
+            if !chartData.isLoadingData {
+                technicalIndicators(geometry: geometry, isFullScreen: isFullScreen)
+            }
             
-            // Live orders visualization
-            if chartSettings.showOrderLines {
+            // Live orders (priority loading)
+            if chartSettings.showOrderLines && !chartData.liveOrders.isEmpty {
                 liveOrderLines(geometry: geometry, isFullScreen: isFullScreen)
             }
             
-            // ENHANCED: Auto-trading indicators
-            enhancedAutoTradingIndicators(geometry: geometry, isFullScreen: isFullScreen)
+            // OPTIMIZED: Bot indicators loaded last
+            if chartData.isChartFullyLoaded {
+                enhancedAutoTradingIndicators(geometry: geometry, isFullScreen: isFullScreen)
+            }
             
-            // Bot signals
-            if chartSettings.showBotSignals {
+            // Bot signals (conditional)
+            if chartSettings.showBotSignals && chartData.isChartFullyLoaded {
                 botSignalOverlay(geometry: geometry, isFullScreen: isFullScreen)
             }
             
-            // Crosshair
+            // Crosshair (lightweight, always available)
             if showCrosshair && chartSettings.showCrosshair {
                 crosshairOverlay(geometry: geometry, isFullScreen: isFullScreen)
             }
             
-            // Price labels
+            // Price labels (essential, always show)
             priceLabels(geometry: geometry, isFullScreen: isFullScreen)
         }
     }
@@ -1183,15 +1195,9 @@ struct ProfessionalChartView: View {
                             .font(.caption2)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
-                        
-                        Text("\(order.direction.rawValue) \(String(format: "%.2f", order.volume))")
-                            .font(.caption2)
-                            .foregroundColor(.white)
-                        
-                        Text(order.formattedPL)
-                            .font(.caption2)
-                            .fontWeight(.bold)
-                            .foregroundColor(order.profitColor)
+                        // Text("\(order.direction.rawValue) \(String(format: "%.2f", order.volume))")
+                        //     .font(.caption2)
+                        //     .foregroundColor(.white)
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -1514,34 +1520,40 @@ extension ProfessionalChartView {
         // Enable auto-hide controls by default
         autoHideControls = true
         
-        // Generate sample bot data for demo
-        chartData.generateSampleBotData()
+        // OPTIMIZED: Async data generation to prevent blocking UI
+        Task {
+            await chartData.generateSampleBotDataAsync()
+        }
         
         // Optimize for performance
         optimizeChartPerformance()
     }
     
     private func optimizeChartPerformance() {
-        // Limit candle data for smooth performance
-        if chartData.candleData.count > 500 {
-            chartData.candleData = Array(chartData.candleData.suffix(500))
+        // OPTIMIZED: More aggressive data limiting
+        if chartData.candleData.count > 200 { // Reduced from 500
+            chartData.candleData = Array(chartData.candleData.suffix(200))
         }
         
-        // Pre-calculate common values
-        _ = getPriceRange()
+        // OPTIMIZED: Pre-calculate and cache common values
+        let priceRange = getPriceRange()
+        chartData.cachedPriceRange = priceRange
+        
+        // OPTIMIZED: Reduce animation frequency
+        chartData.reducedAnimationMode = true
     }
     
     private func startToastDemoSequence() {
-        // Demo toast sequence to show professional notifications
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        // OPTIMIZED: Delayed demo sequence to reduce initial load
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { // Increased delay
             toastManager.showTrading("Bot 'Quantum AI Pro' opened BUY EUR/USD at 1.0875")
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 8.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 12.0) { // Spread out timing
             toastManager.showSuccess("Take Profit hit! +$127.50 profit on GBP/USD")
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 15.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 20.0) {
             toastManager.show("High impact news detected: Fed Rate Decision in 30 minutes", type: .warning)
         }
     }
@@ -1562,3 +1574,5 @@ extension View {
 #Preview {
     ProfessionalChartView()
 }
+```
+```swift

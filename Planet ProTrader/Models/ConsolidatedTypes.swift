@@ -1135,34 +1135,6 @@ enum RewardType: String, CaseIterable, Codable {
     }
 }
 
-enum BotRarityLevel: String, CaseIterable, Codable {
-    case common = "Common"
-    case rare = "Rare"
-    case epic = "Epic"
-    case legendary = "Legendary"
-    case mythic = "Mythic"
-    
-    var color: Color {
-        switch self {
-        case .common: return .gray
-        case .rare: return .blue
-        case .epic: return .purple
-        case .legendary: return .orange
-        case .mythic: return .yellow
-        }
-    }
-    
-    var emoji: String {
-        switch self {
-        case .common: return "⚪"
-        case .rare: return "🔵"
-        case .epic: return "🟣"
-        case .legendary: return "🟠"
-        case .mythic: return "🟡"
-        }
-    }
-}
-
 // MARK: - Enhanced Family Mode Types
 struct FamilyMemberProfile: Identifiable, Codable {
     let id = UUID()

@@ -11,15 +11,25 @@ import FirebaseAuth
 import FirebaseFirestore
 
 @MainActor
-class AuthenticationManager: ObservableObject {
+final class AuthenticationManager: ObservableObject {
     @Published var user: FirebaseAuth.User?
     @Published var isAuthenticated = false
     @Published var isLoading = false
     @Published var errorMessage = ""
     
+    // MARK: - Singleton
+    static let shared: AuthenticationManager = {
+        let instance = AuthenticationManager()
+        return instance
+    }()
+    
     private let db = Firestore.firestore()
     
-    init() {
+    private init() {
+        setupAuthenticationListener()
+    }
+    
+    private func setupAuthenticationListener() {
         // Check current authentication state
         if let currentUser = Auth.auth().currentUser {
             self.user = currentUser
@@ -34,6 +44,8 @@ class AuthenticationManager: ObservableObject {
             }
         }
     }
+    
+    // MARK: - Authentication Methods
     
     func signIn(username: String, password: String) async {
         isLoading = true
@@ -109,6 +121,8 @@ class AuthenticationManager: ObservableObject {
         isLoading = false
     }
     
+    // MARK: - Private Methods
+    
     private func createUserProfile(user: FirebaseAuth.User, username: String) async throws {
         let userData: [String: Any] = [
             "uid": user.uid,
@@ -142,6 +156,7 @@ class AuthenticationManager: ObservableObject {
 }
 
 // MARK: - User Profile Extensions
+
 extension AuthenticationManager {
     var currentUserId: String? {
         user?.uid
@@ -160,7 +175,9 @@ extension AuthenticationManager {
     }
 }
 
+// MARK: - Preview Support
+
 #Preview {
     ProfileView()
-        .environmentObject(AuthenticationManager())
+        .environmentObject(AuthenticationManager.shared)
 }

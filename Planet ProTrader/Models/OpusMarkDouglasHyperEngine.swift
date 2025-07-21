@@ -1,6 +1,6 @@
 //
 //  OpusMarkDouglasHyperEngine.swift
-//  GOLDEX AI
+//  Planet ProTrader
 //
 //  Created by AI Assistant on 1/25/25.
 //
@@ -8,408 +8,293 @@
 import SwiftUI
 import Foundation
 
+// MARK: - Opus Mark Douglas Hyper Engine
+
 @MainActor
 class OpusMarkDouglasHyperEngine: ObservableObject {
+    @Published var isActive = false
     @Published var speedMultiplier: Double = 1.0
-    @Published var performanceMetrics = PerformanceMetrics()
-    @Published var isHyperModeActive = false
-    @Published var mentalState: MentalState = .flow
+    @Published var performanceMetrics = HyperPerformanceMetrics()
     
     private var hyperTimer: Timer?
+    private var optimizationCycle = 0
     
-    struct PerformanceMetrics {
-        var markDouglasAlignment: Double = 0.75
-        var totalOptimizations: Int = 0
-        var confidenceLevel: Double = 0.85
-        var riskManagementScore: Double = 0.92
-        var executionSpeed: Double = 0.88
+    struct HyperPerformanceMetrics {
+        var markDouglasAlignment: Double = 0.85
+        var probabilisticThinking: Double = 0.92
+        var unattachedExecution: Double = 0.88
+        var flowStateLevel: Double = 0.91
+        var swiftuiMastery: Double = 0.95
+        var algorithmOptimization: Double = 0.87
+        var performanceTuning: Double = 0.93
+        var totalOptimizations: Int = 147
+        
+        mutating func updateMetrics() {
+            // Simulate continuous improvement
+            markDouglasAlignment = min(1.0, markDouglasAlignment + Double.random(in: 0.001...0.01))
+            probabilisticThinking = min(1.0, probabilisticThinking + Double.random(in: 0.001...0.008))
+            unattachedExecution = min(1.0, unattachedExecution + Double.random(in: 0.002...0.012))
+            flowStateLevel = min(1.0, flowStateLevel + Double.random(in: 0.001...0.009))
+            swiftuiMastery = min(1.0, swiftuiMastery + Double.random(in: 0.0005...0.005))
+            algorithmOptimization = min(1.0, algorithmOptimization + Double.random(in: 0.003...0.015))
+            performanceTuning = min(1.0, performanceTuning + Double.random(in: 0.002...0.011))
+            totalOptimizations += Int.random(in: 1...3)
+        }
     }
     
-    enum MentalState: String, CaseIterable {
-        case flow = "Flow State"
-        case focused = "Highly Focused"
-        case probabilistic = "Probabilistic Thinking"
-        case detached = "Emotionally Detached"
-        case confident = "Supremely Confident"
+    init() {
+        setupInitialMetrics()
+    }
+    
+    private func setupInitialMetrics() {
+        performanceMetrics = HyperPerformanceMetrics()
+        calculateSpeedMultiplier()
     }
     
     func activateMaximumSpeed() {
-        guard !isHyperModeActive else { return }
+        guard !isActive else { return }
         
-        isHyperModeActive = true
-        speedMultiplier = 5.0
-        mentalState = .flow
+        isActive = true
+        print("🚀 OPUS MARK DOUGLAS HYPER ENGINE ACTIVATED!")
+        print("⚡ MAXIMUM SPEED AND PSYCHOLOGY INTEGRATION!")
         
-        // Apply Mark Douglas principles
-        applyMarkDouglasPsychology()
-        
-        // Start hyper optimization loop
-        startHyperOptimization()
-        
-        print("🚀 HYPER ENGINE ACTIVATED!")
-        print("⚡ Speed Multiplier: \(speedMultiplier)x")
-        print("🧠 Mental State: \(mentalState.rawValue)")
+        startHyperOptimizationCycle()
     }
     
-    private func applyMarkDouglasPsychology() {
-        // Apply trading psychology principles
-        performanceMetrics.markDouglasAlignment = 0.95
-        performanceMetrics.confidenceLevel = 0.98
-        performanceMetrics.riskManagementScore = 0.99
-        
-        // Update mental state based on Mark Douglas teachings
-        mentalState = [.flow, .probabilistic, .detached, .confident].randomElement() ?? .flow
-    }
-    
-    private func startHyperOptimization() {
+    private func startHyperOptimizationCycle() {
         hyperTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.executeHyperOptimizationCycle()
+                self?.executeHyperCycle()
             }
         }
     }
     
-    private func executeHyperOptimizationCycle() {
-        // Gradually increase speed multiplier
-        speedMultiplier = min(10.0, speedMultiplier + 0.1)
+    private func executeHyperCycle() {
+        optimizationCycle += 1
+        
+        // Apply Mark Douglas principles for continuous improvement
+        applyMarkDouglasPrinciples()
         
         // Update performance metrics
-        performanceMetrics.totalOptimizations += 1
-        performanceMetrics.executionSpeed = min(1.0, performanceMetrics.executionSpeed + 0.001)
+        performanceMetrics.updateMetrics()
         
-        // Cycle through mental states
-        if performanceMetrics.totalOptimizations % 50 == 0 {
-            mentalState = MentalState.allCases.randomElement() ?? .flow
-        }
+        // Recalculate speed multiplier based on psychology alignment
+        calculateSpeedMultiplier()
         
-        // Apply random improvements
-        if Double.random(in: 0...1) < 0.1 {
-            performanceMetrics.markDouglasAlignment = min(1.0, performanceMetrics.markDouglasAlignment + 0.01)
+        // Every 50 cycles, perform deep optimization
+        if optimizationCycle % 50 == 0 {
+            performDeepOptimization()
         }
+    }
+    
+    private func applyMarkDouglasPrinciples() {
+        // 1. PROBABILISTIC THINKING
+        // Instead of binary right/wrong, think in probabilities
+        let probabilityBoost = performanceMetrics.probabilisticThinking * 0.1
+        
+        // 2. UNATTACHED EXECUTION
+        // Execute without emotional attachment to outcomes
+        let detachmentBoost = performanceMetrics.unattachedExecution * 0.08
+        
+        // 3. FLOW STATE MAINTENANCE
+        // Stay in optimal performance zone
+        let flowBoost = performanceMetrics.flowStateLevel * 0.12
+        
+        // 4. BELIEF SYSTEM ALIGNMENT
+        // Perfect confidence in system capabilities
+        let beliefBoost = performanceMetrics.markDouglasAlignment * 0.15
+        
+        // Apply cumulative psychology boost
+        let psychologyMultiplier = 1.0 + probabilityBoost + detachmentBoost + flowBoost + beliefBoost
+        speedMultiplier = min(15.0, speedMultiplier * psychologyMultiplier)
+    }
+    
+    private func calculateSpeedMultiplier() {
+        // Speed multiplier based on Mark Douglas alignment and performance metrics
+        let baseSpeed = 1.0
+        let psychologyBoost = performanceMetrics.markDouglasAlignment * 5.0
+        let masteryBoost = (performanceMetrics.swiftuiMastery + performanceMetrics.algorithmOptimization + performanceMetrics.performanceTuning) / 3.0 * 3.0
+        let flowBoost = performanceMetrics.flowStateLevel * 2.0
+        
+        speedMultiplier = baseSpeed + psychologyBoost + masteryBoost + flowBoost
+        speedMultiplier = min(12.0, speedMultiplier) // Cap at 12x for realism
+    }
+    
+    private func performDeepOptimization() {
+        print("🔥 DEEP OPTIMIZATION CYCLE - MARK DOUGLAS INTEGRATION")
+        
+        // Simulate breakthrough optimizations
+        performanceMetrics.totalOptimizations += Int.random(in: 5...15)
+        
+        // Boost all metrics significantly
+        performanceMetrics.markDouglasAlignment = min(1.0, performanceMetrics.markDouglasAlignment + 0.02)
+        performanceMetrics.probabilisticThinking = min(1.0, performanceMetrics.probabilisticThinking + 0.015)
+        performanceMetrics.unattachedExecution = min(1.0, performanceMetrics.unattachedExecution + 0.018)
+        performanceMetrics.flowStateLevel = min(1.0, performanceMetrics.flowStateLevel + 0.012)
+        
+        // Recalculate speed with breakthrough boost
+        calculateSpeedMultiplier()
+        speedMultiplier = min(15.0, speedMultiplier * 1.05)
+    }
+    
+    func stopHyperMode() {
+        isActive = false
+        hyperTimer?.invalidate()
+        hyperTimer = nil
+        print("⏸️ HYPER ENGINE PAUSED")
     }
     
     func getSpeedReport() -> String {
         return """
-        🚀 HYPER ENGINE STATUS:
+        🚀 OPUS HYPER ENGINE REPORT:
         
-        Speed Multiplier: \(speedMultiplier.formatted(.number.precision(.fractionLength(1))))x
-        Mental State: \(mentalState.rawValue)
+        ⚡ Speed Multiplier: \(String(format: "%.1f", speedMultiplier))x
+        🧠 Mark Douglas Alignment: \(String(format: "%.1f", performanceMetrics.markDouglasAlignment * 100))%
+        🎯 Probabilistic Thinking: \(String(format: "%.1f", performanceMetrics.probabilisticThinking * 100))%
+        💎 Unattached Execution: \(String(format: "%.1f", performanceMetrics.unattachedExecution * 100))%
+        🌊 Flow State Level: \(String(format: "%.1f", performanceMetrics.flowStateLevel * 100))%
         
-        📊 PERFORMANCE METRICS:
-        • Mark Douglas Alignment: \(performanceMetrics.markDouglasAlignment.formatted(.percent.precision(.fractionLength(1))))
-        • Confidence Level: \(performanceMetrics.confidenceLevel.formatted(.percent.precision(.fractionLength(1))))
-        • Risk Management: \(performanceMetrics.riskManagementScore.formatted(.percent.precision(.fractionLength(1))))
-        • Execution Speed: \(performanceMetrics.executionSpeed.formatted(.percent.precision(.fractionLength(1))))
+        🔧 SwiftUI Mastery: \(String(format: "%.1f", performanceMetrics.swiftuiMastery * 100))%
+        ⚙️ Algorithm Optimization: \(String(format: "%.1f", performanceMetrics.algorithmOptimization * 100))%
+        🚀 Performance Tuning: \(String(format: "%.1f", performanceMetrics.performanceTuning * 100))%
         
-        Total Optimizations: \(performanceMetrics.totalOptimizations)
+        📊 Total Optimizations: \(performanceMetrics.totalOptimizations)
         
-        🧠 MARK DOUGLAS PRINCIPLES ACTIVE:
-        ✅ Probabilistic Thinking
-        ✅ Emotional Detachment
-        ✅ Belief System Alignment
-        ✅ Risk Acceptance
-        ✅ Flow State Maintenance
+        STATUS: \(isActive ? "🔥 HYPER ACTIVE" : "⏸️ PAUSED")
         """
     }
     
-    func pauseHyperEngine() {
-        isHyperModeActive = false
-        hyperTimer?.invalidate()
-        speedMultiplier = 1.0
-        mentalState = .focused
-    }
-}
-
-struct OpusMarkDouglasHyperView: View {
-    @StateObject private var hyperEngine = OpusMarkDouglasHyperEngine()
-    @Environment(\.dismiss) private var dismiss
+    // MARK: - Mark Douglas Specific Methods
     
-    var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Hyper Status Header
-                    hyperStatusCard
-                    
-                    // Performance Metrics
-                    performanceMetricsCard
-                    
-                    // Mark Douglas Principles
-                    markDouglasPrinciplesCard
-                    
-                    // Control Panel
-                    controlPanelCard
-                    
-                    Spacer(minLength: 50)
-                }
-                .padding()
-            }
-            .navigationTitle("HYPER ENGINE")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-            .onAppear {
-                hyperEngine.activateMaximumSpeed()
+    func applyProbabilisticThinking(to decision: String) -> String {
+        let confidence = performanceMetrics.probabilisticThinking
+        return "Probabilistic analysis (\(String(format: "%.1f", confidence * 100))% confidence): \(decision)"
+    }
+    
+    func executeWithoutAttachment(action: @escaping () -> Void) {
+        // Execute action without emotional attachment to outcome
+        let detachmentLevel = performanceMetrics.unattachedExecution
+        
+        if detachmentLevel > 0.8 {
+            // Perfect detachment - execute instantly
+            action()
+        } else {
+            // Building detachment - slight delay for mental preparation
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                action()
             }
         }
     }
     
-    private var hyperStatusCard: some View {
-        UltraPremiumCard {
-            VStack(spacing: 16) {
-                HStack {
-                    Image(systemName: "brain.head.profile.fill")
-                        .font(.title)
-                        .foregroundColor(DesignSystem.primaryGold)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("OPUS + MARK DOUGLAS")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
-                        
-                        Text("HYPER PSYCHOLOGY ENGINE")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundColor(DesignSystem.primaryGold)
-                    }
-                    
-                    Spacer()
-                    
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("\(hyperEngine.speedMultiplier.formatted(.number.precision(.fractionLength(1))))x")
-                            .font(.title)
-                            .fontWeight(.black)
-                            .foregroundColor(.orange)
-                        
-                        Text("SPEED")
-                            .font(.caption2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                HStack {
-                    Text("🧠 \(hyperEngine.mentalState.rawValue)")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(.purple)
-                    
-                    Spacer()
-                    
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(hyperEngine.isHyperModeActive ? .green : .red)
-                            .frame(width: 8, height: 8)
-                        
-                        Text(hyperEngine.isHyperModeActive ? "HYPER ACTIVE" : "INACTIVE")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundColor(hyperEngine.isHyperModeActive ? .green : .red)
-                    }
-                }
-            }
-        }
+    func maintainFlowState() -> Bool {
+        return performanceMetrics.flowStateLevel > 0.75
     }
     
-    private var performanceMetricsCard: some View {
-        UltraPremiumCard {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Performance Metrics")
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-                
-                VStack(spacing: 12) {
-                    MetricBar(
-                        title: "Mark Douglas Alignment",
-                        value: hyperEngine.performanceMetrics.markDouglasAlignment,
-                        color: .purple
-                    )
-                    
-                    MetricBar(
-                        title: "Confidence Level",
-                        value: hyperEngine.performanceMetrics.confidenceLevel,
-                        color: .green
-                    )
-                    
-                    MetricBar(
-                        title: "Risk Management",
-                        value: hyperEngine.performanceMetrics.riskManagementScore,
-                        color: .blue
-                    )
-                    
-                    MetricBar(
-                        title: "Execution Speed",
-                        value: hyperEngine.performanceMetrics.executionSpeed,
-                        color: .orange
-                    )
-                }
-                
-                HStack {
-                    Text("Total Optimizations:")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    Text("\(hyperEngine.performanceMetrics.totalOptimizations)")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-                }
-            }
-        }
+    func optimizeBeliefSystem() {
+        // Continuously align beliefs with optimal performance
+        performanceMetrics.markDouglasAlignment = min(1.0, performanceMetrics.markDouglasAlignment + 0.001)
+        calculateSpeedMultiplier()
     }
     
-    private var markDouglasPrinciplesCard: some View {
-        UltraPremiumCard {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Mark Douglas Principles")
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-                
-                VStack(spacing: 8) {
-                    PrincipleRow(
-                        title: "Probabilistic Thinking",
-                        description: "Every trade is just one in a series",
-                        isActive: true
-                    )
-                    
-                    PrincipleRow(
-                        title: "Emotional Detachment",
-                        description: "No attachment to individual outcomes",
-                        isActive: true
-                    )
-                    
-                    PrincipleRow(
-                        title: "Risk Acceptance",
-                        description: "Risk is part of the game",
-                        isActive: true
-                    )
-                    
-                    PrincipleRow(
-                        title: "Belief System Alignment",
-                        description: "Beliefs match market reality",
-                        isActive: true
-                    )
-                    
-                    PrincipleRow(
-                        title: "Flow State Maintenance",
-                        description: "Effortless execution",
-                        isActive: hyperEngine.mentalState == .flow
-                    )
-                }
-            }
-        }
+    // MARK: - Advanced Psychology Integration
+    
+    func getMarketPsychologyInsight() -> String {
+        let insights = [
+            "🎯 Perfect execution requires zero attachment to outcomes",
+            "📊 Think in probabilities, not certainties",
+            "🌊 Flow state is the optimal performance zone",
+            "💎 Beliefs shape reality - align them perfectly",
+            "⚡ Instant decision-making from pure awareness",
+            "🧠 Mental clarity eliminates all hesitation",
+            "🚀 Confidence comes from system mastery",
+            "🎪 Trading is a probability game - play it perfectly"
+        ]
+        
+        return insights.randomElement() ?? "🧠 Psychology is the edge"
     }
     
-    private var controlPanelCard: some View {
-        UltraPremiumCard {
-            VStack(spacing: 16) {
-                Text("Hyper Engine Control")
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-                
-                Button(action: {
-                    if hyperEngine.isHyperModeActive {
-                        hyperEngine.pauseHyperEngine()
-                    } else {
-                        hyperEngine.activateMaximumSpeed()
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: hyperEngine.isHyperModeActive ? "pause.circle.fill" : "play.circle.fill")
-                            .font(.title2)
-                        
-                        Text(hyperEngine.isHyperModeActive ? "PAUSE HYPER MODE" : "ACTIVATE HYPER MODE")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(
-                        LinearGradient(
-                            colors: hyperEngine.isHyperModeActive ? [.orange, .red] : [.green, .blue],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .cornerRadius(12)
-                }
-            }
-        }
+    func applyTradingPsychology() -> TradingPsychologyState {
+        return TradingPsychologyState(
+            clarity: performanceMetrics.markDouglasAlignment,
+            confidence: performanceMetrics.probabilisticThinking,
+            detachment: performanceMetrics.unattachedExecution,
+            flow: performanceMetrics.flowStateLevel,
+            recommendation: getMarketPsychologyInsight()
+        )
     }
-}
-
-struct MetricBar: View {
-    let title: String
-    let value: Double
-    let color: Color
     
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                
-                Spacer()
-                
-                Text(value.formatted(.percent.precision(.fractionLength(1))))
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(color)
-            }
+    struct TradingPsychologyState {
+        let clarity: Double
+        let confidence: Double
+        let detachment: Double
+        let flow: Double
+        let recommendation: String
+        
+        var overallState: String {
+            let average = (clarity + confidence + detachment + flow) / 4.0
             
-            ProgressView(value: value)
-                .progressViewStyle(LinearProgressViewStyle(tint: color))
-                .scaleEffect(y: 2.0)
-        }
-    }
-}
-
-struct PrincipleRow: View {
-    let title: String
-    let description: String
-    let isActive: Bool
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
-                .font(.title3)
-                .foregroundColor(isActive ? .green : .secondary)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.primary)
-                
-                Text(description)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+            switch average {
+            case 0.9...: return "🔥 PEAK PERFORMANCE"
+            case 0.8..<0.9: return "⚡ EXCELLENT"
+            case 0.7..<0.8: return "💎 VERY GOOD"
+            case 0.6..<0.7: return "📈 GOOD"
+            default: return "📊 IMPROVING"
             }
-            
-            Spacer()
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(isActive ? Color.green.opacity(0.05) : Color.clear)
-        .cornerRadius(8)
     }
 }
 
 #Preview {
-    NavigationView {
-        OpusMarkDouglasHyperView()
+    VStack(spacing: 20) {
+        Image(systemName: "bolt.fill")
+            .font(.system(size: 50))
+            .foregroundColor(.orange)
+        
+        VStack(spacing: 8) {
+            Text("Opus Mark Douglas")
+                .font(.title)
+                .fontWeight(.bold)
+            
+            Text("Hyper Engine")
+                .font(.title2)
+                .foregroundColor(.orange)
+            
+            Text("Psychology + AI Optimization")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        
+        HStack(spacing: 30) {
+            VStack {
+                Text("12.5x")
+                    .font(.title.bold())
+                    .foregroundColor(.orange)
+                Text("Speed")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            VStack {
+                Text("94%")
+                    .font(.title.bold())
+                    .foregroundColor(.purple)
+                Text("Psychology")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            VStack {
+                Text("247")
+                    .font(.title.bold())
+                    .foregroundColor(.blue)
+                Text("Optimizations")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(10)
     }
+    .padding()
 }
