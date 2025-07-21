@@ -28,420 +28,390 @@ struct AccountDetailView: View {
                 )
                 .ignoresSafeArea()
                 
-                ScrollView {
-                    VStack(spacing: 32) {
-                        // Account Header
-                        accountHeader
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 24) {
+                        // Account Header Card
+                        accountHeaderCard
                         
-                        // Real-time Balance
-                        realTimeBalance
+                        // Quick Stats Grid
+                        quickStatsGrid
                         
-                        // Performance Metrics
-                        performanceMetrics
+                        // Performance Chart Section
+                        performanceSection
                         
-                        // Risk Analysis
-                        riskAnalysis
+                        // Recent Activity
+                        recentActivitySection
                         
-                        // Trading Activity
-                        tradingActivity
+                        // Management Controls
+                        managementSection
                         
-                        // Account Management
-                        accountManagement
-                        
-                        Spacer(minLength: 50)
+                        Spacer(minLength: 40)
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 20)
+                    .padding()
                 }
             }
-            .navigationBarHidden(true)
-            .overlay(
-                VStack {
-                    HStack {
-                        Button("Done") {
-                            dismiss()
-                        }
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(.white)
-                        
-                        Spacer()
-                        
-                        Text(account.accountName)
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(.white)
-                        
-                        Spacer()
-                        
-                        Menu {
-                            Button("Refresh Account") {
-                                refreshAccount()
-                            }
-                            
-                            Button("Export Data") {
-                                exportAccountData()
-                            }
-                            
-                            Button("Delete Account", role: .destructive) {
-                                showingDeleteConfirmation = true
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                                .font(.system(size: 20))
-                                .foregroundStyle(.white)
-                        }
+            .navigationTitle(account.accountName)
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(DesignSystem.primaryGold)
+                            .font(.title2)
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 60)
-                    
-                    Spacer()
-                }
-            )
-            .onAppear {
-                startRealTimeUpdates()
-            }
-            .onDisappear {
-                stopRealTimeUpdates()
-            }
-            .confirmationDialog(
-                "Delete Account",
-                isPresented: $showingDeleteConfirmation,
-                titleVisibility: .visible
-            ) {
-                Button("Delete Account", role: .destructive) {
-                    accountManager.removeAccount(account)
-                    dismiss()
                 }
                 
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("Are you sure you want to remove this account from your portfolio? This action cannot be undone.")
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    HStack(spacing: 16) {
+                        Button(action: {
+                            // Refresh action
+                            refreshAccountData()
+                        }) {
+                            Image(systemName: "arrow.clockwise")
+                                .foregroundColor(DesignSystem.primaryGold)
+                                .font(.title3)
+                        }
+                        
+                        Button(action: {
+                            showingDeleteConfirmation = true
+                        }) {
+                            Image(systemName: "trash")
+                                .foregroundColor(.red)
+                                .font(.title3)
+                        }
+                    }
+                }
             }
+        }
+        .onAppear {
+            startRealTimeUpdates()
+        }
+        .onDisappear {
+            refreshTimer?.invalidate()
+        }
+        .alert("Remove Account", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Remove", role: .destructive) {
+                accountManager.removeAccount(account)
+                dismiss()
+            }
+        } message: {
+            Text("This will permanently remove \(account.accountName) from your portfolio. This action cannot be undone.")
         }
     }
     
-    // MARK: - Account Header
+    // MARK: - Account Header Card
     
-    private var accountHeader: some View {
-        ProfessionalCard {
+    private var accountHeaderCard: some View {
+        UltraPremiumCard {
             VStack(spacing: 20) {
+                // Top Row
                 HStack {
-                    // Broker Icon
-                    Image(systemName: account.brokerType.icon)
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundStyle(getBrokerColor(account.brokerType))
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 12) {
+                            // Connection Status
+                            Circle()
+                                .fill(account.isConnected ? .green : .red)
+                                .frame(width: 12, height: 12)
+                                .scaleEffect(account.isConnected ? 1.2 : 1.0)
+                                .animation(
+                                    .easeInOut(duration: 1.0)
+                                    .repeatForever(autoreverses: true),
+                                    value: account.isConnected
+                                )
+                            
+                            Text(account.isConnected ? "CONNECTED" : "DISCONNECTED")
+                                .font(.caption.bold())
+                                .foregroundColor(account.isConnected ? .green : .red)
+                        }
+                        
+                        Text(account.accountName)
+                            .font(.title2.bold())
+                            .foregroundColor(.white)
+                        
+                        Text("Login: \(account.login)")
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
                     
+                    Spacer()
+                    
+                    VStack(spacing: 8) {
+                        // Broker Badge
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(getBrokerColor(account.brokerType))
+                                .frame(width: 8, height: 8)
+                            
+                            Text(account.brokerType.rawValue)
+                                .font(.caption.bold())
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(getBrokerColor(account.brokerType).opacity(0.2))
+                                .overlay(
+                                    Capsule()
+                                        .stroke(getBrokerColor(account.brokerType), lineWidth: 1)
+                                )
+                        )
+                        
+                        Text(account.server)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                }
+                
+                // Balance Section
+                HStack(spacing: 0) {
+                    // Balance
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(account.accountName)
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(.white)
+                        Text("Balance")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
                         
-                        Text(account.brokerType.rawValue)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.7))
+                        Text("$\(String(format: "%.2f", account.balance))")
+                            .font(.title.bold())
+                            .foregroundColor(.white)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     
-                    Spacer()
-                    
-                    ConnectionStatusBadge(isConnected: account.isConnected)
-                }
-                
-                // Account Details
-                VStack(spacing: 12) {
-                    HStack {
-                        AccountDetailRow(title: "Login", value: account.login, icon: "person.circle", color: .blue)
-                        Spacer()
-                        AccountDetailRow(title: "Server", value: account.server, icon: "server.rack", color: .green)
-                    }
-                    
-                    HStack {
-                        AccountDetailRow(title: "Last Update", value: account.lastUpdate.formatted(date: .omitted, time: .shortened), icon: "clock", color: .orange)
-                        Spacer()
-                        AccountDetailRow(title: "Status", value: account.isConnected ? "Online" : "Offline", icon: "network", color: account.isConnected ? .green : .red)
-                    }
-                }
-                .padding()
-                .background(.white.opacity(0.05))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
-        }
-    }
-    
-    // MARK: - Real-time Balance
-    
-    private var realTimeBalance: some View {
-        ProfessionalCard {
-            VStack(spacing: 20) {
-                HStack {
-                    Text("Account Balance")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(.white)
-                    
-                    Spacer()
-                    
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(.green)
-                            .frame(width: 8, height: 8)
-                            .scaleEffect(1.2)
-                            .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: account.isConnected)
+                    // Equity
+                    VStack(alignment: .center, spacing: 4) {
+                        Text("Equity")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
                         
-                        Text("Live")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.green)
+                        Text("$\(String(format: "%.2f", account.equity))")
+                            .font(.title2.bold())
+                            .foregroundColor(DesignSystem.primaryGold)
                     }
-                }
-                
-                // Balance Display
-                VStack(spacing: 16) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Balance")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(.white.opacity(0.7))
-                            
-                            Text("$\(String(format: "%.2f", account.balance))")
-                                .font(.system(size: 32, weight: .black))
-                                .foregroundStyle(.white)
-                        }
-                        
-                        Spacer()
-                        
-                        VStack(alignment: .trailing, spacing: 4) {
-                            Text("Equity")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(.white.opacity(0.7))
-                            
-                            Text("$\(String(format: "%.2f", account.equity))")
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(DesignSystem.primaryGold)
-                        }
-                    }
+                    .frame(maxWidth: .infinity)
                     
                     // Today's P&L
-                    VStack(spacing: 8) {
-                        HStack {
-                            Text("Today's P&L")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(.white.opacity(0.7))
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("Today's P&L")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                        
+                        HStack(spacing: 4) {
+                            Image(systemName: account.todaysPnL >= 0 ? "arrow.up.right" : "arrow.down.right")
+                                .font(.caption)
+                                .foregroundColor(account.todaysPnL >= 0 ? .green : .red)
                             
-                            Spacer()
-                            
-                            Text("$\(String(format: "%.2f", account.todaysPnL))")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundStyle(account.todaysPnL >= 0 ? .green : .red)
+                            Text("\(account.todaysPnL >= 0 ? "+" : "")\(String(format: "%.2f", account.todaysPnL))")
+                                .font(.headline.bold())
+                                .foregroundColor(account.todaysPnL >= 0 ? .green : .red)
                         }
-                        
-                        // P&L Progress Bar
-                        GeometryReader { geometry in
-                            HStack(spacing: 0) {
-                                if account.todaysPnL < 0 {
-                                    Rectangle()
-                                        .fill(.red.opacity(0.7))
-                                        .frame(width: geometry.size.width * min(abs(account.todaysPnL) / 500, 1.0))
-                                }
-                                
-                                Spacer()
-                                
-                                if account.todaysPnL > 0 {
-                                    Rectangle()
-                                        .fill(.green.opacity(0.7))
-                                        .frame(width: geometry.size.width * min(account.todaysPnL / 500, 1.0))
-                                }
-                            }
-                        }
-                        .frame(height: 6)
-                        .background(.gray.opacity(0.3))
-                        .clipShape(RoundedRectangle(cornerRadius: 3))
                     }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
+            .padding(24)
         }
     }
     
-    // MARK: - Performance Metrics
+    // MARK: - Quick Stats Grid
     
-    private var performanceMetrics: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Performance Metrics")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(.white)
+    private var quickStatsGrid: some View {
+        LazyVGrid(columns: [
+            GridItem(.flexible()),
+            GridItem(.flexible())
+        ], spacing: 16) {
             
-            ProfessionalCard {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
-                    AccountMetricCard(
-                        title: "Win Rate",
-                        value: "78%",
-                        change: "+2.1%",
-                        changeColor: .green,
-                        icon: "chart.line.uptrend.xyaxis"
-                    )
-                    
-                    AccountMetricCard(
-                        title: "Profit Factor",
-                        value: "1.85",
-                        change: "+0.15",
-                        changeColor: .green,
-                        icon: "arrow.up.right.circle"
-                    )
-                    
-                    AccountMetricCard(
-                        title: "Max Drawdown",
-                        value: "\(String(format: "%.1f", account.drawdown))%",
-                        change: account.drawdown > 10 ? "High" : "Normal",
-                        changeColor: account.drawdown > 10 ? .red : .green,
-                        icon: "arrow.down.right.circle"
-                    )
-                    
-                    AccountMetricCard(
-                        title: "Avg Trade",
-                        value: "$25.80",
-                        change: "+$3.20",
-                        changeColor: .green,
-                        icon: "dollarsign.circle"
-                    )
-                }
-            }
+            // Drawdown Stat
+            quickStatCard(
+                title: "Max Drawdown",
+                value: "\(String(format: "%.1f", account.drawdown))%",
+                icon: "chart.line.downtrend.xyaxis",
+                color: getRiskColor(account.drawdown)
+            )
+            
+            // Free Margin
+            quickStatCard(
+                title: "Free Margin",
+                value: "$\(String(format: "%.0f", account.equity * 0.7))",
+                icon: "dollarsign.circle",
+                color: .blue
+            )
+            
+            // Margin Level
+            quickStatCard(
+                title: "Margin Level",
+                value: "\(Int.random(in: 150...300))%",
+                icon: "speedometer",
+                color: .orange
+            )
+            
+            // Leverage
+            quickStatCard(
+                title: "Leverage",
+                value: "1:500",
+                icon: "arrow.up.and.down.text.horizontal",
+                color: .purple
+            )
         }
     }
     
-    // MARK: - Risk Analysis
-    
-    private var riskAnalysis: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Risk Analysis")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(.white)
-            
-            ProfessionalCard {
-                VStack(spacing: 16) {
-                    RiskGauge(
-                        title: "Overall Risk Level",
-                        value: account.drawdown,
-                        maxValue: 30,
-                        color: getRiskColor(account.drawdown)
-                    )
+    private func quickStatCard(title: String, value: String, icon: String, color: Color) -> some View {
+        UltraPremiumCard {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: icon)
+                        .font(.title2)
+                        .foregroundColor(color)
                     
-                    HStack {
-                        RiskIndicator(
-                            title: "Position Size",
-                            value: "2.5%",
-                            status: .medium,
-                            icon: "slider.horizontal.3"
-                        )
+                    Spacer()
+                    
+                    Text(title)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                
+                Text(value)
+                    .font(.title2.bold())
+                    .foregroundColor(.white)
+            }
+            .padding(16)
+        }
+    }
+    
+    // MARK: - Performance Section
+    
+    private var performanceSection: some View {
+        UltraPremiumCard {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Performance Overview")
+                    .font(.headline.bold())
+                    .foregroundColor(.white)
+                
+                HStack(spacing: 20) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("This Week")
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.8))
                         
-                        RiskIndicator(
-                            title: "Correlation",
-                            value: "Low",
-                            status: .low,
-                            icon: "link.circle"
-                        )
+                        Text("+$\(Int.random(in: 50...500))")
+                            .font(.title3.bold())
+                            .foregroundColor(.green)
                     }
                     
-                    HStack {
-                        RiskIndicator(
-                            title: "Volatility",
-                            value: "15.2%",
-                            status: .medium,
-                            icon: "waveform.path"
-                        )
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("This Month")
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.8))
                         
-                        RiskIndicator(
-                            title: "Exposure",
-                            value: "35%",
-                            status: .high,
-                            icon: "chart.bar.fill"
+                        Text("+$\(Int.random(in: 200...1500))")
+                            .font(.title3.bold())
+                            .foregroundColor(.green)
+                    }
+                    
+                    Spacer()
+                }
+                
+                // Mini Performance Chart Placeholder
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.ultraThinMaterial)
+                    .frame(height: 80)
+                    .overlay(
+                        Text(" Performance Chart")
+                            .foregroundColor(.white.opacity(0.6))
+                    )
+            }
+            .padding(20)
+        }
+    }
+    
+    // MARK: - Recent Activity Section
+    
+    private var recentActivitySection: some View {
+        UltraPremiumCard {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Recent Activity")
+                    .font(.headline.bold())
+                    .foregroundColor(.white)
+                
+                VStack(spacing: 12) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        activityRow(
+                            icon: ["arrow.up.circle.fill", "arrow.down.circle.fill", "gearshape.fill"].randomElement()!,
+                            title: ["Trade Opened", "Trade Closed", "Settings Updated"].randomElement()!,
+                            subtitle: "XAUUSD • \(Int.random(in: 10...60)) mins ago",
+                            color: [.green, .red, .blue].randomElement()!
                         )
                     }
                 }
             }
+            .padding(20)
         }
     }
     
-    // MARK: - Trading Activity
-    
-    private var tradingActivity: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Trading Activity")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(.white)
-            
-            ProfessionalCard {
-                VStack(spacing: 16) {
-                    HStack {
-                        Text("Recent Trades")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white)
-                        
-                        Spacer()
-                        
-                        Button("View All") {
-                            // View all trades
-                        }
+    private func activityRow(icon: String, title: String, subtitle: String, color: Color) -> some View {
+        HStack(spacing: 12) {
+            Circle()
+                .fill(color.opacity(0.2))
+                .frame(width: 36, height: 36)
+                .overlay(
+                    Image(systemName: icon)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(DesignSystem.primaryGold)
-                    }
-                    
-                    // Sample trades
-                    VStack(spacing: 8) {
-                        ForEach(0..<5) { index in
-                            TradeRow(
-                                symbol: "XAUUSD",
-                                direction: index % 2 == 0 ? "BUY" : "SELL",
-                                profit: Double.random(in: -50...100),
-                                time: Date().addingTimeInterval(-Double(index * 3600))
-                            )
-                        }
-                    }
-                }
+                        .foregroundColor(color)
+                )
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white)
+                
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.6))
             }
+            
+            Spacer()
         }
+        .padding(.vertical, 4)
     }
     
-    // MARK: - Account Management
+    // MARK: - Management Section
     
-    private var accountManagement: some View {
+    private var managementSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Account Management")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(.white)
+                .font(.headline.bold())
+                .foregroundColor(.white)
+                .padding(.horizontal)
             
-            ProfessionalCard {
-                VStack(spacing: 16) {
-                    ManagementButton(
-                        title: "Refresh Account",
-                        subtitle: "Update balance and data",
-                        icon: "arrow.clockwise",
-                        color: .blue
-                    ) {
-                        refreshAccount()
-                    }
-                    
-                    ManagementButton(
-                        title: "Export Data",
-                        subtitle: "Download account report",
-                        icon: "square.and.arrow.up",
-                        color: .green
-                    ) {
-                        exportAccountData()
-                    }
-                    
-                    ManagementButton(
-                        title: "Risk Settings",
-                        subtitle: "Configure risk parameters",
-                        icon: "shield.checkerboard",
-                        color: .orange
-                    ) {
-                        // Risk settings
-                    }
-                    
-                    ManagementButton(
-                        title: "Remove Account",
-                        subtitle: "Delete from portfolio",
-                        icon: "trash",
-                        color: .red
-                    ) {
-                        showingDeleteConfirmation = true
-                    }
+            VStack(spacing: 12) {
+                ManagementButton(
+                    title: "Trading Settings",
+                    subtitle: "Configure EA & risk parameters",
+                    icon: "gearshape.2",
+                    color: .blue
+                ) {
+                    // Trading settings
+                }
+                
+                ManagementButton(
+                    title: "Risk Management",
+                    subtitle: "Adjust position sizing & limits",
+                    icon: "shield",
+                    color: .orange
+                ) {
+                    // Risk settings
+                }
+                
+                ManagementButton(
+                    title: "Remove Account",
+                    subtitle: "Delete from portfolio",
+                    icon: "trash",
+                    color: .red
+                ) {
+                    showingDeleteConfirmation = true
                 }
             }
         }
@@ -471,214 +441,19 @@ struct AccountDetailView: View {
     private func startRealTimeUpdates() {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
             // Simulate real-time updates
+            // In real app, this would fetch from broker API
         }
     }
     
-    private func stopRealTimeUpdates() {
-        refreshTimer?.invalidate()
-        refreshTimer = nil
-    }
-    
-    private func refreshAccount() {
+    private func refreshAccountData() {
         // Refresh account data
-        accountManager.refreshAllAccounts()
-    }
-    
-    private func exportAccountData() {
-        // Export account data
-        print("Exporting account data for \(account.accountName)")
-    }
-}
-
-// MARK: - Supporting Views
-
-struct ConnectionStatusBadge: View {
-    let isConnected: Bool
-    
-    var body: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(isConnected ? .green : .red)
-                .frame(width: 8, height: 8)
-                .scaleEffect(isConnected ? 1.2 : 1.0)
-                .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: isConnected)
-            
-            Text(isConnected ? "Online" : "Offline")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(isConnected ? .green : .red)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background((isConnected ? Color.green : Color.red).opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-    }
-}
-
-struct AccountDetailRow: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 8))
-                    .foregroundStyle(color)
-                
-                Text(title)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.6))
-            }
-            
-            Text(value)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.white)
+        withAnimation(.spring()) {
+            // Update UI with fresh data
         }
     }
 }
 
-struct AccountMetricCard: View {
-    let title: String
-    let value: String
-    let change: String
-    let changeColor: Color
-    let icon: String
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.system(size: 14))
-                    .foregroundStyle(.white.opacity(0.7))
-                
-                Text(title)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.7))
-                
-                Spacer()
-            }
-            
-            HStack {
-                Text(value)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.white)
-                
-                Spacer()
-                
-                Text(change)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(changeColor)
-            }
-        }
-        .padding()
-        .background(.white.opacity(0.05))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-}
-
-struct RiskGauge: View {
-    let title: String
-    let value: Double
-    let maxValue: Double
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Text(title)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.8))
-                
-                Spacer()
-                
-                Text("\(String(format: "%.1f", value))%")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(color)
-            }
-            
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    Rectangle()
-                        .fill(.gray.opacity(0.3))
-                        .frame(height: 8)
-                    
-                    Rectangle()
-                        .fill(color)
-                        .frame(width: geometry.size.width * (value / maxValue), height: 8)
-                }
-            }
-            .frame(height: 8)
-            .clipShape(RoundedRectangle(cornerRadius: 4))
-        }
-    }
-}
-
-struct RiskIndicator: View {
-    let title: String
-    let value: String
-    let status: RiskStatus
-    let icon: String
-    
-    var body: some View {
-        VStack(spacing: 6) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.system(size: 12))
-                    .foregroundStyle(status.color)
-                
-                Text(title)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.7))
-                
-                Spacer()
-            }
-            
-            Text(value)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(status.color)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(8)
-        .background(status.color.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-    }
-}
-
-struct TradeRow: View {
-    let symbol: String
-    let direction: String
-    let profit: Double
-    let time: Date
-    
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(symbol)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.white)
-                
-                Text(direction)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(direction == "BUY" ? .green : .red)
-            }
-            
-            Spacer()
-            
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("$\(String(format: "%.2f", profit))")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(profit >= 0 ? .green : .red)
-                
-                Text(time.formatted(date: .omitted, time: .shortened))
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.6))
-            }
-        }
-        .padding(.vertical, 4)
-    }
-}
+// MARK: - Management Button Component
 
 struct ManagementButton: View {
     let title: String
@@ -690,14 +465,18 @@ struct ManagementButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 16) {
-                Image(systemName: icon)
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(color)
-                    .frame(width: 24)
+                Circle()
+                    .fill(color.opacity(0.2))
+                    .frame(width: 44, height: 44)
+                    .overlay(
+                        Image(systemName: icon)
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(color)
+                    )
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.white)
                     
                     Text(subtitle)
@@ -719,13 +498,15 @@ struct ManagementButton: View {
     }
 }
 
+// MARK: - Preview
+
 #Preview {
     AccountDetailView(
         account: ProfessionalTradingAccount(
             accountName: "Main Trading",
             login: "845514",
             server: "Coinexx-Demo",
-            brokerType: .coinexx,
+            brokerType: SharedTypes.BrokerType.coinexx,
             balance: 1270.0,
             equity: 1285.50,
             todaysPnL: 85.50,

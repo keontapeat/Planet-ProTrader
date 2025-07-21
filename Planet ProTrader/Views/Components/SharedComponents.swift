@@ -9,36 +9,10 @@ import SwiftUI
 
 // MARK: - Shared UI Components
 
-struct StatCard: View {
-    let title: String
-    let value: String
-    let change: String
-    let color: Color
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            Text(value)
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
-            
-            Text(change)
-                .font(.caption)
-                .foregroundColor(color)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-    }
-}
+// Note: StatCard is now defined in StatCard.swift to avoid duplicates
+// This file contains other shared components
 
-struct SettingsRow: View {
+struct SettingsRowAlt: View {
     let icon: String
     let title: String
     let subtitle: String
@@ -87,14 +61,11 @@ struct SettingsRow: View {
 
 #Preview {
     VStack(spacing: 16) {
-        StatCard(
-            title: "Sample Stat",
-            value: "$1,234.56",
-            change: "+15.2%",
-            color: .green
-        )
+        // StatCard is now in its own file
+        Text("SharedComponents Preview")
+            .font(.title)
         
-        SettingsRow(
+        SettingsRowAlt(
             icon: "bell.fill",
             title: "Notifications",
             subtitle: "Trading alerts and updates"

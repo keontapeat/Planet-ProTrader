@@ -3,6 +3,8 @@ import Foundation
 
 struct MainTabView: View {
     @EnvironmentObject private var authManager: AuthenticationManager
+    @EnvironmentObject private var tradingViewModel: TradingViewModel
+    @EnvironmentObject private var realTimeAccountManager: RealTimeAccountManager
     @StateObject private var opusManager = OpusAutodebugService()
     @State private var showingOpusInterface = false
     @State private var selectedTab = 0
@@ -24,6 +26,8 @@ struct MainTabView: View {
             TabView(selection: $selectedTab) {
                 // Home Tab
                 HomeDashboardView()
+                    .environmentObject(tradingViewModel)
+                    .environmentObject(realTimeAccountManager)
                     .tabItem {
                         Image(systemName: "house.fill")
                         Text("Home")
@@ -509,7 +513,9 @@ struct BotCreatorView: View {
 // MARK: - Previews
 #Preview {
     MainTabView()
-        .environmentObject(AuthenticationManager.shared)
+        .environmentObject(AuthenticationManager())
+        .environmentObject(TradingViewModel())
+        .environmentObject(RealTimeAccountManager())
 }
 
 #Preview("Modern Bot View") {

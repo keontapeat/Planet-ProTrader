@@ -397,7 +397,7 @@ class RealTimeAccountManager: ObservableObject {
 struct TradingPosition: Identifiable, Codable {
     let id: UUID
     let symbol: String
-    let direction: TradeDirection
+    let direction: SharedTypes.TradeDirection
     let lotSize: Double
     let entryPrice: Double
     var currentPrice: Double
@@ -407,11 +407,6 @@ struct TradingPosition: Identifiable, Codable {
     var unrealizedPL: Double
     var realizedPL: Double
     var closeTime: Date?
-    
-    enum TradeDirection: String, Codable, CaseIterable {
-        case buy = "BUY"
-        case sell = "SELL"
-    }
     
     var formattedLotSize: String {
         String(format: "%.2f", lotSize)

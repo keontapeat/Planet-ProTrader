@@ -7,10 +7,89 @@
 
 import Foundation
 import SwiftUI
+import Planet_ProTrader
 
 // MARK: - SharedTypes Namespace (Keep existing unique types)
 
 enum SharedTypes {
+    
+    // MARK: - Type Aliases for Consistency
+    enum BrokerType: String, CaseIterable, Codable {
+        case mt5 = "MetaTrader 5"
+        case mt4 = "MetaTrader 4"
+        case coinexx = "Coinexx"
+        case tradeLocker = "TradeLocker"
+        case xtb = "XTB"
+        case hankotrade = "HankoTrade"
+        case manual = "Manual"
+        case forex = "Forex"
+        
+        var displayName: String {
+            return rawValue
+        }
+    }
+    
+    enum TradeDirection: String, CaseIterable, Codable {
+        case buy = "BUY"
+        case sell = "SELL"
+        
+        var displayName: String {
+            return rawValue
+        }
+        
+        var color: Color {
+            switch self {
+            case .buy: return .green
+            case .sell: return .red
+            }
+        }
+        
+        var arrow: String {
+            switch self {
+            case .buy: return "arrow.up.circle.fill"
+            case .sell: return "arrow.down.circle.fill"
+            }
+        }
+    }
+    
+    enum TradingMode: String, CaseIterable, Codable {
+        case auto = "Auto"
+        case manual = "Manual"
+        case semiAuto = "Semi-Auto"
+        
+        var displayName: String {
+            return rawValue
+        }
+    }
+    
+    enum TradeGrade: String, CaseIterable, Codable {
+        case excellent = "A+"
+        case good = "A"
+        case average = "B"
+        case poor = "C"
+        case failed = "F"
+        
+        var color: Color {
+            switch self {
+            case .excellent: return .green
+            case .good: return .mint
+            case .average: return .yellow
+            case .poor: return .orange
+            case .failed: return .red
+            }
+        }
+    }
+    
+    enum MarketSession: String, CaseIterable, Codable {
+        case london = "London"
+        case newYork = "New York"
+        case tokyo = "Tokyo"
+        case sydney = "Sydney"
+        
+        var displayName: String {
+            return rawValue
+        }
+    }
     
     // Keep only types that are used with SharedTypes namespace prefix
     // All duplicate types moved to ConsolidatedSharedTypes.swift
@@ -242,6 +321,110 @@ enum SharedTypes {
         }
     }
     
+    // MARK: - Core Structs
+    
+    struct EAStats: Identifiable, Codable {
+        let id: UUID
+        let name: String
+        let totalTrades: Int
+        let winRate: Double
+        let totalProfit: Double
+        let isActive: Bool
+        let lastUpdate: Date
+        
+        init(
+            id: UUID = UUID(),
+            name: String,
+            totalTrades: Int = 0,
+            winRate: Double = 0.0,
+            totalProfit: Double = 0.0,
+            isActive: Bool = false,
+            lastUpdate: Date = Date()
+        ) {
+            self.id = id
+            self.name = name
+            self.totalTrades = totalTrades
+            self.winRate = winRate
+            self.totalProfit = totalProfit
+            self.isActive = isActive
+            self.lastUpdate = lastUpdate
+        }
+    }
+    
+    struct PlaybookTrade: Identifiable, Codable {
+        let id: UUID
+        let symbol: String
+        let direction: TradeDirection
+        let entryPrice: Double
+        let exitPrice: Double
+        let profit: Double
+        let grade: TradeGrade
+        let timestamp: Date
+        
+        init(
+            id: UUID = UUID(),
+            symbol: String,
+            direction: TradeDirection,
+            entryPrice: Double,
+            exitPrice: Double,
+            profit: Double,
+            grade: TradeGrade,
+            timestamp: Date = Date()
+        ) {
+            self.id = id
+            self.symbol = symbol
+            self.direction = direction
+            self.entryPrice = entryPrice
+            self.exitPrice = exitPrice
+            self.profit = profit
+            self.grade = grade
+            self.timestamp = timestamp
+        }
+    }
+    
+    struct AutoTrade: Identifiable, Codable {
+        let id: UUID
+        let symbol: String
+        let direction: TradeDirection
+        let volume: Double
+        let entryPrice: Double
+        let currentPrice: Double
+        let stopLoss: Double?
+        let takeProfit: Double?
+        let profit: Double
+        let isOpen: Bool
+        let openTime: Date
+        let closeTime: Date?
+        
+        init(
+            id: UUID = UUID(),
+            symbol: String,
+            direction: TradeDirection,
+            volume: Double,
+            entryPrice: Double,
+            currentPrice: Double,
+            stopLoss: Double? = nil,
+            takeProfit: Double? = nil,
+            profit: Double = 0,
+            isOpen: Bool = true,
+            openTime: Date = Date(),
+            closeTime: Date? = nil
+        ) {
+            self.id = id
+            self.symbol = symbol
+            self.direction = direction
+            self.volume = volume
+            self.entryPrice = entryPrice
+            self.currentPrice = currentPrice
+            self.stopLoss = stopLoss
+            self.takeProfit = takeProfit
+            self.profit = profit
+            self.isOpen = isOpen
+            self.openTime = openTime
+            self.closeTime = closeTime
+        }
+    }
+    
     enum LearningCapability: String, CaseIterable, Codable {
         case patternRecognition = "Pattern Recognition"
         case riskManagement = "Risk Management"
@@ -289,6 +472,110 @@ enum SharedTypes {
         }
     }
 
+    struct TradingAccountDetails: Identifiable, Codable {
+        let id: UUID
+        let accountNumber: String
+        let accountName: String
+        let brokerType: BrokerType
+        let serverName: String
+        let balance: Double
+        let equity: Double
+        let isDemo: Bool
+        let isConnected: Bool
+        
+        init(
+            id: UUID = UUID(),
+            accountNumber: String,
+            accountName: String,
+            brokerType: BrokerType,
+            serverName: String,
+            balance: Double,
+            equity: Double,
+            isDemo: Bool,
+            isConnected: Bool = false
+        ) {
+            self.id = id
+            self.accountNumber = accountNumber
+            self.accountName = accountName
+            self.brokerType = brokerType
+            self.serverName = serverName
+            self.balance = balance
+            self.equity = equity
+            self.isDemo = isDemo
+            self.isConnected = isConnected
+        }
+        
+        // Computed properties
+        var name: String {
+            return accountName
+        }
+        
+        var formattedBalance: String {
+            return String(format: "$%.2f", balance)
+        }
+        
+        var server: String {
+            return serverName
+        }
+        
+        var accountTypeText: String {
+            return isDemo ? "DEMO" : "LIVE"
+        }
+        
+        var accountTypeColor: Color {
+            return isDemo ? .orange : .green
+        }
+        
+        enum AccountType {
+            case demo
+            case live
+        }
+        
+        var accountType: AccountType {
+            return isDemo ? .demo : .live
+        }
+    }
+    
+    struct FlipGoal: Identifiable, Codable {
+        let id: UUID
+        let name: String
+        let startAmount: Double
+        let targetAmount: Double
+        let currentAmount: Double
+        let startDate: Date
+        let targetDate: Date
+        let strategy: String
+        
+        init(
+            id: UUID = UUID(),
+            name: String,
+            startAmount: Double,
+            targetAmount: Double,
+            currentAmount: Double = 0,
+            startDate: Date = Date(),
+            targetDate: Date,
+            strategy: String
+        ) {
+            self.id = id
+            self.name = name
+            self.startAmount = startAmount
+            self.targetAmount = targetAmount
+            self.currentAmount = currentAmount
+            self.startDate = startDate
+            self.targetDate = targetDate
+            self.strategy = strategy
+        }
+        
+        var progress: Double {
+            guard targetAmount > startAmount else { return 0 }
+            return (currentAmount - startAmount) / (targetAmount - startAmount)
+        }
+        
+        var formattedProgress: String {
+            return String(format: "%.1f%%", progress * 100)
+        }
+    }
+    
 } // End SharedTypes namespace
 
 #Preview {
@@ -296,7 +583,7 @@ enum SharedTypes {
         Text("SharedTypes Preview")
             .font(.title)
         
-        Text("Namespace types - duplicates removed")
+        Text("Consolidated type definitions")
             .font(.caption)
     }
     .padding()

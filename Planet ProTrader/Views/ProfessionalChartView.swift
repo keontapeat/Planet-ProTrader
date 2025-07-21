@@ -213,7 +213,7 @@ struct ProfessionalChartView: View {
                 )
                 .cornerRadius(6)
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
     }
     
     private var optimizedBottomControls: some View {
@@ -287,6 +287,7 @@ struct ProfessionalChartView: View {
                 .background(isActive ? DesignSystem.primaryGold : Color(.systemGray5))
                 .clipShape(Circle())
         }
+        .buttonStyle(.plain)
     }
     
     private var autoTradingStatusButton: some View {
@@ -310,6 +311,7 @@ struct ProfessionalChartView: View {
             .background(chartData.isAutoTradingActive ? .green : .gray)
             .cornerRadius(6)
         }
+        .buttonStyle(.plain)
     }
     
     private var floatingOrdersPanel: some View {
@@ -397,6 +399,7 @@ struct ProfessionalChartView: View {
                 .background(Color(.systemGray5))
                 .clipShape(Circle())
         }
+        .buttonStyle(.plain)
     }
     
     // MARK: - Screen Optimization Helpers
@@ -569,21 +572,25 @@ struct ProfessionalChartView: View {
                     Image(systemName: "chart.xyaxis.line")
                         .foregroundColor(DesignSystem.primaryGold)
                 }
+                .buttonStyle(.plain)
                 
                 Button(action: { showingTools = true }) {
                     Image(systemName: "pencil.and.ruler.fill")
                         .foregroundColor(DesignSystem.primaryGold)
                 }
+                .buttonStyle(.plain)
                 
                 Button(action: { showingSettings = true }) {
                     Image(systemName: "gearshape.fill")
                         .foregroundColor(DesignSystem.primaryGold)
                 }
+                .buttonStyle(.plain)
                 
                 Button(action: { showingNews = true }) {
                     Image(systemName: "newspaper.fill")
                         .foregroundColor(DesignSystem.primaryGold)
                 }
+                .buttonStyle(.plain)
                 
                 Button(action: { 
                     withAnimation(.easeInOut(duration: 0.3)) {
@@ -593,6 +600,7 @@ struct ProfessionalChartView: View {
                     Image(systemName: "arrow.up.left.and.arrow.down.right")
                         .foregroundColor(DesignSystem.primaryGold)
                 }
+                .buttonStyle(.plain)
             }
         }
         .padding(.horizontal)
@@ -1378,7 +1386,7 @@ struct ProfessionalChartView: View {
                 )
                 .cornerRadius(isCompact ? 4 : 8)
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
     }
     
     // MARK: - Bottom Controls
@@ -1390,18 +1398,21 @@ struct ProfessionalChartView: View {
                     .font(.caption)
                     .foregroundColor(DesignSystem.primaryGold)
             }
+            .buttonStyle(.plain)
             
             Button(action: { showingTools = true }) {
                 Label("Tools", systemImage: "pencil.and.ruler")
                     .font(.caption)
                     .foregroundColor(DesignSystem.primaryGold)
             }
+            .buttonStyle(.plain)
             
             Button(action: { showingNews = true }) {
                 Label("News", systemImage: "newspaper")
                     .font(.caption)
                     .foregroundColor(DesignSystem.primaryGold)
             }
+            .buttonStyle(.plain)
             
             Spacer()
             
@@ -1422,6 +1433,7 @@ struct ProfessionalChartView: View {
                 .background(Color.green.opacity(0.1))
                 .cornerRadius(6)
             }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
@@ -1495,6 +1507,7 @@ struct ProfessionalChartView: View {
                 .background(Color(.systemGray5))
                 .cornerRadius(6)
         }
+        .buttonStyle(.plain)
     }
     
     // MARK: - Helper Methods
@@ -1574,5 +1587,3 @@ extension View {
 #Preview {
     ProfessionalChartView()
 }
-```
-```swift
