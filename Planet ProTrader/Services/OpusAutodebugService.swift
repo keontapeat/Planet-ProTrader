@@ -8,6 +8,51 @@
 import SwiftUI
 import Foundation
 
+// MARK: - Keychain Service for Opus
+class KeychainService {
+    func save(key: String, value: String) {
+        let data = value.data(using: .utf8)!
+        
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: key,
+            kSecValueData as String: data
+        ]
+        
+        SecItemDelete(query as CFDictionary)
+        SecItemAdd(query as CFDictionary, nil)
+    }
+    
+    func load(key: String) -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: key,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let string = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        
+        return string
+    }
+    
+    func delete(key: String) {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: key
+        ]
+        
+        SecItemDelete(query as CFDictionary)
+    }
+}
+
 // MARK: - OPUS LEVEL AUTODEBUG WITH APPLE DOCS MASTERY
 
 @MainActor
@@ -22,7 +67,8 @@ class OpusAutodebugService: ObservableObject {
     @Published var hyperEngine = OpusMarkDouglasHyperEngine()
     
     private var anthropicAPIKey: String {
-        return ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"] ?? ""
+        let keychain = KeychainService()
+        return keychain.load(key: "anthropic_api_key") ?? ""
     }
     private let apiURL = "https://api.anthropic.com/v1/messages"
     
@@ -465,7 +511,7 @@ class OpusAutodebugService: ObservableObject {
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         
         let requestBody: [String: Any] = [
-            "model": "claude-3-opus-20240229",
+            "model": "claude-3-5-sonnet-20241022",
             "max_tokens": maxTokens,
             "messages": [
                 [

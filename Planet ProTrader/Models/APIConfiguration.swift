@@ -12,6 +12,7 @@ import SwiftUI
 @MainActor
 class APIConfiguration: ObservableObject {
     @Published var openAIKey: String = ""
+    @Published var anthropicKey: String = ""
     @Published var supabaseKey: String = ""
     @Published var supabaseURL: String = ""
     @Published var coinexxAPIKey: String = ""
@@ -27,6 +28,7 @@ class APIConfiguration: ObservableObject {
     // MARK: - Load Configuration
     private func loadConfiguration() {
         openAIKey = keychain.load(key: "openai_api_key") ?? ""
+        anthropicKey = keychain.load(key: "anthropic_api_key") ?? ""
         supabaseKey = keychain.load(key: "supabase_api_key") ?? ""
         supabaseURL = keychain.load(key: "supabase_url") ?? ""
         coinexxAPIKey = keychain.load(key: "coinexx_api_key") ?? ""
@@ -38,6 +40,7 @@ class APIConfiguration: ObservableObject {
     // MARK: - Save Configuration
     func saveConfiguration() {
         keychain.save(key: "openai_api_key", value: openAIKey)
+        keychain.save(key: "anthropic_api_key", value: anthropicKey)
         keychain.save(key: "supabase_api_key", value: supabaseKey)
         keychain.save(key: "supabase_url", value: supabaseURL)
         keychain.save(key: "coinexx_api_key", value: coinexxAPIKey)
@@ -46,6 +49,7 @@ class APIConfiguration: ObservableObject {
         // Also save to UserDefaults for GPTIntegration compatibility
         let apiKeys: [String: String] = [
             "openai_key": openAIKey,
+            "anthropic_key": anthropicKey,
             "supabase_key": supabaseKey,
             "supabase_url": supabaseURL,
             "coinexx_key": coinexxAPIKey,
@@ -62,12 +66,14 @@ class APIConfiguration: ObservableObject {
     // MARK: - Clear Configuration
     func clearConfiguration() {
         openAIKey = ""
+        anthropicKey = ""
         supabaseKey = ""
         supabaseURL = ""
         coinexxAPIKey = ""
         telegramBotToken = ""
         
         keychain.delete(key: "openai_api_key")
+        keychain.delete(key: "anthropic_api_key")
         keychain.delete(key: "supabase_api_key")
         keychain.delete(key: "supabase_url")
         keychain.delete(key: "coinexx_api_key")
@@ -80,11 +86,15 @@ class APIConfiguration: ObservableObject {
     
     // MARK: - Validation
     private func updateConfigurationStatus() {
-        isConfigured = !openAIKey.isEmpty || !supabaseKey.isEmpty || !coinexxAPIKey.isEmpty
+        isConfigured = !openAIKey.isEmpty || !anthropicKey.isEmpty || !supabaseKey.isEmpty || !coinexxAPIKey.isEmpty
     }
     
     func validateOpenAIKey() -> Bool {
         return openAIKey.hasPrefix("sk-") && openAIKey.count > 20
+    }
+    
+    func validateAnthropicKey() -> Bool {
+        return anthropicKey.hasPrefix("sk-ant-") && anthropicKey.count > 20
     }
     
     func validateSupabaseConfig() -> Bool {
@@ -105,6 +115,33 @@ class APIConfiguration: ObservableObject {
         request.setValue("Bearer \(openAIKey)", forHTTPHeaderField: "Authorization")
         
         do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            return (response as? HTTPURLResponse)?.statusCode == 200
+        } catch {
+            return false
+        }
+    }
+    
+    func testAnthropicConnection() async -> Bool {
+        guard validateAnthropicKey() else { return false }
+        
+        let url = URL(string: "https://api.anthropic.com/v1/messages")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(anthropicKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        
+        let testMessage: [String: Any] = [
+            "model": "claude-3-5-sonnet-20241022",
+            "max_tokens": 10,
+            "messages": [
+                ["role": "user", "content": "Test"]
+            ]
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: testMessage)
             let (_, response) = try await URLSession.shared.data(for: request)
             return (response as? HTTPURLResponse)?.statusCode == 200
         } catch {
@@ -191,6 +228,9 @@ struct APIConfigurationView: View {
                     // OpenAI Configuration
                     openAISection
                     
+                    // Anthropic Configuration
+                    anthropicSection
+                    
                     // Supabase Configuration
                     supabaseSection
                     
@@ -272,6 +312,20 @@ struct APIConfigurationView: View {
         }
     }
     
+    // MARK: - Anthropic Section
+    private var anthropicSection: some View {
+        ConfigurationSection(
+            title: "Anthropic Claude Opus",
+            description: "Required for Opus Hyper AI autodebug system",
+            icon: "cpu.fill",
+            isValid: config.validateAnthropicKey()
+        ) {
+            SecureField("sk-ant-...", text: $config.anthropicKey)
+                .textFieldStyle(.roundedBorder)
+                .font(.system(.body, design: .monospaced))
+        }
+    }
+    
     // MARK: - Supabase Section
     private var supabaseSection: some View {
         ConfigurationSection(
@@ -339,6 +393,15 @@ struct APIConfigurationView: View {
                 )
                 
                 TestConnectionRow(
+                    service: "Anthropic Claude Opus",
+                    isValid: config.validateAnthropicKey(),
+                    testResult: testResults["anthropic"],
+                    action: {
+                        await testAnthropic()
+                    }
+                )
+                
+                TestConnectionRow(
                     service: "Supabase",
                     isValid: config.validateSupabaseConfig(),
                     testResult: testResults["supabase"],
@@ -400,6 +463,12 @@ struct APIConfigurationView: View {
     private func testOpenAI() async {
         isTestingConnections = true
         testResults["openai"] = await config.testOpenAIConnection()
+        isTestingConnections = false
+    }
+    
+    private func testAnthropic() async {
+        isTestingConnections = true
+        testResults["anthropic"] = await config.testAnthropicConnection()
         isTestingConnections = false
     }
     

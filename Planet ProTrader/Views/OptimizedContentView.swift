@@ -66,6 +66,21 @@ struct OptimizedContentView: View {
     private func initializeCoreServices() async {
         // Initialize Firebase, Supabase, etc.
         // This is where you'd initialize your services
+        
+        // Auto-setup Anthropic API key
+        setupAnthropicAPIKey()
+    }
+    
+    private func setupAnthropicAPIKey() {
+        let keychain = KeychainService()
+        
+        // Check if key already exists
+        if keychain.load(key: "anthropic_api_key") == nil {
+            // Save the API key
+            let anthropicKey = "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"
+            keychain.save(key: "anthropic_api_key", value: anthropicKey)
+            print("✅ Anthropic API key auto-configured for Opus!")
+        }
     }
     
     private func preloadCriticalData() async {
@@ -321,6 +336,15 @@ struct MainAppInterface: View {
                 Label("Settings", systemImage: "gear")
             }
             .tag(4)
+            
+            // Opus AI Debug
+            NavigationStack {
+                OpusActivatorView()
+            }
+            .tabItem {
+                Label("OPUS AI", systemImage: "cpu.fill")
+            }
+            .tag(5)
         }
         .tint(.blue)
     }
@@ -417,10 +441,61 @@ struct SettingsMainView: View {
     }
 }
 
+struct OpusActivatorView: View {
+    var body: some View {
+        Text("Opus Activator View")
+    }
+}
+
 // MARK: - Notification Extensions
 
 extension Notification.Name {
     static let appDidLaunch = Notification.Name("appDidLaunch")
+}
+
+// MARK: - Keychain Service
+class KeychainService {
+    func save(key: String, value: String) {
+        let data = value.data(using: .utf8)!
+        
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: key,
+            kSecValueData as String: data
+        ]
+        
+        SecItemDelete(query as CFDictionary)
+        SecItemAdd(query as CFDictionary, nil)
+    }
+    
+    func load(key: String) -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: key,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let string = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        
+        return string
+    }
+    
+    func delete(key: String) {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: key
+        ]
+        
+        SecItemDelete(query as CFDictionary)
+    }
 }
 
 #Preview {
