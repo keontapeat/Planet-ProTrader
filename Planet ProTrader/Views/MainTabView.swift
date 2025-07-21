@@ -56,11 +56,11 @@ struct MainTabView: View {
                         }
                         .tag(0)
                     
-                    // Trading Tab
-                    ProfessionalChartView()
+                    // Trading Terminal Tab
+                    Terminal()
                         .tabItem {
                             Image(systemName: selectedTab == 1 ? "chart.line.uptrend.xyaxis" : "chart.line.uptrend.xyaxis")
-                            Text("Trading")
+                            Text("Terminal")
                         }
                         .tag(1)
                     
@@ -158,497 +158,285 @@ struct MainTabView: View {
     }
 }
 
-// MARK: - Enhanced OPUS Floating Button Component
+// MARK: - OPUS Floating Button
 struct OpusFloatingButton: View {
     let isActive: Bool
     @Binding var showingInterface: Bool
-    @State private var isHovered = false
-    @State private var pulseAnimation = false
+    @State private var isAnimating = false
     
     var body: some View {
         Button(action: {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
                 showingInterface.toggle()
             }
         }) {
-            HStack(spacing: 8) {
-                Image(systemName: "brain.head.profile.fill")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(
-                        isActive ? 
-                        LinearGradient(colors: [.orange, .yellow], startPoint: .topLeading, endPoint: .bottomTrailing) :
-                        LinearGradient(colors: [.gray, .gray], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    )
-                    .scaleEffect(isActive ? (pulseAnimation ? 1.2 : 1.1) : 1.0)
-                    .onAppear {
-                        if isActive {
-                            withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
-                                pulseAnimation = true
-                            }
-                        }
-                    }
-                
+            ZStack {
+                // Pulsing ring when active
                 if isActive {
                     Circle()
-                        .fill(
-                            LinearGradient(colors: [.green, .mint], startPoint: .top, endPoint: .bottom)
-                        )
-                        .frame(width: 6, height: 6)
-                        .scaleEffect(pulseAnimation ? 1.4 : 1.2)
-                        .animation(
-                            .easeInOut(duration: 0.8)
-                            .repeatForever(autoreverses: true),
-                            value: pulseAnimation
-                        )
+                        .stroke(DesignSystem.primaryGold.opacity(0.4), lineWidth: 2)
+                        .scaleEffect(isAnimating ? 1.2 : 1.0)
+                        .opacity(isAnimating ? 0.0 : 1.0)
+                        .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: false), value: isAnimating)
                 }
                 
-                Text(isActive ? "AI Active" : "AI Assistant")
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundColor(.primary)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 25)
-                    .fill(.ultraThinMaterial)
-                    .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 25)
-                            .stroke(
-                                LinearGradient(
-                                    colors: isActive ? [.orange.opacity(0.6), .yellow.opacity(0.6)] : [.gray.opacity(0.2)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: isActive ? 2 : 1
-                            )
+                // Main button
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: isActive 
+                            ? [DesignSystem.primaryGold, DesignSystem.primaryGold.opacity(0.8)]
+                            : [Color.gray, Color.gray.opacity(0.8)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-            )
+                    .frame(width: 56, height: 56)
+                    .shadow(color: isActive ? DesignSystem.primaryGold.opacity(0.3) : .black.opacity(0.1), radius: 8, x: 0, y: 4)
+                
+                // Icon
+                Image(systemName: "brain.head.profile")
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundColor(.white)
+                    .scaleEffect(showingInterface ? 1.1 : 1.0)
+            }
         }
         .buttonStyle(.plain)
-        .scaleEffect(showingInterface ? 0.95 : (isHovered ? 1.05 : 1.0))
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: showingInterface)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isHovered)
-        .onHover { hovering in
-            isHovered = hovering
+        .onAppear {
+            if isActive {
+                isAnimating = true
+            }
+        }
+        .onChange(of: isActive) { newValue in
+            withAnimation(.easeInOut) {
+                isAnimating = newValue
+            }
         }
     }
 }
 
-// MARK: - Enhanced Modern Bot View
+// MARK: - Modern Bot View
 struct ModernBotView: View {
-    @State private var selectedBotCategory = 0
-    @State private var showingBotCreator = false
-    @State private var isRefreshing = false
-    private let botCategories = ["Active", "Learning", "Archived"]
+    @StateObject private var botManager = TradingBotManager.shared
+    @State private var showingBotCreation = false
+    @State private var selectedBot: TradingBot?
     
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 24) {
-                    // Header Statistics
-                    ModernStatsCard()
-                    
-                    // Category Picker with Create Bot Button
-                    HStack {
-                        BotCategoryPicker(selection: $selectedBotCategory, categories: botCategories)
-                        
-                        Spacer()
-                        
-                        Menu {
-                            Button("Create New Bot") {
-                                showingBotCreator = true
-                            }
-                            Button("Import Bot") {
-                                // Import functionality
-                            }
-                            Button("Bot Marketplace") {
-                                // Marketplace functionality
-                            }
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title2)
-                                .foregroundStyle(DesignSystem.primaryGold)
-                        }
-                    }
-                    
-                    // Bot Grid
-                    LazyVGrid(columns: [
-                        GridItem(.flexible(), spacing: 16),
-                        GridItem(.flexible(), spacing: 16)
-                    ], spacing: 16) {
-                        ForEach(getBotsByCategory(), id: \.id) { bot in
-                            ModernBotCard(bot: bot)
-                        }
-                    }
-                    
-                    Spacer(minLength: 100)
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
-            }
-            .navigationTitle("AI Trading Bots")
-            .navigationBarTitleDisplayMode(.large)
-            .background(Color(.systemGroupedBackground).ignoresSafeArea())
-            .refreshable {
-                await refreshBots()
-            }
-        }
-        .sheet(isPresented: $showingBotCreator) {
-            BotCreatorView()
-        }
-    }
-    
-    private func getBotsByCategory() -> [SampleBot] {
-        switch selectedBotCategory {
-        case 0: return SampleBot.activeBots
-        case 1: return SampleBot.learningBots
-        case 2: return SampleBot.archivedBots
-        default: return SampleBot.activeBots
-        }
-    }
-    
-    @MainActor
-    private func refreshBots() async {
-        isRefreshing = true
-        // Simulate network refresh
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
-        isRefreshing = false
-    }
-}
-
-// MARK: - Sample Bot Model
-struct SampleBot: Identifiable {
-    let id = UUID()
-    let name: String
-    let strategy: String
-    let profit: Double
-    let isActive: Bool
-    let winRate: Int
-    let performance: Double
-    
-    static let activeBots = [
-        SampleBot(name: "Quantum AI Pro", strategy: "Scalping", profit: 2450.75, isActive: true, winRate: 84, performance: 0.24),
-        SampleBot(name: "Gold Master", strategy: "Swing", profit: 1875.50, isActive: true, winRate: 78, performance: 0.19),
-        SampleBot(name: "Trend Hunter", strategy: "DCA", profit: 3247.25, isActive: true, winRate: 91, performance: 0.32),
-        SampleBot(name: "News Trader", strategy: "News", profit: 987.80, isActive: true, winRate: 73, performance: 0.10)
-    ]
-    
-    static let learningBots = [
-        SampleBot(name: "Neural Net v2", strategy: "Learning", profit: 125.50, isActive: false, winRate: 45, performance: 0.01),
-        SampleBot(name: "Pattern Bot", strategy: "Pattern", profit: -47.25, isActive: false, winRate: 38, performance: -0.005)
-    ]
-    
-    static let archivedBots = [
-        SampleBot(name: "Old Scalper", strategy: "Scalping", profit: 5247.75, isActive: false, winRate: 67, performance: 0.52),
-        SampleBot(name: "Legacy Bot", strategy: "Swing", profit: -234.50, isActive: false, winRate: 42, performance: -0.02)
-    ]
-}
-
-// MARK: - Enhanced Modern Stats Card Component
-struct ModernStatsCard: View {
-    @State private var animateStats = false
-    
-    var body: some View {
-        UltraPremiumCard {
-            VStack(spacing: 20) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Portfolio Overview")
-                            .font(.title2.bold())
+                LazyVStack(spacing: 16) {
+                    // Header Stats
+                    VStack(spacing: 12) {
+                        Text("AI Trading Bots")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
                             .foregroundColor(.primary)
                         
-                        Text("Last updated: \(Date(), format: .dateTime.hour().minute())")
+                        HStack(spacing: 24) {
+                            StatCard(
+                                title: "Active Bots",
+                                value: "\(botManager.activeBots.count)",
+                                color: .green
+                            )
+                            
+                            StatCard(
+                                title: "Total Profit",
+                                value: "$2,847.92",
+                                color: DesignSystem.primaryGold
+                            )
+                            
+                            StatCard(
+                                title: "Win Rate",
+                                value: "84.3%",
+                                color: .blue
+                            )
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(16)
+                    .padding(.horizontal)
+                    
+                    // Bot List
+                    ForEach(botManager.allBots) { bot in
+                        BotCard(bot: bot) {
+                            selectedBot = bot
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+                .padding(.top)
+            }
+            .refreshable {
+                await botManager.refreshBots()
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showingBotCreation = true }) {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(DesignSystem.primaryGold)
+                            .font(.title2)
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showingBotCreation) {
+            BotCreationView()
+        }
+        .sheet(item: $selectedBot) { bot in
+            BotDetailView(bot: bot)
+        }
+    }
+}
+
+// MARK: - Supporting Views
+struct StatCard: View {
+    let title: String
+    let value: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(color)
+            
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+struct BotCard: View {
+    let bot: TradingBot
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 16) {
+                // Bot Avatar
+                Circle()
+                    .fill(bot.isActive ? Color.green : Color.gray)
+                    .frame(width: 50, height: 50)
+                    .overlay(
+                        Image(systemName: "brain.head.profile")
+                            .foregroundColor(.white)
+                            .font(.title2)
+                    )
+                
+                // Bot Info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(bot.name)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Text(bot.strategy.displayName)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    HStack(spacing: 16) {
+                        Text("P&L: \(bot.profitLoss, format: .currency(code: "USD"))")
+                            .font(.caption)
+                            .foregroundColor(bot.profitLoss >= 0 ? .green : .red)
+                        
+                        Text("Trades: \(bot.totalTrades)")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chart.line.uptrend.xyaxis")
-                        .font(.title2)
-                        .foregroundStyle(.green)
-                        .scaleEffect(animateStats ? 1.1 : 1.0)
-                        .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: animateStats)
                 }
                 
-                HStack(spacing: 0) {
-                    StatItem(
-                        value: "8",
-                        label: "Active Bots",
-                        color: .blue,
-                        icon: "robot.2.fill"
-                    )
+                Spacer()
+                
+                // Status
+                VStack(spacing: 4) {
+                    Circle()
+                        .fill(bot.isActive ? Color.green : Color.gray)
+                        .frame(width: 12, height: 12)
                     
-                    Divider()
-                        .frame(height: 40)
-                    
-                    StatItem(
-                        value: "$4,247",
-                        label: "Total Profit",
-                        color: .green,
-                        icon: "dollarsign.circle.fill"
-                    )
-                    
-                    Divider()
-                        .frame(height: 40)
-                    
-                    StatItem(
-                        value: "82%",
-                        label: "Win Rate",
-                        color: .orange,
-                        icon: "target"
-                    )
+                    Text(bot.isActive ? "ACTIVE" : "STOPPED")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundColor(bot.isActive ? .green : .gray)
                 }
             }
-            .padding(20)
-        }
-        .onAppear {
-            animateStats = true
-        }
-    }
-}
-
-// MARK: - Enhanced Stat Item Component
-struct StatItem: View {
-    let value: String
-    let label: String
-    let color: Color
-    let icon: String
-    @State private var animateValue = false
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundStyle(color)
-                .scaleEffect(animateValue ? 1.1 : 1.0)
-                .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: animateValue)
-            
-            Text(value)
-                .font(.title2.bold())
-                .foregroundColor(color)
-                .opacity(animateValue ? 1.0 : 0.7)
-                .contentTransition(.numericText())
-                .animation(.easeInOut(duration: 1.0), value: value)
-            
-            Text(label)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .onAppear {
-            withAnimation(.easeInOut(duration: 0.8).delay(Double.random(in: 0.1...0.5))) {
-                animateValue = true
-            }
-        }
-    }
-}
-
-// MARK: - Enhanced Bot Category Picker
-struct BotCategoryPicker: View {
-    @Binding var selection: Int
-    let categories: [String]
-    
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(Array(categories.enumerated()), id: \.offset) { index, category in
-                Button(action: {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                        selection = index
-                    }
-                }) {
-                    Text(category)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(selection == index ? .white : .primary)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(selection == index ? DesignSystem.primaryGold : Color.clear)
-                                .shadow(
-                                    color: selection == index ? DesignSystem.primaryGold.opacity(0.3) : .clear, 
-                                    radius: selection == index ? 4 : 0
-                                )
-                        )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(6)
-        .background(
-            RoundedRectangle(cornerRadius: 25)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.1), radius: 4)
-        )
-    }
-}
-
-// MARK: - Enhanced Modern Bot Card
-struct ModernBotCard: View {
-    let bot: SampleBot
-    @State private var cardHovered = false
-    @State private var showingBotDetails = false
-    
-    var body: some View {
-        Button(action: {
-            showingBotDetails = true
-        }) {
-            UltraPremiumCard {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(bot.name)
-                                .font(.headline.bold())
-                                .foregroundColor(.primary)
-                            
-                            Text(bot.strategy)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 2)
-                                .background(Color(.systemGray6))
-                                .clipShape(Capsule())
-                        }
-                        
-                        Spacer()
-                        
-                        VStack(spacing: 2) {
-                            Circle()
-                                .fill(bot.isActive ? .green : .gray)
-                                .frame(width: 8, height: 8)
-                                .scaleEffect(bot.isActive ? 1.2 : 1.0)
-                                .animation(
-                                    bot.isActive ? .easeInOut(duration: 1.0).repeatForever(autoreverses: true) : .default, 
-                                    value: bot.isActive
-                                )
-                            
-                            Text(bot.isActive ? "LIVE" : "OFF")
-                                .font(.system(size: 8, weight: .bold))
-                                .foregroundColor(bot.isActive ? .green : .gray)
-                        }
-                    }
-                    
-                    Divider()
-                        .opacity(0.5)
-                    
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Profit")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            
-                            Text("$\(Int(bot.profit))")
-                                .font(.subheadline.bold())
-                                .foregroundColor(bot.profit > 0 ? .green : .red)
-                        }
-                        
-                        Spacer()
-                        
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text("Win Rate")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            
-                            Text("\(bot.winRate)%")
-                                .font(.subheadline.bold())
-                                .foregroundColor(.blue)
-                        }
-                    }
-                    
-                    // Performance indicator
-                    ProgressView(value: max(0, min(1, bot.performance)))
-                        .progressViewStyle(LinearProgressViewStyle(tint: bot.performance > 0 ? .green : .red))
-                        .scaleEffect(y: 0.8)
-                    
-                    // Quick action buttons
-                    HStack(spacing: 8) {
-                        Button(action: {
-                            // Toggle bot action
-                        }) {
-                            Text(bot.isActive ? "Pause" : "Start")
-                                .font(.caption.bold())
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 4)
-                                .background(bot.isActive ? .orange : .green)
-                                .clipShape(Capsule())
-                        }
-                        .buttonStyle(.plain)
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            // Settings action
-                        }) {
-                            Image(systemName: "gearshape.fill")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(16)
-            }
+            .padding()
+            .background(Color(.systemBackground))
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(.plain)
-        .scaleEffect(cardHovered ? 1.02 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: cardHovered)
-        .onHover { hovering in
-            cardHovered = hovering
-        }
-        .sheet(isPresented: $showingBotDetails) {
-            BotDetailSheet(bot: bot)
+    }
+}
+
+// MARK: - Placeholder Views for Navigation
+struct BotCreationView: View {
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                Text("🤖")
+                    .font(.system(size: 80))
+                
+                Text("Create New Trading Bot")
+                    .font(.title)
+                    .fontWeight(.bold)
+                
+                Text("Bot creation interface coming soon...")
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("New Bot")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
         }
     }
 }
 
-// MARK: - Bot Detail Sheet
-struct BotDetailSheet: View {
-    let bot: SampleBot
-    @Environment(\.dismiss) private var dismiss
+struct BotDetailView: View {
+    let bot: TradingBot
+    @Environment(\.dismiss) var dismiss
     
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // Bot header
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(bot.name)
-                                .font(.title.bold())
-                            Text(bot.strategy)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
+                VStack(spacing: 20) {
+                    // Bot Header
+                    VStack(spacing: 12) {
+                        Circle()
+                            .fill(bot.isActive ? Color.green : Color.gray)
+                            .frame(width: 80, height: 80)
+                            .overlay(
+                                Image(systemName: "brain.head.profile")
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 32))
+                            )
                         
-                        Spacer()
+                        Text(bot.name)
+                            .font(.title)
+                            .fontWeight(.bold)
                         
-                        VStack {
-                            Circle()
-                                .fill(bot.isActive ? .green : .gray)
-                                .frame(width: 12, height: 12)
-                            Text(bot.isActive ? "ACTIVE" : "INACTIVE")
-                                .font(.caption.bold())
-                                .foregroundColor(bot.isActive ? .green : .gray)
-                        }
+                        Text(bot.strategy.displayName)
+                            .foregroundColor(.secondary)
                     }
                     
-                    // Performance metrics
+                    // Performance Metrics
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
-                        MetricCard(title: "Total Profit", value: "$\(Int(bot.profit))", color: bot.profit > 0 ? .green : .red)
-                        MetricCard(title: "Win Rate", value: "\(bot.winRate)%", color: .blue)
-                        MetricCard(title: "Performance", value: "\(Int(bot.performance * 100))%", color: .purple)
-                        MetricCard(title: "Strategy", value: bot.strategy, color: .orange)
+                        MetricCard(title: "Profit/Loss", value: bot.profitLoss, format: .currency(code: "USD"))
+                        MetricCard(title: "Total Trades", value: Double(bot.totalTrades), format: .number)
+                        MetricCard(title: "Win Rate", value: bot.winRate * 100, format: .percent)
+                        MetricCard(title: "Risk Level", value: Double(bot.riskLevel.rawValue), format: .number)
                     }
-                    
-                    Text("Bot Details")
-                        .font(.headline.bold())
-                    
-                    Text("This is a placeholder for detailed bot information, including performance charts, trading history, and configuration options.")
-                        .font(.body)
-                        .foregroundColor(.secondary)
                     
                     Spacer()
                 }
@@ -658,9 +446,7 @@ struct BotDetailSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
+                    Button("Done") { dismiss() }
                 }
             }
         }
@@ -669,13 +455,110 @@ struct BotDetailSheet: View {
 
 struct MetricCard: View {
     let title: String
+    let value: Double
+    let format: FloatingPointFormatStyle<Double>
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(value, format: format)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(DesignSystem.primaryGold)
+            
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - OPUS Debug Interface
+struct OpusDebugInterface: View {
+    @Environment(\.dismiss) var dismiss
+    @StateObject private var opusManager = OpusAutodebugService()
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Header
+                    HStack {
+                        Image(systemName: "brain.head.profile")
+                            .font(.largeTitle)
+                            .foregroundColor(DesignSystem.primaryGold)
+                        
+                        VStack(alignment: .leading) {
+                            Text("OPUS AI Assistant")
+                                .font(.title)
+                                .fontWeight(.bold)
+                            
+                            Text("Advanced Trading Intelligence")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                    }
+                    
+                    // Status Cards
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
+                        StatusCard(title: "System Status", value: "Active", color: .green)
+                        StatusCard(title: "Processes", value: "7 Running", color: DesignSystem.primaryGold)
+                        StatusCard(title: "Accuracy", value: "94.2%", color: .blue)
+                        StatusCard(title: "Uptime", value: "99.8%", color: .purple)
+                    }
+                    
+                    // Debug Console
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Debug Console")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        ScrollView {
+                            LazyVStack(alignment: .leading, spacing: 4) {
+                                ForEach(opusManager.debugLogs.indices, id: \.self) { index in
+                                    Text(opusManager.debugLogs[index])
+                                        .font(.system(.caption, design: .monospaced))
+                                        .foregroundColor(.green)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .frame(height: 200)
+                        .padding()
+                        .background(Color.black)
+                        .cornerRadius(8)
+                    }
+                    
+                    Spacer()
+                }
+                .padding()
+            }
+            .navigationTitle("OPUS Interface")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+struct StatusCard: View {
+    let title: String
     let value: String
     let color: Color
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             Text(value)
-                .font(.title2.bold())
+                .font(.title3)
+                .fontWeight(.bold)
                 .foregroundColor(color)
             
             Text(title)
@@ -684,107 +567,15 @@ struct MetricCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(.systemGray6).opacity(0.3))
-        .cornerRadius(12)
+        .background(Color(.systemGray6))
+        .cornerRadius(8)
     }
 }
 
-// MARK: - Bot Creator View
-struct BotCreatorView: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var botName = ""
-    @State private var selectedStrategy = 0
-    private let strategies = ["Scalping", "Swing Trading", "Day Trading", "News Trading", "Grid Trading"]
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                Text("Create New Trading Bot")
-                    .font(.largeTitle.bold())
-                    .padding(.top)
-                
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Bot Configuration")
-                        .font(.headline.bold())
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Bot Name")
-                            .font(.subheadline.bold())
-                        TextField("Enter bot name", text: $botName)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Trading Strategy")
-                            .font(.subheadline.bold())
-                        Picker("Strategy", selection: $selectedStrategy) {
-                            ForEach(Array(strategies.enumerated()), id: \.offset) { index, strategy in
-                                Text(strategy).tag(index)
-                            }
-                        }
-                        .pickerStyle(MenuPickerStyle())
-                    }
-                    
-                    Text("Advanced configuration options will be available in the full version.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.top)
-                }
-                .padding()
-                .background(Color(.systemGray6).opacity(0.3))
-                .cornerRadius(12)
-                
-                Spacer()
-                
-                Button("Create Bot") {
-                    // Bot creation logic
-                    ToastManager.shared.showSuccess("Bot '\(botName.isEmpty ? "New Bot" : botName)' created successfully!")
-                    dismiss()
-                }
-                .font(.headline)
-                .foregroundColor(.white)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(DesignSystem.primaryGold)
-                .cornerRadius(12)
-                .disabled(botName.isEmpty)
-                .opacity(botName.isEmpty ? 0.6 : 1.0)
-            }
-            .padding()
-            .navigationTitle("New Bot")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Previews
-#Preview("Main Tab View") {
+// MARK: - Preview
+#Preview {
     MainTabView()
         .environmentObject(AuthenticationManager())
         .environmentObject(TradingViewModel())
         .environmentObject(RealTimeAccountManager())
-}
-
-#Preview("Modern Bot View") {
-    ModernBotView()
-}
-
-#Preview("OPUS Floating Button") {
-    VStack(spacing: 20) {
-        OpusFloatingButton(isActive: true, showingInterface: .constant(false))
-        OpusFloatingButton(isActive: false, showingInterface: .constant(false))
-    }
-    .padding()
-    .background(Color(.systemGroupedBackground))
-}
-
-#Preview("Bot Creator") {
-    BotCreatorView()
 }

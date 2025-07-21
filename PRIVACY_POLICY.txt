@@ -1,0 +1,172 @@
+# PLANET PROTRADER - PRIVACY POLICY
+
+**Effective Date:** January 25, 2025  
+**Last Updated:** January 25, 2025
+
+## INTRODUCTION
+
+Planet ProTrader ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application Planet ProTrader (the "App").
+
+## INFORMATION WE COLLECT
+
+### Personal Information
+- **Account Information:** Name, email address, phone number
+- **Identity Verification:** Government-issued ID for trading accounts
+- **Financial Information:** Bank account details, trading account numbers
+- **Device Information:** Device type, operating system, unique device identifiers
+
+### Trading Data
+- **Trading Activity:** Orders, positions, profit/loss, trading history
+- **AI Bot Data:** Bot performance, strategies, preferences
+- **Market Data:** Prices, charts, technical indicators
+- **Usage Analytics:** App interactions, feature usage, session duration
+
+### Automatically Collected Information
+- **Technical Data:** IP address, browser type, device specifications
+- **Location Data:** General location for regulatory compliance
+- **Cookies & Tracking:** App performance and user experience data
+
+## HOW WE USE YOUR INFORMATION
+
+### Core Services
+- **Account Management:** Create and maintain your trading accounts
+- **Trading Execution:** Process your trades and manage positions
+- **AI Bot Services:** Operate trading bots and marketplace features
+- **Customer Support:** Respond to inquiries and provide assistance
+
+### Compliance & Security
+- **Regulatory Compliance:** Meet financial industry requirements
+- **Fraud Prevention:** Detect and prevent unauthorized activities
+- **Risk Management:** Monitor and manage trading risks
+- **Legal Obligations:** Comply with applicable laws and regulations
+
+### Improvement & Communication
+- **Service Enhancement:** Improve app features and performance
+- **Personalization:** Customize your trading experience
+- **Marketing Communications:** Send updates and promotional materials
+- **Research & Development:** Develop new features and services
+
+## INFORMATION SHARING
+
+### We DO NOT sell your personal information to third parties.
+
+### We may share information with:
+- **Service Providers:** Cloud hosting, payment processors, analytics
+- **Trading Partners:** Brokers and liquidity providers for trade execution
+- **Regulatory Bodies:** Financial regulators when required by law
+- **Legal Requirements:** Court orders, subpoenas, law enforcement
+
+### Business Transfers
+In case of merger, acquisition, or sale, your information may be transferred as part of the business assets.
+
+## DATA SECURITY
+
+### Security Measures
+- **Encryption:** All sensitive data encrypted in transit and at rest
+- **Secure Storage:** Industry-standard security protocols
+- **Access Controls:** Limited access to authorized personnel only
+- **Regular Audits:** Security assessments and vulnerability testing
+
+### Financial Security
+- **Two-Factor Authentication:** Required for account access
+- **Fraud Monitoring:** Real-time transaction monitoring
+- **Secure APIs:** Encrypted connections to trading platforms
+- **Risk Controls:** Automated risk management systems
+
+## YOUR RIGHTS & CHOICES
+
+### Account Control
+- **Access:** View and download your personal information
+- **Correction:** Update incorrect or incomplete data
+- **Deletion:** Request deletion of your account and data
+- **Portability:** Export your trading data in standard formats
+
+### Communication Preferences
+- **Marketing Opt-out:** Unsubscribe from promotional emails
+- **Push Notifications:** Control app notification settings
+- **Data Processing:** Object to certain data processing activities
+
+### Data Retention
+We retain your information for as long as your account is active or as needed to provide services, comply with legal obligations, resolve disputes, and enforce agreements.
+
+## INTERNATIONAL DATA TRANSFERS
+
+Your information may be transferred to and processed in countries other than your country of residence. We ensure appropriate safeguards are in place to protect your information.
+
+## CHILDREN'S PRIVACY
+
+Our App is not intended for children under 18. We do not knowingly collect personal information from children. Trading services require users to be of legal age.
+
+## CALIFORNIA PRIVACY RIGHTS (CCPA)
+
+California residents have additional rights under the California Consumer Privacy Act:
+- **Right to Know:** Categories of information collected and shared
+- **Right to Delete:** Request deletion of personal information
+- **Right to Opt-out:** Opt-out of sale of personal information
+- **Non-discrimination:** No discrimination for exercising privacy rights
+
+## GDPR RIGHTS (EU RESIDENTS)
+
+European Union residents have additional rights under GDPR:
+- **Lawful Basis:** Processing based on legitimate interests or consent
+- **Data Protection Officer:** Available for privacy-related inquiries
+- **Supervisory Authority:** Right to lodge complaints with data protection authorities
+
+## COOKIES & TRACKING TECHNOLOGIES
+
+We use cookies and similar technologies to:
+- **Authentication:** Keep you logged in securely
+- **Preferences:** Remember your app settings
+- **Analytics:** Understand app usage and performance
+- **Security:** Detect fraudulent activities
+
+You can control cookie preferences through your device settings.
+
+## THIRD-PARTY SERVICES
+
+### Integrated Services
+- **Firebase:** Authentication and analytics (Google Privacy Policy applies)
+- **Supabase:** Database and backend services
+- **Claude AI:** AI trading analysis (Anthropic Privacy Policy applies)
+- **MetaTrader 5:** Trading platform integration
+
+### External Links
+Our App may contain links to third-party websites. We are not responsible for their privacy practices.
+
+## CHANGES TO PRIVACY POLICY
+
+We may update this Privacy Policy periodically. We will notify you of material changes through:
+- **In-app notifications**
+- **Email notifications**
+- **App Store updates**
+
+Continued use of the App after changes constitutes acceptance of the updated policy.
+
+## CONTACT INFORMATION
+
+### Privacy Questions
+**Email:** privacy@planetprotrader.com  
+**Address:** [Your Company Address]  
+**Phone:** [Your Phone Number]
+
+### Data Protection Officer
+**Email:** dpo@planetprotrader.com
+
+### Customer Support
+**Email:** support@planetprotrader.com  
+**In-App:** Contact support through app settings
+
+## REGULATORY COMPLIANCE
+
+Planet ProTrader operates under the oversight of applicable financial regulatory authorities. We maintain compliance with:
+- **Securities Regulations:** SEC, FINRA, CFTC (US)
+- **Data Protection Laws:** GDPR (EU), CCPA (California)
+- **Financial Privacy:** Gramm-Leach-Bliley Act
+- **Anti-Money Laundering:** Bank Secrecy Act, USA PATRIOT Act
+
+---
+
+**By using Planet ProTrader, you acknowledge that you have read, understood, and agree to this Privacy Policy.**
+
+*Last updated: January 25, 2025*  
+*Version: 1.0*

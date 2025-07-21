@@ -902,34 +902,95 @@ struct PerformanceMetrics: Identifiable, Codable {
 
 struct MicroFlipGame: Identifiable, Codable {
     let id: UUID
-    let gameType: GameType
-    let difficulty: Difficulty
-    let betAmount: Double
+    let playerId: String
+    let gameType: MicroFlipGame.GameType
+    let difficulty: MicroFlipGame.Difficulty
+    let entryAmount: Double
     var currentBalance: Double
     let startingBalance: Double
-    var status: GameStatus
-    var playerChoice: PlayerChoice?
-    var result: GameResult?
+    let targetAmount: Double
+    let targetProfit: Double
+    let duration: TimeInterval
+    let maxTime: TimeInterval
+    var elapsedTime: TimeInterval
+    var status: MicroFlipGame.GameStatus
+    var playerChoice: MicroFlipGame.PlayerChoice?
+    var result: MicroFlipGame.GameResult?
     let timestamp: Date
+    var isCompleted: Bool
+    var isWon: Bool
+    let maxLoss: Double
+    let name: String
+    
+    // Computed properties
+    var progressToTarget: Double {
+        guard targetProfit > 0 else { return 0 }
+        return min(1.0, max(0, currentBalance / targetProfit))
+    }
+    
+    var timeRemaining: TimeInterval {
+        return max(0, maxTime - elapsedTime)
+    }
     
     enum GameType: String, CaseIterable, Codable {
         case quickFlip = "Quick Flip"
-        case prediction = "Price Prediction"
-        case momentum = "Momentum Game"
-        case reversal = "Reversal Challenge"
+        case speedRun = "Speed Run"
+        case precision = "Precision"
+        case endurance = "Endurance"
+        case riskMaster = "Risk Master"
+        case botBattle = "Bot Battle"
+        
+        var displayName: String {
+            return "\(emoji) \(rawValue)"
+        }
+        
+        var emoji: String {
+            switch self {
+            case .quickFlip: return "⚡"
+            case .speedRun: return "🏃"
+            case .precision: return "🎯"
+            case .endurance: return "💪"
+            case .riskMaster: return "🔥"
+            case .botBattle: return "🤖"
+            }
+        }
+        
+        var description: String {
+            switch self {
+            case .quickFlip: return "Fast-paced trading in short bursts"
+            case .speedRun: return "Race against time to hit targets"
+            case .precision: return "Accuracy-focused trading challenges"
+            case .endurance: return "Long-term strategic gameplay"
+            case .riskMaster: return "High-risk, high-reward scenarios"
+            case .botBattle: return "Compete against AI trading bots"
+            }
+        }
+        
+        var baseMultiplier: Double {
+            switch self {
+            case .quickFlip: return 1.5
+            case .speedRun: return 2.0
+            case .precision: return 1.8
+            case .endurance: return 1.2
+            case .riskMaster: return 3.0
+            case .botBattle: return 2.5
+            }
+        }
     }
     
     enum Difficulty: String, CaseIterable, Codable {
         case rookie = "Rookie"
-        case trader = "Trader"
         case pro = "Pro"
+        case expert = "Expert"
         case legend = "Legend"
+        
+        var displayName: String { rawValue }
         
         var color: Color {
             switch self {
             case .rookie: return .green
-            case .trader: return .blue
-            case .pro: return .orange
+            case .pro: return .blue
+            case .expert: return .orange
             case .legend: return .purple
             }
         }
@@ -940,6 +1001,19 @@ struct MicroFlipGame: Identifiable, Codable {
         case active = "Active"
         case completed = "Completed"
         case expired = "Expired"
+        case failed = "Failed"
+        
+        var displayName: String { rawValue }
+        
+        var color: Color {
+            switch self {
+            case .waiting: return .orange
+            case .active: return .blue
+            case .completed: return .green
+            case .expired: return .gray
+            case .failed: return .red
+            }
+        }
     }
     
     enum PlayerChoice: String, CaseIterable, Codable {
@@ -952,46 +1026,87 @@ struct MicroFlipGame: Identifiable, Codable {
         case win = "Win"
         case loss = "Loss"
         case tie = "Tie"
+        
+        var displayText: String {
+            switch self {
+            case .win: return "+$"
+            case .loss: return "-$"
+            case .tie: return "$"
+            }
+        }
+        
+        var color: Color {
+            switch self {
+            case .win: return .green
+            case .loss: return .red
+            case .tie: return .gray
+            }
+        }
     }
     
     init(
         id: UUID = UUID(),
+        playerId: String,
         gameType: GameType,
-        difficulty: Difficulty,
-        betAmount: Double,
-        currentBalance: Double? = nil,
-        startingBalance: Double? = nil,
+        entryAmount: Double,
+        targetAmount: Double,
+        duration: TimeInterval,
         status: GameStatus = .waiting,
+        difficulty: Difficulty = .rookie,
         playerChoice: PlayerChoice? = nil,
         result: GameResult? = nil,
         timestamp: Date = Date()
     ) {
         self.id = id
+        self.playerId = playerId
         self.gameType = gameType
         self.difficulty = difficulty
-        self.betAmount = betAmount
-        self.currentBalance = currentBalance ?? betAmount
-        self.startingBalance = startingBalance ?? betAmount
+        self.entryAmount = entryAmount
+        self.currentBalance = entryAmount
+        self.startingBalance = entryAmount
+        self.targetAmount = targetAmount
+        self.targetProfit = targetAmount
+        self.duration = duration
+        self.maxTime = duration
+        self.elapsedTime = 0
         self.status = status
         self.playerChoice = playerChoice
         self.result = result
         self.timestamp = timestamp
+        self.isCompleted = false
+        self.isWon = false
+        self.maxLoss = entryAmount * 0.1 // 10% max loss
+        self.name = gameType.displayName
     }
     
     static var sampleGames: [MicroFlipGame] {
         return [
             MicroFlipGame(
+                playerId: "sample_player",
                 gameType: .quickFlip,
-                difficulty: .rookie,
-                betAmount: 100.0,
-                status: .active
+                entryAmount: 100.0,
+                targetAmount: 150.0,
+                duration: 300,
+                status: .active,
+                difficulty: .rookie
             ),
             MicroFlipGame(
-                gameType: .prediction,
-                difficulty: .trader,
-                betAmount: 250.0,
+                playerId: "sample_player",
+                gameType: .precision,
+                entryAmount: 250.0,
+                targetAmount: 450.0,
+                duration: 600,
                 status: .completed,
-                result: .win
+                difficulty: .pro
+            ),
+            MicroFlipGame(
+                playerId: "sample_player",
+                gameType: .speedRun,
+                entryAmount: 500.0,
+                targetAmount: 1000.0,
+                duration: 180,
+                status: .failed,
+                difficulty: .expert
             )
         ]
     }
@@ -1011,13 +1126,19 @@ struct BotVoiceNote: Identifiable, Codable {
     let confidence: Double
     let isHighlighted: Bool
     let tags: [String]
-    let priority: VoiceNotePriority
+    let priority: BotVoiceNote.VoiceNotePriority
+    
+    // Computed properties for compatibility
+    var content: String { transcript }
+    var category: VoiceNotePriority { priority }
     
     enum VoiceNotePriority: String, CaseIterable, Codable {
         case urgent = "Urgent"
         case tradeAlert = "Trade Alert"
         case celebration = "Celebration"
         case info = "Info"
+        case warning = "Warning"
+        case performance = "Performance"
         
         var color: Color {
             switch self {
@@ -1025,6 +1146,8 @@ struct BotVoiceNote: Identifiable, Codable {
             case .tradeAlert: return .orange
             case .celebration: return .green
             case .info: return .blue
+            case .warning: return .yellow
+            case .performance: return .purple
             }
         }
         
@@ -1034,10 +1157,13 @@ struct BotVoiceNote: Identifiable, Codable {
             case .tradeAlert: return "bell.fill"
             case .celebration: return "party.popper.fill"
             case .info: return "info.circle.fill"
+            case .warning: return "exclamationmark.triangle"
+            case .performance: return "chart.line.uptrend.xyaxis"
             }
         }
     }
     
+    // Primary initializer
     init(
         id: UUID = UUID(),
         botName: String,
@@ -1064,6 +1190,27 @@ struct BotVoiceNote: Identifiable, Codable {
         self.isHighlighted = isHighlighted
         self.tags = tags
         self.priority = priority
+    }
+    
+    // Convenience initializer for GameControllerView compatibility
+    init(
+        botId: String,
+        botName: String,
+        content: String,
+        category: VoiceNotePriority
+    ) {
+        self.id = UUID()
+        self.botId = botId
+        self.botName = botName
+        self.audioURL = ""
+        self.transcript = content
+        self.duration = 3.0
+        self.timestamp = Date()
+        self.topic = "Game Event"
+        self.confidence = 0.8
+        self.isHighlighted = category == .urgent || category == .tradeAlert
+        self.tags = ["game", "microflip"]
+        self.priority = category
     }
 }
 
@@ -1272,11 +1419,11 @@ struct ChartSettings: Codable {
 
 struct ErrorLogModel: Identifiable, Codable {
     let id = UUID()
-    let type: ErrorType
+    let type: ErrorLogModel.ErrorType
     let message: String
     let timestamp: Date
     let fileName: String
-    let severity: Severity
+    let severity: ErrorLogModel.Severity
     
     enum ErrorType: String, CaseIterable, Codable {
         case runtime = "Runtime"
@@ -1381,8 +1528,8 @@ enum AutoTradingStatus: String, Codable, CaseIterable {
 struct EnhancedProTraderBot: Identifiable, Codable {
     let id: UUID
     let name: String
-    let strategy: TradingStrategy
-    let specialization: BotSpecialization
+    let strategy: EnhancedProTraderBot.TradingStrategy
+    let specialization: EnhancedProTraderBot.BotSpecialization
     let performance: PerformanceMetrics
     let isActive: Bool
     

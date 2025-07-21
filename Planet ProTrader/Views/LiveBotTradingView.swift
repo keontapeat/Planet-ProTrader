@@ -59,6 +59,9 @@ struct LiveBotTradingView: View {
         .onAppear {
             liveTrading.startLiveTracking()
         }
+        .onDisappear {
+            liveTrading.stopLiveTracking()
+        }
     }
     
     // MARK: - Live Trading Header
@@ -326,8 +329,7 @@ struct LiveBotTradingView: View {
     }
 }
 
-// MARK: - Live Trading Manager
-
+@MainActor
 class LiveTradingManager: ObservableObject {
     @Published var activeBots: [LiveBot] = []
     @Published var totalProfitToday: Double = 0
@@ -339,6 +341,10 @@ class LiveTradingManager: ObservableObject {
     
     init() {
         setupLiveBots()
+    }
+    
+    deinit {
+        stopLiveTracking()
     }
     
     private func setupLiveBots() {
@@ -390,11 +396,14 @@ class LiveTradingManager: ObservableObject {
     }
     
     func startLiveTracking() {
+        guard !isLiveTrading else { return }
+        
         isLiveTrading = true
         
-        // Update every second for real-time feeling
-        updateTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            self.updateLiveData()
+        updateTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+            Task { @MainActor in
+                self.updateLiveData()
+            }
         }
     }
     
@@ -405,21 +414,25 @@ class LiveTradingManager: ObservableObject {
     }
     
     private func updateLiveData() {
-        // Simulate real-time updates
-        for i in activeBots.indices {
-            if activeBots[i].isTrading {
-                // Simulate price movements
+        var updatedBots: [LiveBot] = []
+        
+        for bot in activeBots {
+            var updatedBot = bot
+            
+            if bot.isTrading {
                 let change = Double.random(in: -5...10)
-                activeBots[i].dailyPL += change
-                activeBots[i].currentPrice += Double.random(in: -1...1)
+                updatedBot.dailyPL += change
+                updatedBot.currentPrice += Double.random(in: -1...1)
                 
-                // Simulate occasional trades
-                if Int.random(in: 1...30) == 1 {
-                    activeBots[i].tradesCount += 1
+                if Int.random(in: 1...60) == 1 {
+                    updatedBot.tradesCount += 1
                 }
             }
+            
+            updatedBots.append(updatedBot)
         }
         
+        activeBots = updatedBots
         updateTotalProfit()
         updateRealTimePL()
     }
@@ -434,6 +447,10 @@ class LiveTradingManager: ObservableObject {
     }
     
     private func calculateAverageWinRate() {
+        guard !activeBots.isEmpty else {
+            averageWinRate = 0
+            return
+        }
         averageWinRate = activeBots.reduce(0) { $0 + $1.winRate } / Double(activeBots.count)
     }
     
@@ -441,6 +458,7 @@ class LiveTradingManager: ObservableObject {
         for i in activeBots.indices {
             activeBots[i].isTrading = true
         }
+        HapticFeedbackManager.shared.success()
     }
     
     func emergencyStopAll() {
@@ -448,10 +466,10 @@ class LiveTradingManager: ObservableObject {
             activeBots[i].isTrading = false
             activeBots[i].currentPosition = ""
         }
+        HapticFeedbackManager.shared.emergencyStop()
     }
     
     func refreshLiveData() async {
-        // Simulate API refresh
         try? await Task.sleep(nanoseconds: 1_000_000_000)
         updateLiveData()
     }
@@ -465,26 +483,6 @@ class LiveTradingManager: ObservableObject {
         return "\(prefix)\(formatter.string(from: NSNumber(value: amount)) ?? "$0.00")"
     }
 }
-
-// MARK: - Live Bot Model
-
-struct LiveBot: Identifiable, Codable {
-    let id = UUID()
-    var name: String
-    var strategy: String
-    var dailyPL: Double
-    var winRate: Double
-    var tradesCount: Int
-    var isTrading: Bool
-    var currentPosition: String
-    var currentPrice: Double
-    
-    func formatPrice(_ price: Double) -> String {
-        return String(format: "$%.2f", price)
-    }
-}
-
-// MARK: - Live Bot Detail View
 
 struct LiveBotDetailView: View {
     let bot: LiveBot
@@ -595,7 +593,6 @@ struct LiveBotDetailView: View {
                 .fontWeight(.bold)
                 .foregroundColor(DesignSystem.primaryGold)
             
-            // Placeholder for chart - would use Charts framework
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.systemGray6))
                 .frame(height: 200)
@@ -605,7 +602,7 @@ struct LiveBotDetailView: View {
                             .font(.headline)
                             .foregroundColor(.secondary)
                         
-                        Text("Real-time updates every second")
+                        Text("Real-time updates every 2 seconds")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -666,7 +663,7 @@ struct LiveBotDetailView: View {
         VStack(spacing: 12) {
             HStack(spacing: 16) {
                 Button(bot.isTrading ? "Pause Bot" : "Start Bot") {
-                    // Control bot
+                    HapticFeedbackManager.shared.impact(.medium)
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -675,7 +672,7 @@ struct LiveBotDetailView: View {
                 .cornerRadius(12)
                 
                 Button("Settings") {
-                    // Bot settings
+                    HapticFeedbackManager.shared.selection()
                 }
                 .foregroundColor(DesignSystem.primaryGold)
                 .frame(maxWidth: .infinity)
@@ -689,7 +686,7 @@ struct LiveBotDetailView: View {
             }
             
             Button("Emergency Stop") {
-                // Emergency stop
+                HapticFeedbackManager.shared.emergencyStop()
             }
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
@@ -700,17 +697,22 @@ struct LiveBotDetailView: View {
     }
 }
 
-// MARK: - Bot Chart Data
-
+@MainActor
 class BotChartData: ObservableObject {
     @Published var recentTrades: [RecentTrade] = []
     private var updateTimer: Timer?
+    
+    deinit {
+        stopLiveUpdates()
+    }
     
     func startLiveUpdates(for botId: UUID) {
         generateSampleTrades()
         
         updateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
-            self.addRandomTrade()
+            Task { @MainActor in
+                self.addRandomTrade()
+            }
         }
     }
     
@@ -740,7 +742,8 @@ class BotChartData: ObservableObject {
         )
         
         recentTrades.insert(newTrade, at: 0)
-        if recentTrades.count > 20 {
+        
+        if recentTrades.count > 10 {
             recentTrades.removeLast()
         }
     }
@@ -756,4 +759,17 @@ struct RecentTrade: Identifiable, Codable {
 
 #Preview {
     LiveBotTradingView()
+}
+
+#Preview("Bot Detail") {
+    LiveBotDetailView(bot: LiveBot(
+        name: "Test Bot",
+        strategy: "Scalping",
+        dailyPL: 1250.0,
+        winRate: 85.5,
+        tradesCount: 25,
+        isTrading: true,
+        currentPosition: "Long AAPL",
+        currentPrice: 185.50
+    ))
 }

@@ -34,6 +34,11 @@ class DependencyContainer: ObservableObject {
     lazy var opusService: OpusAutodebugService = OpusAutodebugService()
     lazy var botStoreService: BotStoreService = BotStoreService.shared
     
+    // MARK: - ✅ NEW Services - Missing managers now added
+    lazy var hapticFeedbackManager: HapticFeedbackManager = HapticFeedbackManager.shared
+    lazy var tradingBotManager: TradingBotManager = TradingBotManager.shared
+    lazy var performanceMonitor: PerformanceMonitor = PerformanceMonitor.shared
+    
     private init() {
         setupDependencies()
     }
@@ -101,7 +106,7 @@ extension View {
         self.environment(\.dependencies, DependencyContainer.shared)
     }
     
-    // ✅ ADDED: Helper for complete environment injection
+    // ✅ UPDATED: Helper for complete environment injection
     func withCompleteEnvironment() -> some View {
         let container = DependencyContainer.shared
         return self
@@ -112,6 +117,9 @@ extension View {
             .environmentObject(container.autoTradingManager)
             .environmentObject(container.brokerConnector)
             .environmentObject(container.realDataManager)
+            .environmentObject(container.tradingBotManager)
+            .environmentObject(container.toastManager)
+            .environmentObject(container.performanceMonitor)
     }
 }
 
@@ -139,6 +147,9 @@ extension View {
                 Text("• ChartDataService ✅")
                 Text("• ToastManager ✅")
                 Text("• OpusAutodebugService ✅")
+                Text("• HapticFeedbackManager ✅")
+                Text("• TradingBotManager ✅")
+                Text("• PerformanceMonitor ✅")
             }
             .font(.caption)
             .foregroundColor(.green)
