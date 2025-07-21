@@ -2,25 +2,20 @@
 //  MasterSharedTypes.swift
 //  Planet ProTrader
 //
-//  Ultimate Consolidated Master Types File - Fixes ALL compilation errors
-//  Created by Alex AI Assistant
+//  Single Source of Truth for All Types - Cleaned and Optimized
+//  Created by AI Assistant
 //
 
 import SwiftUI
 import Foundation
 import Combine
 
-// MARK: - Core SharedTypes Enum
-enum SharedTypes {
-    // This enum serves as a namespace for all shared types
-}
-
 // MARK: - Core Trading Enums
 
 enum TradeDirection: String, Codable, CaseIterable {
     case buy = "BUY"
     case sell = "SELL"
-    case long = "LONG"
+    case long = "LONG" 
     case short = "SHORT"
     
     var displayName: String {
@@ -44,9 +39,7 @@ enum TradeDirection: String, Codable, CaseIterable {
         }
     }
     
-    var icon: String {
-        return systemImage
-    }
+    var icon: String { return systemImage }
 }
 
 enum TradingMode: String, Codable, CaseIterable {
@@ -123,73 +116,20 @@ enum BrokerType: String, Codable, CaseIterable {
 }
 
 enum TradeGrade: String, CaseIterable, Codable {
-    case all = "All"
+    case excellent = "Excellent"
     case elite = "Elite"
     case good = "Good"
     case average = "Average"
     case poor = "Poor"
+    case all = "All"
     
     var color: Color {
         switch self {
-        case .elite: return .green
+        case .excellent, .elite: return .green
         case .good: return .blue
         case .average: return .orange
         case .poor: return .red
         case .all: return .gray
-        }
-    }
-    
-    var goldexColor: Color {
-        return color
-    }
-    
-    var finalColor: Color {
-        return color
-    }
-}
-
-enum TimeFrame: String, Codable, CaseIterable {
-    case oneMinute = "1M"
-    case fiveMinute = "5M"
-    case fifteenMinute = "15M"
-    case thirtyMinute = "30M"
-    case oneHour = "1H"
-    case fourHour = "4H"
-    case daily = "1D"
-    case weekly = "1W"
-    case monthly = "1MN"
-    
-    var displayName: String { rawValue }
-    
-    var minutes: Int {
-        switch self {
-        case .oneMinute: return 1
-        case .fiveMinute: return 5
-        case .fifteenMinute: return 15
-        case .thirtyMinute: return 30
-        case .oneHour: return 60
-        case .fourHour: return 240
-        case .daily: return 1440
-        case .weekly: return 10080
-        case .monthly: return 43200
-        }
-    }
-}
-
-enum RiskLevel: String, Codable, CaseIterable {
-    case veryLow = "Very Low"
-    case low = "Low"
-    case medium = "Medium"
-    case high = "High"
-    case extreme = "Extreme"
-    
-    var color: Color {
-        switch self {
-        case .veryLow: return .green
-        case .low: return .blue
-        case .medium: return .orange
-        case .high: return .red
-        case .extreme: return .purple
         }
     }
 }
@@ -252,7 +192,51 @@ enum BotStatus: String, CaseIterable, Codable {
     }
 }
 
-// MARK: - Advanced Trading Types
+enum RiskLevel: String, Codable, CaseIterable {
+    case veryLow = "Very Low"
+    case low = "Low"
+    case medium = "Medium"
+    case high = "High"
+    case extreme = "Extreme"
+    
+    var color: Color {
+        switch self {
+        case .veryLow: return .green
+        case .low: return .blue
+        case .medium: return .orange
+        case .high: return .red
+        case .extreme: return .purple
+        }
+    }
+}
+
+enum TimeFrame: String, Codable, CaseIterable {
+    case oneMinute = "1M"
+    case fiveMinute = "5M"
+    case fifteenMinute = "15M"
+    case thirtyMinute = "30M"
+    case oneHour = "1H"
+    case fourHour = "4H"
+    case daily = "1D"
+    case weekly = "1W"
+    case monthly = "1MN"
+    
+    var displayName: String { rawValue }
+    
+    var minutes: Int {
+        switch self {
+        case .oneMinute: return 1
+        case .fiveMinute: return 5
+        case .fifteenMinute: return 15
+        case .thirtyMinute: return 30
+        case .oneHour: return 60
+        case .fourHour: return 240
+        case .daily: return 1440
+        case .weekly: return 10080
+        case .monthly: return 43200
+        }
+    }
+}
 
 enum TrendDirection: String, Codable, CaseIterable {
     case bullish = "Bullish"
@@ -294,23 +278,71 @@ enum MarketSentiment: String, Codable, CaseIterable {
     }
 }
 
-enum MarketTrend: String, Codable, CaseIterable {
-    case uptrend = "Uptrend"
-    case downtrend = "Downtrend"
-    case sideways = "Sideways"
-    case volatile = "Volatile"
+enum InsightPriority: String, CaseIterable, Codable {
+    case low = "low"
+    case medium = "medium"
+    case high = "high"
+    case critical = "critical"
     
     var color: Color {
         switch self {
-        case .uptrend: return .green
-        case .downtrend: return .red
-        case .sideways: return .gray
-        case .volatile: return .orange
+        case .low: return .gray
+        case .medium: return .orange
+        case .high: return .red
+        case .critical: return .purple
         }
     }
 }
 
-// MARK: - Bot and AI Types
+// MARK: - Learning Capabilities
+
+enum LearningCapability: String, CaseIterable, Codable {
+    case patternRecognition = "Pattern Recognition"
+    case riskManagement = "Risk Management"
+    case technicalAnalysis = "Technical Analysis"
+    case fundamentalAnalysis = "Fundamental Analysis"
+    case sentimentAnalysis = "Sentiment Analysis"
+    case marketTiming = "Market Timing"
+    case priceAction = "Price Action"
+    case volumeAnalysis = "Volume Analysis"
+    case microstructure = "Microstructure"
+    case supportResistance = "Support Resistance"
+    case fundamentals = "Fundamentals"
+    case trendAnalysis = "Trend Analysis"
+    case orderFlow = "Order Flow"
+    case marketStructure = "Market Structure"
+    case liquidity = "Liquidity"
+    case extremes = "Extremes"
+    case meanReversion = "Mean Reversion"
+    case sentiment = "Sentiment"
+    case socialMedia = "Social Media"
+    case positioning = "Positioning"
+    case newsAnalysis = "News Analysis"
+    case eventTrading = "Event Trading"
+    case volatility = "Volatility"
+    case chartPatterns = "Chart Patterns"
+    case candlesticks = "Candlesticks"
+    case riskAssessment = "Risk Assessment"
+    case portfolioManagement = "Portfolio Management"
+    case correlation = "Correlation"
+    case behaviorAnalysis = "Behavior Analysis"
+    case emotionalPatterns = "Emotional Patterns"
+    case marketPsychology = "Market Psychology"
+    
+    var description: String {
+        switch self {
+        case .patternRecognition: return "Identifies recurring market patterns"
+        case .riskManagement: return "Optimizes risk-reward ratios"
+        case .technicalAnalysis: return "Analyzes price action and indicators"
+        case .fundamentalAnalysis: return "Evaluates economic factors"
+        case .sentimentAnalysis: return "Gauges market sentiment"
+        case .marketTiming: return "Times market entry and exit"
+        default: return rawValue
+        }
+    }
+}
+
+// MARK: - Core Data Structures
 
 struct TradingBot: Identifiable, Codable {
     let id: UUID
@@ -355,6 +387,74 @@ struct TradingBot: Identifiable, Codable {
     }
 }
 
+struct BotPerformanceMetrics: Identifiable, Codable {
+    let id: UUID
+    let botId: String
+    let totalTrades: Int
+    let winningTrades: Int
+    let losingTrades: Int
+    let totalProfit: Double
+    let winRate: Double
+    let profitFactor: Double
+    let maxDrawdown: Double
+    let averageWin: Double
+    let averageLoss: Double
+    let sharpeRatio: Double
+    let lastUpdated: Date
+    
+    init(
+        id: UUID = UUID(),
+        botId: String,
+        totalTrades: Int = 0,
+        winningTrades: Int = 0,
+        losingTrades: Int = 0,
+        totalProfit: Double = 0.0,
+        winRate: Double = 0.0,
+        profitFactor: Double = 1.0,
+        maxDrawdown: Double = 0.0,
+        averageWin: Double = 0.0,
+        averageLoss: Double = 0.0,
+        sharpeRatio: Double = 0.0,
+        lastUpdated: Date = Date()
+    ) {
+        self.id = id
+        self.botId = botId
+        self.totalTrades = totalTrades
+        self.winningTrades = winningTrades
+        self.losingTrades = losingTrades
+        self.totalProfit = totalProfit
+        self.winRate = winRate
+        self.profitFactor = profitFactor
+        self.maxDrawdown = maxDrawdown
+        self.averageWin = averageWin
+        self.averageLoss = averageLoss
+        self.sharpeRatio = sharpeRatio
+        self.lastUpdated = lastUpdated
+    }
+    
+    var formattedWinRate: String {
+        return String(format: "%.1f%%", winRate * 100)
+    }
+    
+    var formattedProfitFactor: String {
+        return String(format: "%.2f", profitFactor)
+    }
+    
+    var formattedTotalProfit: String {
+        return String(format: "$%.2f", totalProfit)
+    }
+    
+    var performanceGrade: TradeGrade {
+        switch winRate {
+        case 0.8...: return .elite
+        case 0.7..<0.8: return .excellent
+        case 0.6..<0.7: return .good
+        case 0.5..<0.6: return .average
+        default: return .poor
+        }
+    }
+}
+
 struct BotPersonalityProfile: Identifiable, Codable {
     let id: UUID
     let name: String
@@ -391,57 +491,6 @@ struct BotPersonalityProfile: Identifiable, Codable {
         self.timeframes = timeframes
     }
 }
-
-struct BotPerformanceMetrics: Identifiable, Codable {
-    let id: UUID
-    let botId: String
-    let totalTrades: Int
-    let winningTrades: Int
-    let losingTrades: Int
-    let totalProfit: Double
-    let winRate: Double
-    let profitFactor: Double
-    let maxDrawdown: Double
-    let lastUpdated: Date
-    
-    init(
-        id: UUID = UUID(),
-        botId: String,
-        totalTrades: Int = 0,
-        winningTrades: Int = 0,
-        losingTrades: Int = 0,
-        totalProfit: Double = 0.0,
-        winRate: Double = 0.0,
-        profitFactor: Double = 1.0,
-        maxDrawdown: Double = 0.0,
-        lastUpdated: Date = Date()
-    ) {
-        self.id = id
-        self.botId = botId
-        self.totalTrades = totalTrades
-        self.winningTrades = winningTrades
-        self.losingTrades = losingTrades
-        self.totalProfit = totalProfit
-        self.winRate = winRate
-        self.profitFactor = profitFactor
-        self.maxDrawdown = maxDrawdown
-        self.lastUpdated = lastUpdated
-    }
-    
-    static var sample: BotPerformanceMetrics {
-        BotPerformanceMetrics(
-            botId: "sample",
-            totalTrades: 100,
-            winningTrades: 65,
-            losingTrades: 35,
-            totalProfit: 15000.0,
-            winRate: 0.65,
-            profitFactor: 1.8
-        )
-    }
-}
-
-// MARK: - EAStats (Expert Advisor Statistics)
 
 struct EAStats: Identifiable, Codable {
     let id: UUID
@@ -487,24 +536,6 @@ struct EAStats: Identifiable, Codable {
     
     var totalTrades: Int { totalSignals }
     
-    var finalTradesPerHour: Double {
-        let hoursActive: Double = 24.0
-        guard totalSignals > 0 else { return 0.0 }
-        return Double(totalSignals) / hoursActive
-    }
-    
-    var finalGrade: TradeGrade {
-        if winRate >= 0.8 && profitFactor >= 2.0 {
-            return .elite
-        } else if winRate >= 0.6 && profitFactor >= 1.5 {
-            return .good
-        } else if winRate >= 0.4 && profitFactor >= 1.0 {
-            return .average
-        } else {
-            return .poor
-        }
-    }
-    
     var formattedWinRate: String {
         return String(format: "%.1f%%", winRate * 100)
     }
@@ -513,8 +544,6 @@ struct EAStats: Identifiable, Codable {
         return String(format: "%.2f", profitFactor)
     }
 }
-
-// MARK: - Trading Account Types
 
 struct TradingAccountDetails: Identifiable, Codable {
     let id: UUID
@@ -555,138 +584,6 @@ struct TradingAccountDetails: Identifiable, Codable {
         self.lastUpdate = lastUpdate
     }
 }
-
-struct MT5Account: Identifiable, Codable {
-    let id: UUID
-    let login: String
-    let password: String
-    let server: String
-    let broker: String
-    let balance: Double
-    let equity: Double
-    let margin: Double
-    let freeMargin: Double
-    let marginLevel: Double
-    
-    init(
-        id: UUID = UUID(),
-        login: String,
-        password: String,
-        server: String,
-        broker: String,
-        balance: Double = 0.0,
-        equity: Double = 0.0,
-        margin: Double = 0.0,
-        freeMargin: Double = 0.0,
-        marginLevel: Double = 0.0
-    ) {
-        self.id = id
-        self.login = login
-        self.password = password
-        self.server = server
-        self.broker = broker
-        self.balance = balance
-        self.equity = equity
-        self.margin = margin
-        self.freeMargin = freeMargin
-        self.marginLevel = marginLevel
-    }
-}
-
-struct MT5Trade: Identifiable, Codable {
-    let id: UUID
-    let ticket: Int
-    let symbol: String
-    let type: TradeDirection
-    let volume: Double
-    let openPrice: Double
-    let closePrice: Double?
-    let openTime: Date
-    let closeTime: Date?
-    let profit: Double
-    let comment: String
-    
-    init(
-        id: UUID = UUID(),
-        ticket: Int,
-        symbol: String,
-        type: TradeDirection,
-        volume: Double,
-        openPrice: Double,
-        closePrice: Double? = nil,
-        openTime: Date = Date(),
-        closeTime: Date? = nil,
-        profit: Double = 0.0,
-        comment: String = ""
-    ) {
-        self.id = id
-        self.ticket = ticket
-        self.symbol = symbol
-        self.type = type
-        self.volume = volume
-        self.openPrice = openPrice
-        self.closePrice = closePrice
-        self.openTime = openTime
-        self.closeTime = closeTime
-        self.profit = profit
-        self.comment = comment
-    }
-}
-
-struct MT5Symbol: Identifiable, Codable {
-    let id: UUID
-    let name: String
-    let bid: Double
-    let ask: Double
-    let spread: Double
-    let digits: Int
-    let contractSize: Double
-    
-    init(
-        id: UUID = UUID(),
-        name: String,
-        bid: Double,
-        ask: Double,
-        spread: Double,
-        digits: Int,
-        contractSize: Double
-    ) {
-        self.id = id
-        self.name = name
-        self.bid = bid
-        self.ask = ask
-        self.spread = spread
-        self.digits = digits
-        self.contractSize = contractSize
-    }
-}
-
-struct BrokerCredentials: Identifiable, Codable {
-    let id: UUID
-    let brokerType: BrokerType
-    let accountNumber: String
-    let password: String
-    let serverName: String
-    let additionalSettings: [String: String]
-    
-    init(
-        id: UUID = UUID(),
-        brokerType: BrokerType,
-        accountNumber: String,
-        password: String,
-        serverName: String,
-        additionalSettings: [String: String] = [:]
-    ) {
-        self.id = id
-        self.brokerType = brokerType
-        self.accountNumber = accountNumber
-        self.password = password
-        self.serverName = serverName
-        self.additionalSettings = additionalSettings
-    }
-}
-
-// MARK: - Auto Trading Types
 
 struct AutoTrade: Identifiable, Codable {
     let id: UUID
@@ -772,26 +669,6 @@ struct AutoTradingSignal: Identifiable, Codable {
     }
 }
 
-enum AutoTradingStatus: String, Codable, CaseIterable {
-    case active = "Active"
-    case paused = "Paused"
-    case stopped = "Stopped"
-    case error = "Error"
-    
-    var color: Color {
-        switch self {
-        case .active: return .green
-        case .paused: return .orange
-        case .stopped: return .gray
-        case .error: return .red
-        }
-    }
-    
-    static var sample: AutoTradingStatus {
-        return .active
-    }
-}
-
 struct SharedTradeResult: Identifiable, Codable {
     let id: UUID
     let symbol: String
@@ -817,29 +694,12 @@ struct SharedTradeResult: Identifiable, Codable {
     }
 }
 
-struct SharedTradeOutcome: Identifiable, Codable {
-    let id: UUID
-    let result: String
-    let profit: Double
-    let timestamp: Date
-    
-    init(id: UUID = UUID(), result: String, profit: Double, timestamp: Date = Date()) {
-        self.id = id
-        self.result = result
-        self.profit = profit
-        self.timestamp = timestamp
-    }
-}
-
-// MARK: - AI and Learning Types
-
-struct AIInsights: Identifiable, Codable {
+struct AIInsight: Identifiable, Codable {
     let id: UUID
     let title: String
     let description: String
     let confidence: Double
     let timestamp: Date
-    let type: String
     let priority: InsightPriority
     
     init(
@@ -848,7 +708,6 @@ struct AIInsights: Identifiable, Codable {
         description: String,
         confidence: Double,
         timestamp: Date = Date(),
-        type: String,
         priority: InsightPriority = .medium
     ) {
         self.id = id
@@ -856,79 +715,16 @@ struct AIInsights: Identifiable, Codable {
         self.description = description
         self.confidence = confidence
         self.timestamp = timestamp
-        self.type = type
         self.priority = priority
-    }
-}
-
-struct AIInsight: Identifiable, Codable {
-    let id: UUID
-    let title: String
-    let description: String
-    let confidence: Double
-    let timestamp: Date
-    
-    init(
-        id: UUID = UUID(),
-        title: String,
-        description: String,
-        confidence: Double,
-        timestamp: Date = Date()
-    ) {
-        self.id = id
-        self.title = title
-        self.description = description
-        self.confidence = confidence
-        self.timestamp = timestamp
     }
     
     static var sample: AIInsight {
         AIInsight(
             title: "Strong Bullish Signal Detected",
             description: "Technical indicators show strong upward momentum",
-            confidence: 0.85
+            confidence: 0.85,
+            priority: .high
         )
-    }
-}
-
-enum InsightPriority: String, CaseIterable, Codable {
-    case low = "low"
-    case medium = "medium"
-    case high = "high"
-    case critical = "critical"
-    
-    var color: Color {
-        switch self {
-        case .low: return .gray
-        case .medium: return .orange
-        case .high: return .red
-        case .critical: return .purple
-        }
-    }
-}
-
-struct TradeLearningData: Identifiable, Codable {
-    let id: UUID
-    let tradeId: String
-    let patterns: [String]
-    let indicators: [String]
-    let outcome: String
-    let timestamp: Date
-    
-    init(
-        id: UUID = UUID(),
-        tradeId: String,
-        patterns: [String],
-        indicators: [String],
-        outcome: String,
-        timestamp: Date = Date()
-    ) {
-        self.id = id
-        self.tradeId = tradeId
-        self.patterns = patterns
-        self.indicators = indicators
-        self.outcome = outcome
-        self.timestamp = timestamp
     }
 }
 
@@ -966,8 +762,6 @@ struct PlaybookTrade: Identifiable, Codable {
     }
 }
 
-// MARK: - Flip Trading Types
-
 struct FlipGoal: Identifiable, Codable {
     let id: UUID
     let startAmount: Double
@@ -990,28 +784,6 @@ struct FlipGoal: Identifiable, Codable {
         self.currentAmount = currentAmount
         self.timeframe = timeframe
         self.status = status
-    }
-}
-
-struct FlipSignal: Identifiable, Codable {
-    let id: UUID
-    let symbol: String
-    let direction: TradeDirection
-    let confidence: Double
-    let timestamp: Date
-    
-    init(
-        id: UUID = UUID(),
-        symbol: String,
-        direction: TradeDirection,
-        confidence: Double,
-        timestamp: Date = Date()
-    ) {
-        self.id = id
-        self.symbol = symbol
-        self.direction = direction
-        self.confidence = confidence
-        self.timestamp = timestamp
     }
 }
 
@@ -1039,73 +811,6 @@ struct FlipTradeLog: Identifiable, Codable {
         self.entryPrice = entryPrice
         self.exitPrice = exitPrice
         self.profit = profit
-        self.timestamp = timestamp
-    }
-}
-
-struct DemoAccount: Identifiable, Codable {
-    let id: UUID
-    let accountNumber: String
-    let balance: Double
-    let equity: Double
-    let broker: BrokerType
-    let isActive: Bool
-    
-    init(
-        id: UUID = UUID(),
-        accountNumber: String,
-        balance: Double,
-        equity: Double,
-        broker: BrokerType,
-        isActive: Bool = true
-    ) {
-        self.id = id
-        self.accountNumber = accountNumber
-        self.balance = balance
-        self.equity = equity
-        self.broker = broker
-        self.isActive = isActive
-    }
-}
-
-enum FlipRiskLevel: String, CaseIterable, Codable {
-    case conservative = "Conservative"
-    case moderate = "Moderate"
-    case aggressive = "Aggressive"
-    
-    var color: Color {
-        switch self {
-        case .conservative: return .green
-        case .moderate: return .orange
-        case .aggressive: return .red
-        }
-    }
-}
-
-enum FlipStrategy: String, CaseIterable, Codable {
-    case scalping = "Scalping"
-    case swing = "Swing"
-    case dayTrading = "Day Trading"
-    case newsTrading = "News Trading"
-}
-
-enum FlipStatus: String, CaseIterable, Codable {
-    case active = "Active"
-    case paused = "Paused"
-    case completed = "Completed"
-    case failed = "Failed"
-}
-
-struct FlipAlert: Identifiable, Codable {
-    let id: UUID
-    let message: String
-    let severity: String
-    let timestamp: Date
-    
-    init(id: UUID = UUID(), message: String, severity: String, timestamp: Date = Date()) {
-        self.id = id
-        self.message = message
-        self.severity = severity
         self.timestamp = timestamp
     }
 }
@@ -1140,230 +845,60 @@ struct FlipEvent: Identifiable, Codable {
     }
 }
 
-enum FlipMode: String, CaseIterable, Codable {
+enum FlipStrategy: String, CaseIterable, Codable {
     case conservative = "Conservative"
     case balanced = "Balanced"
     case aggressive = "Aggressive"
     case experimental = "Experimental"
 }
 
-struct VPSConnection: Identifiable, Codable {
+struct PerformanceMetrics: Identifiable, Codable {
     let id: UUID
-    let host: String
-    let port: Int
-    let username: String
-    let status: String
-    
-    init(id: UUID = UUID(), host: String, port: Int, username: String, status: String = "Disconnected") {
-        self.id = id
-        self.host = host
-        self.port = port
-        self.username = username
-        self.status = status
-    }
-}
-
-// MARK: - Enhanced Learning Types
-
-struct EnhancedLearningSession: Identifiable, Codable {
-    let id: UUID
-    let sessionType: String
-    let startTime: Date
-    let endTime: Date?
-    let patterns: [String]
-    let aiEngineUsed: String
-    let marketConditions: [String]
-    let tradingOpportunities: Int
-    let riskAssessment: String
-    let performanceScore: Double
-    
-    init(
-        id: UUID = UUID(),
-        sessionType: String,
-        startTime: Date = Date(),
-        endTime: Date? = nil,
-        patterns: [String] = [],
-        aiEngineUsed: String,
-        marketConditions: [String] = [],
-        tradingOpportunities: Int = 0,
-        riskAssessment: String = "Medium",
-        performanceScore: Double = 0.0
-    ) {
-        self.id = id
-        self.sessionType = sessionType
-        self.startTime = startTime
-        self.endTime = endTime
-        self.patterns = patterns
-        self.aiEngineUsed = aiEngineUsed
-        self.marketConditions = marketConditions
-        self.tradingOpportunities = tradingOpportunities
-        self.riskAssessment = riskAssessment
-        self.performanceScore = performanceScore
-    }
-}
-
-// MARK: - Goldex Integration Types
-
-struct GoldexTrade: Identifiable, Codable {
-    let id: UUID
-    let symbol: String
-    let direction: TradeDirection
-    let entryPrice: Double
-    let exitPrice: Double?
-    let profit: Double
+    let totalProfit: Double
+    let totalTrades: Int
+    let winRate: Double
+    let averageWin: Double
+    let averageLoss: Double
+    let profitFactor: Double
+    let maxDrawdown: Double
     let timestamp: Date
     
     init(
         id: UUID = UUID(),
-        symbol: String = "XAUUSD",
-        direction: TradeDirection,
-        entryPrice: Double,
-        exitPrice: Double? = nil,
-        profit: Double = 0.0,
+        totalProfit: Double = 0.0,
+        totalTrades: Int = 0,
+        winRate: Double = 0.0,
+        averageWin: Double = 0.0,
+        averageLoss: Double = 0.0,
+        profitFactor: Double = 1.0,
+        maxDrawdown: Double = 0.0,
         timestamp: Date = Date()
     ) {
         self.id = id
-        self.symbol = symbol
-        self.direction = direction
-        self.entryPrice = entryPrice
-        self.exitPrice = exitPrice
-        self.profit = profit
+        self.totalProfit = totalProfit
+        self.totalTrades = totalTrades
+        self.winRate = winRate
+        self.averageWin = averageWin
+        self.averageLoss = averageLoss
+        self.profitFactor = profitFactor
+        self.maxDrawdown = maxDrawdown
         self.timestamp = timestamp
     }
-}
-
-struct GoldexAILearningData: Identifiable, Codable {
-    let id: UUID
-    let patternType: String
-    let confidence: Double
-    let marketConditions: [String]
-    let timestamp: Date
     
-    init(
-        id: UUID = UUID(),
-        patternType: String,
-        confidence: Double,
-        marketConditions: [String] = [],
-        timestamp: Date = Date()
-    ) {
-        self.id = id
-        self.patternType = patternType
-        self.confidence = confidence
-        self.marketConditions = marketConditions
-        self.timestamp = timestamp
+    static var sample: PerformanceMetrics {
+        PerformanceMetrics(
+            totalProfit: 15000.0,
+            totalTrades: 150,
+            winRate: 0.67,
+            averageWin: 180.0,
+            averageLoss: -90.0,
+            profitFactor: 1.8,
+            maxDrawdown: -500.0
+        )
     }
 }
 
-struct GoldexSignalStorage: Identifiable, Codable {
-    let id: UUID
-    let signalData: String
-    let confidence: Double
-    let timestamp: Date
-    
-    init(id: UUID = UUID(), signalData: String, confidence: Double, timestamp: Date = Date()) {
-        self.id = id
-        self.signalData = signalData
-        self.confidence = confidence
-        self.timestamp = timestamp
-    }
-}
-
-// MARK: - Family Mode Types
-
-enum FamilyMemberType: String, CaseIterable, Codable {
-    case parent = "Parent"
-    case child = "Child"
-    case teen = "Teen"
-    case adult = "Adult"
-    case grandparent = "Grandparent"
-    
-    var emoji: String {
-        switch self {
-        case .parent: return "👨‍👩‍👧‍👦"
-        case .child: return "👶"
-        case .teen: return "🧑‍🎓"
-        case .adult: return "🧑‍💼"
-        case .grandparent: return "👴"
-        }
-    }
-    
-    var primaryColor: Color {
-        switch self {
-        case .parent: return .blue
-        case .child: return .green
-        case .teen: return .orange
-        case .adult: return .purple
-        case .grandparent: return .brown
-        }
-    }
-    
-    var description: String {
-        switch self {
-        case .parent: return "Experienced family leader"
-        case .child: return "Learning the basics"
-        case .teen: return "Developing skills"
-        case .adult: return "Independent trader"
-        case .grandparent: return "Wisdom and experience"
-        }
-    }
-}
-
-struct FamilyMemberProfile: Identifiable, Codable {
-    let id: UUID
-    let name: String
-    let memberType: FamilyMemberType
-    let age: Int
-    let role: String
-    let experience: String
-    let goals: [String]
-    let progress: Double
-    let avatar: String
-    let isActive: Bool
-    let joinDate: Date
-    let tradingExperience: String
-    let preferences: String
-    let achievements: [String]
-    let specialties: [String]
-    let backstory: String
-    
-    init(
-        id: UUID = UUID(),
-        name: String,
-        memberType: FamilyMemberType,
-        age: Int,
-        role: String,
-        experience: String,
-        goals: [String] = [],
-        progress: Double = 0.0,
-        avatar: String = "",
-        isActive: Bool = true,
-        joinDate: Date = Date(),
-        tradingExperience: String = "Beginner",
-        preferences: String = "",
-        achievements: [String] = [],
-        specialties: [String] = [],
-        backstory: String = ""
-    ) {
-        self.id = id
-        self.name = name
-        self.memberType = memberType
-        self.age = age
-        self.role = role
-        self.experience = experience
-        self.goals = goals
-        self.progress = progress
-        self.avatar = avatar
-        self.isActive = isActive
-        self.joinDate = joinDate
-        self.tradingExperience = tradingExperience
-        self.preferences = preferences
-        self.achievements = achievements
-        self.specialties = specialties
-        self.backstory = backstory
-    }
-}
-
-// MARK: - Game and Gamification Types
+// MARK: - Micro Flip Game Types
 
 struct MicroFlipGame: Identifiable, Codable {
     let id: UUID
@@ -1462,7 +997,7 @@ struct MicroFlipGame: Identifiable, Codable {
     }
 }
 
-// MARK: - Voice and Communication Types
+// MARK: - Voice Note Types
 
 struct BotVoiceNote: Identifiable, Codable {
     let id: UUID
@@ -1530,11 +1065,75 @@ struct BotVoiceNote: Identifiable, Codable {
         self.tags = tags
         self.priority = priority
     }
+}
+
+// MARK: - Family Mode Types
+
+enum FamilyMemberType: String, CaseIterable, Codable {
+    case parent = "Parent"
+    case child = "Child"
+    case teen = "Teen" 
+    case adult = "Adult"
+    case grandparent = "Grandparent"
     
-    var formattedDuration: String {
-        let minutes = Int(duration) / 60
-        let seconds = Int(duration) % 60
-        return String(format: "%d:%02d", minutes, seconds)
+    var emoji: String {
+        switch self {
+        case .parent: return "👨‍👩‍👧‍👦"
+        case .child: return "👶"
+        case .teen: return "🧑‍🎓"
+        case .adult: return "🧑‍💼"
+        case .grandparent: return "👴"
+        }
+    }
+    
+    var primaryColor: Color {
+        switch self {
+        case .parent: return .blue
+        case .child: return .green
+        case .teen: return .orange
+        case .adult: return .purple
+        case .grandparent: return .brown
+        }
+    }
+}
+
+struct FamilyMemberProfile: Identifiable, Codable {
+    let id: UUID
+    let name: String
+    let memberType: FamilyMemberType
+    let age: Int
+    let role: String
+    let experience: String
+    let goals: [String]
+    let progress: Double
+    let avatar: String
+    let isActive: Bool
+    let joinDate: Date
+    
+    init(
+        id: UUID = UUID(),
+        name: String,
+        memberType: FamilyMemberType,
+        age: Int,
+        role: String,
+        experience: String,
+        goals: [String] = [],
+        progress: Double = 0.0,
+        avatar: String = "",
+        isActive: Bool = true,
+        joinDate: Date = Date()
+    ) {
+        self.id = id
+        self.name = name
+        self.memberType = memberType
+        self.age = age
+        self.role = role
+        self.experience = experience
+        self.goals = goals
+        self.progress = progress
+        self.avatar = avatar
+        self.isActive = isActive
+        self.joinDate = joinDate
     }
 }
 
@@ -1556,10 +1155,6 @@ struct NewsTimeFilter: RawRepresentable, CaseIterable, Codable, Hashable {
     static var allCases: [NewsTimeFilter] {
         return [.all, .lastHour, .last6Hours, .today, .lastWeek]
     }
-    
-    var displayName: String {
-        return rawValue
-    }
 }
 
 struct CalendarTimeframe: RawRepresentable, CaseIterable, Codable {
@@ -1577,10 +1172,6 @@ struct CalendarTimeframe: RawRepresentable, CaseIterable, Codable {
     static let all = CalendarTimeframe(rawValue: "All")
     
     static var allCases: [CalendarTimeframe] = [.today, .tomorrow, .thisWeek, .nextWeek, .thisMonth, .all]
-    
-    var displayName: String {
-        return rawValue
-    }
 }
 
 enum EconomicImpact: String, CaseIterable, Codable {
@@ -1634,389 +1225,290 @@ struct EconomicEventModel: Identifiable, Codable {
     }
 }
 
-// MARK: - Pattern Recognition Types
-
-struct TradingPattern: Identifiable, Codable {
-    let id: UUID
-    let name: String
-    let type: PatternType
-    let confidence: Double
-    let description: String
-    let timeframe: String
-    let timestamp: Date
+struct NewsArticleModel: Identifiable, Hashable, Codable {
+    let id = UUID()
+    let title: String
+    let summary: String
+    let content: String
+    let impact: EconomicImpact
+    let publishedAt: Date
+    let source: String
+    let category: String
+    let tags: [String]
     
-    enum PatternType: String, CaseIterable, Codable {
-        case triangle = "Triangle"
-        case headAndShoulders = "Head and Shoulders"
-        case doubleTop = "Double Top"
-        case doubleBottom = "Double Bottom"
-        case flag = "Flag"
-        case pennant = "Pennant"
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: NewsArticleModel, rhs: NewsArticleModel) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+// MARK: - Chart Types
+
+enum ChartTimeframe: String, CaseIterable, Codable {
+    case m1 = "1M"
+    case m5 = "5M"
+    case m15 = "15M"
+    case m30 = "30M"
+    case h1 = "1H"
+    case h4 = "4H"
+    case d1 = "1D"
+    case w1 = "1W"
+    case mn1 = "1MN"
+}
+
+struct ChartSettings: Codable {
+    var showGrid: Bool = true
+    var showVolume: Bool = true
+    var selectedTimeframe: ChartTimeframe = .m15
+    var indicatorsEnabled: Bool = true
+    
+    init() {}
+}
+
+// MARK: - Error and Debug Types
+
+struct ErrorLogModel: Identifiable, Codable {
+    let id = UUID()
+    let type: ErrorType
+    let message: String
+    let timestamp: Date
+    let fileName: String
+    let severity: Severity
+    
+    enum ErrorType: String, CaseIterable, Codable {
+        case runtime = "Runtime"
+        case logic = "Logic"
+        case network = "Network"
+        case ui = "UI"
+        case data = "Data"
+    }
+    
+    enum Severity: String, CaseIterable, Codable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        var systemImage: String {
+            switch self {
+            case .low: return "info.circle"
+            case .medium: return "exclamationmark.triangle"
+            case .high: return "exclamationmark.circle"
+            case .critical: return "xmark.octagon"
+            }
+        }
         
         var color: Color {
             switch self {
-            case .triangle: return .blue
-            case .headAndShoulders: return .red
-            case .doubleTop: return .orange
-            case .doubleBottom: return .green
-            case .flag: return .purple
-            case .pennant: return .cyan
+            case .low: return .blue
+            case .medium: return .orange
+            case .high: return .red
+            case .critical: return .purple
             }
         }
+    }
+    
+    var severityColor: Color { severity.color }
+    
+    static let samples: [ErrorLogModel] = [
+        ErrorLogModel(
+            type: .runtime,
+            message: "Sample error message",
+            timestamp: Date(),
+            fileName: "TestFile.swift",
+            severity: .medium
+        )
+    ]
+}
+
+struct DebugSession: Identifiable, Codable {
+    let id: UUID
+    let startTime: Date
+    let endTime: Date?
+    let errorsFound: Int
+    let errorsFixed: Int
+    
+    init(id: UUID = UUID(), startTime: Date = Date(), endTime: Date? = nil, errorsFound: Int = 0, errorsFixed: Int = 0) {
+        self.id = id
+        self.startTime = startTime
+        self.endTime = endTime
+        self.errorsFound = errorsFound
+        self.errorsFixed = errorsFixed
+    }
+}
+
+struct LearningEvent: Identifiable, Codable {
+    let id: UUID
+    let eventType: String
+    let data: String
+    let timestamp: Date
+    let confidence: Double
+    
+    init(id: UUID = UUID(), eventType: String, data: String, timestamp: Date = Date(), confidence: Double = 0.0) {
+        self.id = id
+        self.eventType = eventType
+        self.data = data
+        self.timestamp = timestamp
+        self.confidence = confidence
+    }
+}
+
+// MARK: - Additional Supporting Types
+
+enum AutoTradingStatus: String, Codable, CaseIterable {
+    case active = "Active"
+    case paused = "Paused"
+    case stopped = "Stopped"
+    case error = "Error"
+    
+    var color: Color {
+        switch self {
+        case .active: return .green
+        case .paused: return .orange
+        case .stopped: return .gray
+        case .error: return .red
+        }
+    }
+    
+    static var sample: AutoTradingStatus {
+        return .active
+    }
+}
+
+struct EnhancedProTraderBot: Identifiable, Codable {
+    let id: UUID
+    let name: String
+    let strategy: TradingStrategy
+    let specialization: BotSpecialization
+    let performance: PerformanceMetrics
+    let isActive: Bool
+    
+    enum TradingStrategy: String, CaseIterable, Codable {
+        case scalping = "Scalping"
+        case swing = "Swing"
+        case dayTrading = "Day Trading"
+        case news = "News Trading"
+    }
+    
+    enum BotSpecialization: String, CaseIterable, Codable {
+        case gold = "Gold Trading"
+        case forex = "Forex"
+        case crypto = "Cryptocurrency"
+        case indices = "Indices"
     }
     
     init(
         id: UUID = UUID(),
         name: String,
-        type: PatternType,
-        confidence: Double,
-        description: String,
-        timeframe: String,
-        timestamp: Date = Date()
+        strategy: TradingStrategy,
+        specialization: BotSpecialization,
+        performance: PerformanceMetrics,
+        isActive: Bool = false
     ) {
         self.id = id
         self.name = name
-        self.type = type
-        self.confidence = confidence
-        self.description = description
-        self.timeframe = timeframe
-        self.timestamp = timestamp
+        self.strategy = strategy
+        self.specialization = specialization
+        self.performance = performance
+        self.isActive = isActive
     }
 }
 
-// MARK: - Performance Metrics
-
-struct PerformanceMetrics: Identifiable, Codable {
-    let id: UUID
-    let totalProfit: Double
-    let totalTrades: Int
-    let winRate: Double
-    let averageWin: Double
-    let averageLoss: Double
-    let profitFactor: Double
-    let maxDrawdown: Double
-    let timestamp: Date
-    
-    init(
-        id: UUID = UUID(),
-        totalProfit: Double = 0.0,
-        totalTrades: Int = 0,
-        winRate: Double = 0.0,
-        averageWin: Double = 0.0,
-        averageLoss: Double = 0.0,
-        profitFactor: Double = 1.0,
-        maxDrawdown: Double = 0.0,
-        timestamp: Date = Date()
-    ) {
-        self.id = id
-        self.totalProfit = totalProfit
-        self.totalTrades = totalTrades
-        self.winRate = winRate
-        self.averageWin = averageWin
-        self.averageLoss = averageLoss
-        self.profitFactor = profitFactor
-        self.maxDrawdown = maxDrawdown
-        self.timestamp = timestamp
-    }
-    
-    static var sample: PerformanceMetrics {
-        PerformanceMetrics(
-            totalProfit: 15000.0,
-            totalTrades: 150,
-            winRate: 0.67,
-            averageWin: 180.0,
-            averageLoss: -90.0,
-            profitFactor: 1.8,
-            maxDrawdown: -500.0
-        )
-    }
-}
-
-// MARK: - Chart Drawing Types
-
-struct ChartDrawing: Identifiable, Codable {
-    let id: UUID
-    let type: DrawingType
-    let points: [ChartPoint]
-    let color: String
-    let timestamp: Date
-    
-    enum DrawingType: String, CaseIterable, Codable {
-        case line = "Line"
-        case trendLine = "Trend Line"
-        case rectangle = "Rectangle"
-        case circle = "Circle"
-        case arrow = "Arrow"
-    }
-    
-    struct ChartPoint: Codable {
-        let x: Double
-        let y: Double
-        
-        init(x: Double, y: Double) {
-            self.x = x
-            self.y = y
-        }
-    }
-    
-    init(
-        id: UUID = UUID(),
-        type: DrawingType,
-        points: [ChartPoint] = [],
-        color: String = "blue",
-        timestamp: Date = Date()
-    ) {
-        self.id = id
-        self.type = type
-        self.points = points
-        self.color = color
-        self.timestamp = timestamp
-    }
-}
-
-// MARK: - Additional Complex Types
-
-struct TradeSignal: Identifiable, Codable {
+struct LiveTradingOrder: Identifiable, Codable {
     let id: UUID
     let symbol: String
-    let direction: TradeDirection
-    let confidence: Double
-    let timestamp: Date
-    
-    init(id: UUID = UUID(), symbol: String, direction: TradeDirection, confidence: Double, timestamp: Date = Date()) {
-        self.id = id
-        self.symbol = symbol
-        self.direction = direction
-        self.confidence = confidence
-        self.timestamp = timestamp
-    }
-}
-
-struct MarketSession: Identifiable, Codable {
-    let id: UUID
-    let name: String
-    let startTime: Date
-    let endTime: Date
-    let timezone: String
-    
-    init(id: UUID = UUID(), name: String, startTime: Date, endTime: Date, timezone: String) {
-        self.id = id
-        self.name = name
-        self.startTime = startTime
-        self.endTime = endTime
-        self.timezone = timezone
-    }
-}
-
-enum TradingVelocity: String, CaseIterable, Codable {
-    case slow = "Slow"
-    case normal = "Normal"
-    case fast = "Fast"
-    case hyperSpeed = "Hyper Speed"
-    
-    var color: Color {
-        switch self {
-        case .slow: return .blue
-        case .normal: return .green
-        case .fast: return .orange
-        case .hyperSpeed: return .red
-        }
-    }
-}
-
-enum TradeQuality: String, CaseIterable, Codable {
-    case excellent = "Excellent"
-    case good = "Good"
-    case average = "Average"
-    case poor = "Poor"
-    
-    var color: Color {
-        switch self {
-        case .excellent: return .green
-        case .good: return .blue
-        case .average: return .orange
-        case .poor: return .red
-        }
-    }
-}
-
-enum VolatilityLevel: String, CaseIterable, Codable {
-    case low = "Low"
-    case medium = "Medium"
-    case high = "High"
-    case extreme = "Extreme"
-    
-    var color: Color {
-        switch self {
-        case .low: return .green
-        case .medium: return .orange
-        case .high: return .red
-        case .extreme: return .purple
-        }
-    }
-}
-
-enum NewsImpact: String, CaseIterable, Codable {
-    case low = "Low"
-    case medium = "Medium"
-    case high = "High"
-    case all = "All"
-    
-    var color: Color {
-        switch self {
-        case .low: return .green
-        case .medium: return .orange
-        case .high: return .red
-        case .all: return .gray
-        }
-    }
-}
-
-struct ClaudeFlipTradeLog: Identifiable, Codable {
-    let id: UUID
-    let symbol: String
-    let direction: TradeDirection
+    let type: TradeDirection
+    let size: Double
     let entryPrice: Double
-    let exitPrice: Double
-    let profit: Double
+    let stopLoss: Double?
+    let takeProfit: Double?
+    let currentPL: Double
     let timestamp: Date
     
     init(
         id: UUID = UUID(),
         symbol: String,
-        direction: TradeDirection,
+        type: TradeDirection,
+        size: Double,
         entryPrice: Double,
-        exitPrice: Double,
-        profit: Double,
+        stopLoss: Double? = nil,
+        takeProfit: Double? = nil,
+        currentPL: Double = 0.0,
         timestamp: Date = Date()
     ) {
         self.id = id
         self.symbol = symbol
-        self.direction = direction
+        self.type = type
+        self.size = size
         self.entryPrice = entryPrice
-        self.exitPrice = exitPrice
-        self.profit = profit
+        self.stopLoss = stopLoss
+        self.takeProfit = takeProfit
+        self.currentPL = currentPL
         self.timestamp = timestamp
     }
 }
 
-// MARK: - SharedTypes Extensions for Type Aliases
-
-extension SharedTypes {
-    typealias TradeDirection = Planet_ProTrader.TradeDirection
-    typealias TradingMode = Planet_ProTrader.TradingMode
-    typealias BrokerType = Planet_ProTrader.BrokerType
-    typealias TradeGrade = Planet_ProTrader.TradeGrade
-    typealias TimeFrame = Planet_ProTrader.TimeFrame
-    typealias RiskLevel = Planet_ProTrader.RiskLevel
-    typealias TradeStatus = Planet_ProTrader.TradeStatus
-    typealias BotStatus = Planet_ProTrader.BotStatus
-    typealias TrendDirection = Planet_ProTrader.TrendDirection
-    typealias MarketSentiment = Planet_ProTrader.MarketSentiment
-    typealias MarketTrend = Planet_ProTrader.MarketTrend
+struct BotSignal: Identifiable, Codable {
+    let id: UUID
+    let botId: String
+    let signal: String
+    let confidence: Double
+    let timestamp: Date
+    let direction: TradeDirection
     
-    // Struct Type Aliases
-    typealias TradingBot = Planet_ProTrader.TradingBot
-    typealias BotPersonalityProfile = Planet_ProTrader.BotPersonalityProfile
-    typealias BotPerformanceMetrics = Planet_ProTrader.BotPerformanceMetrics
-    typealias EAStats = Planet_ProTrader.EAStats
-    typealias TradingAccountDetails = Planet_ProTrader.TradingAccountDetails
-    typealias MT5Account = Planet_ProTrader.MT5Account
-    typealias MT5Trade = Planet_ProTrader.MT5Trade
-    typealias MT5Symbol = Planet_ProTrader.MT5Symbol
-    typealias BrokerCredentials = Planet_ProTrader.BrokerCredentials
-    
-    typealias AutoTrade = Planet_ProTrader.AutoTrade
-    typealias AutoTradingSignal = Planet_ProTrader.AutoTradingSignal
-    typealias AutoTradingStatus = Planet_ProTrader.AutoTradingStatus
-    typealias SharedTradeResult = Planet_ProTrader.SharedTradeResult
-    typealias SharedTradeOutcome = Planet_ProTrader.SharedTradeOutcome
-    
-    typealias AIInsights = Planet_ProTrader.AIInsights
-    typealias AIInsight = Planet_ProTrader.AIInsight
-    typealias TradeLearningData = Planet_ProTrader.TradeLearningData
-    typealias PlaybookTrade = Planet_ProTrader.PlaybookTrade
-    
-    typealias FlipGoal = Planet_ProTrader.FlipGoal
-    typealias FlipSignal = Planet_ProTrader.FlipSignal
-    typealias FlipTradeLog = Planet_ProTrader.FlipTradeLog
-    typealias DemoAccount = Planet_ProTrader.DemoAccount
-    typealias VPSConnection = Planet_ProTrader.VPSConnection
-    typealias FlipCompletion = Planet_ProTrader.FlipCompletion
-    typealias FlipEvent = Planet_ProTrader.FlipEvent
-    typealias FlipAlert = Planet_ProTrader.FlipAlert
-    typealias FlipRiskLevel = Planet_ProTrader.FlipRiskLevel
-    typealias FlipStrategy = Planet_ProTrader.FlipStrategy
-    
-    typealias EnhancedLearningSession = Planet_ProTrader.EnhancedLearningSession
-    typealias GoldexTrade = Planet_ProTrader.GoldexTrade
-    typealias GoldexAILearningData = Planet_ProTrader.GoldexAILearningData
-    typealias GoldexSignalStorage = Planet_ProTrader.GoldexSignalStorage
-    
-    typealias FamilyMemberType = Planet_ProTrader.FamilyMemberType
-    typealias FamilyMemberProfile = Planet_ProTrader.FamilyMemberProfile
-    
-    typealias MicroFlipGame = Planet_ProTrader.MicroFlipGame
-    typealias BotVoiceNote = Planet_ProTrader.BotVoiceNote
-    
-    typealias NewsTimeFilter = Planet_ProTrader.NewsTimeFilter
-    typealias CalendarTimeframe = Planet_ProTrader.CalendarTimeframe
-    typealias EconomicImpact = Planet_ProTrader.EconomicImpact
-    typealias EconomicEventModel = Planet_ProTrader.EconomicEventModel
-    
-    typealias TradingPattern = Planet_ProTrader.TradingPattern
-    typealias PerformanceMetrics = Planet_ProTrader.PerformanceMetrics
-    typealias ChartDrawing = Planet_ProTrader.ChartDrawing
-    
-    typealias TradeSignal = Planet_ProTrader.TradeSignal
-    typealias MarketSession = Planet_ProTrader.MarketSession
-    typealias ClaudeFlipTradeLog = Planet_ProTrader.ClaudeFlipTradeLog
+    init(
+        id: UUID = UUID(),
+        botId: String,
+        signal: String,
+        confidence: Double,
+        timestamp: Date = Date(),
+        direction: TradeDirection
+    ) {
+        self.id = id
+        self.botId = botId
+        self.signal = signal
+        self.confidence = confidence
+        self.timestamp = timestamp
+        self.direction = direction
+    }
 }
 
-// MARK: - View Extensions for Missing Properties
+struct TradingInstrument: Identifiable, Codable {
+    let id: UUID
+    let symbol: String
+    let name: String
+    let currentPrice: Double
+    let change: Double
+    let changePercent: Double
+    
+    init(id: UUID = UUID(), symbol: String, name: String, currentPrice: Double, change: Double, changePercent: Double) {
+        self.id = id
+        self.symbol = symbol
+        self.name = name
+        self.currentPrice = currentPrice
+        self.change = change
+        self.changePercent = changePercent
+    }
+    
+    static let sampleInstruments: [TradingInstrument] = [
+        TradingInstrument(
+            symbol: "XAUUSD",
+            name: "Gold",
+            currentPrice: 2045.50,
+            change: 12.30,
+            changePercent: 0.61
+        )
+    ]
+}
+
+// MARK: - Color Extensions
 
 extension Color {
     static let gold = Color.yellow
     static let brown = Color(red: 0.6, green: 0.4, blue: 0.2)
-}
-
-// MARK: - AuthenticationManager Singleton
-
-extension AuthenticationManager {
-    static let shared = AuthenticationManager()
-    
-    convenience init() {
-        self.init()
-    }
-}
-
-// MARK: - Material Extension
-
-extension Material {
-    static var ultraThinMaterial: Material {
-        return .ultraThinMaterial
-    }
-}
-
-// MARK: - CGPoint Codable Extension
-
-extension CGPoint: Codable {
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let x = try container.decode(CGFloat.self, forKey: .x)
-        let y = try container.decode(CGFloat.self, forKey: .y)
-        self.init(x: x, y: y)
-    }
-    
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(x, forKey: .x)
-        try container.encode(y, forKey: .y)
-    }
-    
-    private enum CodingKeys: String, CodingKey {
-        case x, y
-    }
 }
 
 // MARK: - Preview
@@ -2027,28 +1519,32 @@ extension CGPoint: Codable {
             .font(.title.bold())
             .foregroundColor(.blue)
         
-        Text("All types consolidated and organized")
+        Text("Single source of truth for all types")
             .font(.subheadline)
             .foregroundColor(.secondary)
         
         HStack {
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Core Types:")
                     .font(.caption.bold())
                 Text("• TradeDirection")
                 Text("• TradingMode") 
                 Text("• BrokerType")
                 Text("• TradeGrade")
+                Text("• BotPerformanceMetrics ✅")
+                    .foregroundColor(.green)
             }
             .font(.caption)
             
-            VStack(alignment: .leading) {
-                Text("AI Types:")
+            Spacer()
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Bot Types:")
                     .font(.caption.bold())
+                Text("• TradingBot")
                 Text("• EAStats")
                 Text("• AutoTrade")
-                Text("• AIInsights")
-                Text("• PlaybookTrade")
+                Text("• BotStatus")
             }
             .font(.caption)
         }

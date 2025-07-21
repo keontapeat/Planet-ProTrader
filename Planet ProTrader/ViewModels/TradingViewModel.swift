@@ -11,6 +11,9 @@ import Combine
 @MainActor
 class TradingViewModel: ObservableObject {
     
+    // MARK: - Dependencies
+    private let repository: TradingRepositoryProtocol
+    
     // MARK: - Published Properties (Real Data Only)
     
     @Published var currentSignal: TradingModels.GoldSignal?
@@ -21,9 +24,9 @@ class TradingViewModel: ObservableObject {
     
     // Real performance tracking (connected to account)
     @Published var isAutoTradingEnabled = false
-    @Published var autoTradingMode: SharedTypes.TradingMode = .auto
+    @Published var autoTradingMode: MasterSharedTypes.TradingMode = .auto
     @Published var isFlipModeActive = false
-    @Published var flipGoals: [SharedTypes.FlipGoal] = []
+    @Published var flipGoals: [MasterSharedTypes.FlipGoal] = []
     
     // Real-time market data
     @Published var currentPrice: Double = 0.0
@@ -42,14 +45,19 @@ class TradingViewModel: ObservableObject {
     
     // MARK: - Initialization
     
-    init() {
+    init(repository: TradingRepositoryProtocol = TradingRepository()) {
+        self.repository = repository
         setupRealTimeUpdates()
         loadRealMarketData()
+        subscribeToRealtimeData()
     }
     
     deinit {
         priceUpdateTimer?.invalidate()
         signalGenerationTimer?.invalidate()
+        priceUpdateTimer = nil
+        signalGenerationTimer = nil
+        cancellables.removeAll()
     }
     
     // MARK: - Real-Time Setup
@@ -235,11 +243,11 @@ class TradingViewModel: ObservableObject {
         autoTradingMode = .auto
     }
     
-    func createFlipGoal(_ goal: SharedTypes.FlipGoal) {
+    func createFlipGoal(_ goal: MasterSharedTypes.FlipGoal) {
         flipGoals.append(goal)
     }
     
-    func removeFlipGoal(_ goal: SharedTypes.FlipGoal) {
+    func removeFlipGoal(_ goal: MasterSharedTypes.FlipGoal) {
         flipGoals.removeAll { $0.id == goal.id }
     }
     
@@ -256,6 +264,29 @@ class TradingViewModel: ObservableObject {
         Task {
             await generateRealSignal()
         }
+    }
+    
+    // MARK: - Real-Time Data Subscription
+    
+    private func subscribeToRealtimeData() {
+        repository.subscribeToRealTimeData(for: "XAUUSD")
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] newPrice in
+                self?.updatePrice(newPrice)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func updatePrice(_ newPrice: Double) {
+        let previousPrice = currentPrice
+        currentPrice = newPrice
+        
+        if previousPrice > 0 {
+            priceChange = newPrice - previousPrice
+            priceChangePercent = (priceChange / previousPrice) * 100
+        }
+        
+        lastPriceUpdate = Date()
     }
     
     // MARK: - Performance Optimizations
@@ -360,8 +391,8 @@ class TradingViewModel: ObservableObject {
 
 // MARK: - Clean Extensions (No Sample Data)
 
-extension SharedTypes.FlipGoal {
-    static let empty: [SharedTypes.FlipGoal] = []
+extension MasterSharedTypes.FlipGoal {
+    static let empty: [MasterSharedTypes.FlipGoal] = []
 }
 
 // MARK: - Trading View Model Preview

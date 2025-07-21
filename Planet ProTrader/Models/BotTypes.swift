@@ -329,54 +329,6 @@ enum TradingTimeframe: String, Codable, CaseIterable {
     }
 }
 
-// MARK: - Learning Capabilities
-
-enum LearningCapability: String, CaseIterable, Codable {
-    case patternRecognition = "Pattern Recognition"
-    case riskManagement = "Risk Management"
-    case technicalAnalysis = "Technical Analysis"
-    case fundamentalAnalysis = "Fundamental Analysis"
-    case sentimentAnalysis = "Sentiment Analysis"
-    case marketTiming = "Market Timing"
-    case priceAction = "Price Action"
-    case volumeAnalysis = "Volume Analysis"
-    case microstructure = "Microstructure"
-    case supportResistance = "Support Resistance"
-    case fundamentals = "Fundamentals"
-    case trendAnalysis = "Trend Analysis"
-    case orderFlow = "Order Flow"
-    case marketStructure = "Market Structure"
-    case liquidity = "Liquidity"
-    case extremes = "Extremes"
-    case meanReversion = "Mean Reversion"
-    case sentiment = "Sentiment"
-    case socialMedia = "Social Media"
-    case positioning = "Positioning"
-    case newsAnalysis = "News Analysis"
-    case eventTrading = "Event Trading"
-    case volatility = "Volatility"
-    case chartPatterns = "Chart Patterns"
-    case candlesticks = "Candlesticks"
-    case riskAssessment = "Risk Assessment"
-    case portfolioManagement = "Portfolio Management"
-    case correlation = "Correlation"
-    case behaviorAnalysis = "Behavior Analysis"
-    case emotionalPatterns = "Emotional Patterns"
-    case marketPsychology = "Market Psychology"
-    
-    var description: String {
-        switch self {
-        case .patternRecognition: return "Identifies recurring market patterns"
-        case .riskManagement: return "Optimizes risk-reward ratios"
-        case .technicalAnalysis: return "Analyzes price action and indicators"
-        case .fundamentalAnalysis: return "Evaluates economic factors"
-        case .sentimentAnalysis: return "Gauges market sentiment"
-        case .marketTiming: return "Times market entry and exit"
-        default: return rawValue
-        }
-    }
-}
-
 // MARK: - Communication Styles
 
 enum CommunicationStyle: String, Codable, CaseIterable {
@@ -593,6 +545,10 @@ struct LearningEvent: Codable {
                 }
             }
         }
+        
+        Text("✅ Using MasterSharedTypes for consistency")
+            .font(.caption)
+            .foregroundColor(.green)
     }
     .padding()
     .background(Color(.systemGray6))

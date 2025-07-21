@@ -25,7 +25,8 @@ final class AuthenticationManager: ObservableObject {
     
     private let db = Firestore.firestore()
     
-    private init() {
+    // Make init internal/public for SwiftUI usage
+    init() {
         setupAuthenticationListener()
     }
     
@@ -178,6 +179,16 @@ extension AuthenticationManager {
 // MARK: - Preview Support
 
 #Preview {
-    ProfileView()
-        .environmentObject(AuthenticationManager.shared)
+    VStack {
+        Text("🔐 Authentication Fixed")
+            .font(.title.bold())
+            .foregroundColor(.blue)
+        
+        Text("AuthenticationManager now has public init")
+            .font(.caption)
+            .foregroundColor(.secondary)
+    }
+    .padding()
+    .background(Color(.systemGroupedBackground))
+    .cornerRadius(12)
 }

@@ -20,7 +20,7 @@ struct TradeModel: Identifiable, Codable {
     let takeProfit: Double?
     let lotSize: Double
     let profit: Double
-    let tradeDirection: TradeDirection
+    let tradeDirection: MasterSharedTypes.TradeDirection
     let tradeStartTime: Date
     let tradeEndTime: Date?
     let confidenceScore: Double
@@ -28,95 +28,13 @@ struct TradeModel: Identifiable, Codable {
     let screenshotDuringUrl: String?
     let screenshotAfterUrl: String?
     let tradeReasoning: String?
-    let tradeGrade: TradeGrade
+    let tradeGrade: MasterSharedTypes.TradeGrade
     let marketSession: MarketSession?
-    let tradeStatus: TradeStatus
+    let tradeStatus: MasterSharedTypes.TradeStatus
     let createdAt: Date
     let updatedAt: Date
     
     // MARK: - Supporting Enums
-    
-    enum TradeDirection: String, Codable, CaseIterable {
-        case buy = "BUY"
-        case sell = "SELL"
-        
-        var displayName: String {
-            switch self {
-            case .buy: return "Buy"
-            case .sell: return "Sell"
-            }
-        }
-        
-        var color: Color {
-            switch self {
-            case .buy: return .green
-            case .sell: return .red
-            }
-        }
-        
-        var systemImage: String {
-            switch self {
-            case .buy: return "arrow.up.circle.fill"
-            case .sell: return "arrow.down.circle.fill"
-            }
-        }
-    }
-    
-    enum TradeGrade: String, Codable, CaseIterable {
-        case elite = "ELITE"
-        case good = "GOOD"
-        case average = "AVERAGE"
-        case poor = "POOR"
-        
-        var displayName: String {
-            switch self {
-            case .elite: return "Elite"
-            case .good: return "Good"
-            case .average: return "Average"
-            case .poor: return "Poor"
-            }
-        }
-        
-        var color: Color {
-            switch self {
-            case .elite: return .gold
-            case .good: return .green
-            case .average: return .blue
-            case .poor: return .red
-            }
-        }
-        
-        var systemImage: String {
-            switch self {
-            case .elite: return "star.fill"
-            case .good: return "checkmark.circle.fill"
-            case .average: return "minus.circle.fill"
-            case .poor: return "xmark.circle.fill"
-            }
-        }
-    }
-    
-    enum TradeStatus: String, Codable, CaseIterable {
-        case open = "OPEN"
-        case closed = "CLOSED"
-        case cancelled = "CANCELLED"
-        
-        var displayName: String {
-            switch self {
-            case .open: return "Open"
-            case .closed: return "Closed"
-            case .cancelled: return "Cancelled"
-            }
-        }
-        
-        var color: Color {
-            switch self {
-            case .open: return .blue
-            case .closed: return .green
-            case .cancelled: return .red
-            }
-        }
-    }
     
     enum MarketSession: String, Codable, CaseIterable {
         case sydney = "SYDNEY"
@@ -246,7 +164,7 @@ struct TradeModel: Identifiable, Codable {
         takeProfit: Double? = nil,
         lotSize: Double,
         profit: Double = 0.0,
-        tradeDirection: TradeDirection,
+        tradeDirection: MasterSharedTypes.TradeDirection,
         tradeStartTime: Date = Date(),
         tradeEndTime: Date? = nil,
         confidenceScore: Double,
@@ -254,9 +172,9 @@ struct TradeModel: Identifiable, Codable {
         screenshotDuringUrl: String? = nil,
         screenshotAfterUrl: String? = nil,
         tradeReasoning: String? = nil,
-        tradeGrade: TradeGrade = .average,
+        tradeGrade: MasterSharedTypes.TradeGrade = .average,
         marketSession: MarketSession? = nil,
-        tradeStatus: TradeStatus = .open,
+        tradeStatus: MasterSharedTypes.TradeStatus = .open,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -388,7 +306,7 @@ struct TradeModel: Identifiable, Codable {
             takeProfit: dbTrade.takeProfit,
             lotSize: dbTrade.lotSize,
             profit: dbTrade.profit,
-            tradeDirection: TradeDirection(rawValue: dbTrade.tradeDirection) ?? .buy,
+            tradeDirection: MasterSharedTypes.TradeDirection(rawValue: dbTrade.tradeDirection) ?? .buy,
             tradeStartTime: dbTrade.tradeStartTime,
             tradeEndTime: dbTrade.tradeEndTime,
             confidenceScore: dbTrade.confidenceScore,
@@ -396,9 +314,9 @@ struct TradeModel: Identifiable, Codable {
             screenshotDuringUrl: dbTrade.screenshotDuringUrl,
             screenshotAfterUrl: dbTrade.screenshotAfterUrl,
             tradeReasoning: dbTrade.tradeReasoning,
-            tradeGrade: TradeGrade(rawValue: dbTrade.tradeGrade) ?? .average,
+            tradeGrade: MasterSharedTypes.TradeGrade(rawValue: dbTrade.tradeGrade) ?? .average,
             marketSession: dbTrade.marketSession.flatMap { MarketSession(rawValue: $0) },
-            tradeStatus: TradeStatus(rawValue: dbTrade.tradeStatus) ?? .open,
+            tradeStatus: MasterSharedTypes.TradeStatus(rawValue: dbTrade.tradeStatus) ?? .open,
             createdAt: dbTrade.createdAt,
             updatedAt: dbTrade.updatedAt
         )
@@ -461,12 +379,14 @@ extension TradeModel {
     ]
 }
 
-// MARK: - Color Extension (Removed duplicate - using DesignSystem.primaryGold instead)
-
 // MARK: - Preview
 
 #Preview {
     VStack(spacing: 20) {
+        Text("✅ Trade Model - Using MasterSharedTypes")
+            .font(.headline)
+            .foregroundColor(.green)
+        
         ForEach(TradeModel.sampleTrades) { trade in
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
@@ -507,9 +427,13 @@ extension TradeModel {
                             .font(.caption)
                             .foregroundColor(.secondary)
                         
-                        Label(trade.tradeGrade.displayName, systemImage: trade.tradeGrade.systemImage)
-                            .font(.caption)
-                            .foregroundColor(trade.tradeGrade.color)
+                        HStack {
+                            Image(systemName: "star.fill")
+                                .foregroundColor(trade.tradeGrade.color)
+                            Text("\(trade.tradeGrade.rawValue)")
+                                .font(.caption)
+                                .foregroundColor(trade.tradeGrade.color)
+                        }
                     }
                 }
                 

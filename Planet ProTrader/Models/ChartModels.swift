@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Foundation
+import MasterSharedTypes
 
 // MARK: - Chart Data Models
 
@@ -241,7 +242,7 @@ struct LiveTradingOrder: Identifiable, Codable {
     var botName: String?
     let symbol: String
     let orderType: OrderType
-    let direction: TradeDirection
+    let direction: MasterSharedTypes.TradeDirection
     let volume: Double
     let openPrice: Double
     let stopLoss: Double?
@@ -272,25 +273,6 @@ struct LiveTradingOrder: Identifiable, Codable {
             case .pending: return .orange
             case .limit: return .green
             case .stop: return .red
-            }
-        }
-    }
-    
-    enum TradeDirection: String, CaseIterable, Codable {
-        case buy = "BUY"
-        case sell = "SELL"
-        
-        var color: Color {
-            switch self {
-            case .buy: return .green
-            case .sell: return .red
-            }
-        }
-        
-        var arrow: String {
-            switch self {
-            case .buy: return "arrow.up"
-            case .sell: return "arrow.down"
             }
         }
     }
@@ -884,7 +866,7 @@ class ChartDataService: ObservableObject {
 struct BotSignal: Identifiable {
     let id = UUID()
     let botName: String
-    let direction: SignalDirection
+    let direction: MasterSharedTypes.TradeDirection
     let price: Double
     let confidence: Double
     let candleIndex: Int
@@ -902,7 +884,7 @@ struct BotTrade: Identifiable {
     let id = UUID()
     let botName: String
     let pair: String
-    let direction: TradeDirection
+    let direction: MasterSharedTypes.TradeDirection
     let entryPrice: Double
     let exitPrice: Double?
     let volume: Double

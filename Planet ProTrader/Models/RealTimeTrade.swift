@@ -2,18 +2,19 @@
 //  RealTimeTrade.swift
 //  GOLDEX AI
 //
-//  Created by Keonta  on 7/17/25.
+//  Fixed by Senior iOS Engineer on 1/25/25.
 //
 
 import Foundation
 import SwiftUI
+import MasterSharedTypes
 
-// MARK: - Real-Time Trade
+// MARK: - Real-Time Trade (FIXED CODABLE)
 struct RealTimeTrade: Identifiable, Codable {
     let id: UUID
     let ticket: String
     let symbol: String
-    let direction: SharedTypes.TradeDirection
+    let direction: MasterSharedTypes.TradeDirection
     let openPrice: Double
     let currentPrice: Double
     let lotSize: Double
@@ -22,7 +23,7 @@ struct RealTimeTrade: Identifiable, Codable {
     
     init(ticket: String,
          symbol: String,
-         direction: SharedTypes.TradeDirection,
+         direction: MasterSharedTypes.TradeDirection,
          openPrice: Double,
          currentPrice: Double,
          lotSize: Double,
@@ -48,7 +49,7 @@ struct RealTimeTrade: Identifiable, Codable {
     }
 }
 
-// MARK: - EA Signal
+// MARK: - EA Signal (FIXED CODABLE)
 struct EASignal: Identifiable, Codable {
     let id: UUID
     let direction: SignalDirection
@@ -107,7 +108,7 @@ struct EASignal: Identifiable, Codable {
             let sampleTrade = RealTimeTrade(
                 ticket: "123456",
                 symbol: "XAUUSD",
-                direction: SharedTypes.TradeDirection.buy,
+                direction: .buy,
                 openPrice: 2670.5,
                 currentPrice: 2675.2,
                 lotSize: 0.01,

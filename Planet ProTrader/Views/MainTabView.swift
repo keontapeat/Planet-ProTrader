@@ -6,6 +6,7 @@ struct MainTabView: View {
     @EnvironmentObject private var tradingViewModel: TradingViewModel
     @EnvironmentObject private var realTimeAccountManager: RealTimeAccountManager
     @StateObject private var opusManager = OpusAutodebugService()
+    @StateObject private var performanceMonitor = PerformanceMonitor.shared
     @State private var showingOpusInterface = false
     @State private var selectedTab = 0
     @Namespace private var tabAnimation
@@ -63,7 +64,12 @@ struct MainTabView: View {
             .onAppear {
                 setupOpusSystem()
                 setupTabBarAppearance()
+                performanceMonitor.startMonitoring()
             }
+            .onDisappear {
+                performanceMonitor.stopMonitoring()
+            }
+            .withErrorHandling()
             
             // Floating OPUS AI Assistant - Available from any tab
             VStack {

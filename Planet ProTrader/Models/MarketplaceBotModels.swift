@@ -37,331 +37,419 @@ enum BotCategory: String, CaseIterable, Codable {
     }
 }
 
-enum MarketplaceRiskLevel: String, CaseIterable, Codable {
-    case low = "Low Risk"
-    case medium = "Medium Risk"
-    case high = "High Risk"
-    case extreme = "Extreme Risk"
-    
-    var color: Color {
-        switch self {
-        case .low: return .green
-        case .medium: return .yellow
-        case .high: return .orange
-        case .extreme: return .red
-        }
-    }
-    
-    var emoji: String {
-        switch self {
-        case .low: return "🛡️"
-        case .medium: return "⚖️"
-        case .high: return "⚔️"
-        case .extreme: return "🔥"
-        }
-    }
-}
+// MARK: - Bot Store Enums for BotStoreView
 
-enum MarketplacePopularityLevel: String, CaseIterable, Codable {
-    case new = "New"
-    case rising = "Rising"
-    case popular = "Popular"
-    case viral = "Viral"
+enum BotRarity: String, CaseIterable, Codable {
+    case common = "Common"
+    case uncommon = "Uncommon"
+    case rare = "Rare"
+    case epic = "Epic"
     case legendary = "Legendary"
+    case mythic = "Mythic"
     
     var color: Color {
         switch self {
-        case .new: return .gray
-        case .rising: return .blue
-        case .popular: return .green
-        case .viral: return .orange
-        case .legendary: return .purple
+        case .common: return .gray
+        case .uncommon: return .green
+        case .rare: return .blue
+        case .epic: return .purple
+        case .legendary: return .orange
+        case .mythic: return .red
         }
     }
     
-    var badge: String {
+    var sparkleEffect: String {
         switch self {
-        case .new: return "🆕"
-        case .rising: return "📈"
-        case .popular: return "⭐"
-        case .viral: return "🔥"
+        case .common: return "🤖"
+        case .uncommon: return "✨"
+        case .rare: return "💎"
+        case .epic: return "🌟"
         case .legendary: return "👑"
+        case .mythic: return "🔥"
         }
     }
 }
 
-// MARK: - Marketplace Bot Model
+enum BotTier: String, CaseIterable, Codable {
+    case bronze = "Bronze"
+    case silver = "Silver"
+    case gold = "Gold"
+    case platinum = "Platinum"
+    case diamond = "Diamond"
+    case master = "Master"
+    
+    var color: Color {
+        switch self {
+        case .bronze: return Color.orange.opacity(0.8)
+        case .silver: return Color.gray
+        case .gold: return Color.yellow
+        case .platinum: return Color.cyan
+        case .diamond: return Color.blue
+        case .master: return Color.purple
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .bronze: return "🥉"
+        case .silver: return "🥈"
+        case .gold: return "🥇"
+        case .platinum: return "💿"
+        case .diamond: return "💎"
+        case .master: return "👑"
+        }
+    }
+}
+
+enum BotAvailability: String, CaseIterable, Codable {
+    case available = "Available"
+    case busy = "Busy"
+    case offline = "Offline"
+    case maintenance = "Maintenance"
+    
+    var color: Color {
+        switch self {
+        case .available: return .green
+        case .busy: return .orange
+        case .offline: return .gray
+        case .maintenance: return .red
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .available: return "checkmark.circle.fill"
+        case .busy: return "clock.fill"
+        case .offline: return "xmark.circle.fill"
+        case .maintenance: return "wrench.fill"
+        }
+    }
+}
+
+enum BotVerificationStatus: String, CaseIterable, Codable {
+    case unverified = "Unverified"
+    case verified = "Verified"
+    case premium = "Premium"
+    case elite = "Elite"
+    
+    var color: Color {
+        switch self {
+        case .unverified: return .gray
+        case .verified: return .blue
+        case .premium: return .purple
+        case .elite: return .gold
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .unverified: return "questionmark.circle"
+        case .verified: return "checkmark.seal.fill"
+        case .premium: return "crown.fill"
+        case .elite: return "star.fill"
+        }
+    }
+}
+
+// MARK: - Enhanced Marketplace Bot Model for Store
 struct MarketplaceBotModel: Identifiable, Codable {
     let id = UUID()
     let name: String
-    let nickname: String
-    let ownerName: String
+    let tagline: String
+    let creatorUsername: String
     let category: BotCategory
-    let riskLevel: MarketplaceRiskLevel
-    let popularityLevel: MarketplacePopularityLevel
+    let rarity: BotRarity
+    let tier: BotTier
+    let availability: BotAvailability
+    let verificationStatus: BotVerificationStatus
     
     // Performance metrics
-    let winRate: Double
-    let totalEarnings: Double
-    let averageReturn: Double
-    let maxDrawdown: Double
-    let sharpeRatio: Double
+    let stats: BotStats
     let averageRating: Double
-    let followerCount: Int
-    let tradesExecuted: Int
+    let totalReviews: Int
     
-    // Availability & Pricing
-    let isAvailable: Bool
-    let hiringFee: Double
-    let dailyRate: Double
-    let minimumHiringPeriod: Int // days
+    // Pricing
+    let price: Double
+    let isFreeTrial: Bool
     
     // Timestamps
     let createdAt: Date
-    let lastActiveAt: Date
+    let lastUpdated: Date
     
     // Additional info
     let description: String
-    let specialAbilities: [String]
-    let tradingPairs: [String]
-    let verified: Bool
+    let features: [String]
+    let supportedPairs: [String]
+    
+    // MARK: - Computed Properties for Compatibility
+    
+    /// Alias for name property (backward compatibility)
+    var nickname: String { name }
+    
+    /// Alias for creatorUsername property (backward compatibility)
+    var ownerName: String { creatorUsername }
+    
+    /// Alias for price property (backward compatibility)  
+    var hiringFee: Double { price }
+    
+    /// Computed availability boolean
+    var isAvailable: Bool { availability == .available }
+    
+    /// Additional computed properties for enhanced functionality
+    var followerCount: Int { stats.totalUsers }
+    var winRate: Double { stats.winRate }
+    var totalEarnings: Double { stats.totalReturn }
+    
+    var formattedPrice: String {
+        if price == 0 {
+            return "FREE"
+        } else if price >= 1000 {
+            return String(format: "$%.0fK", price / 1000)
+        } else {
+            return String(format: "$%.0f", price)
+        }
+    }
     
     enum CodingKeys: String, CodingKey {
-        case name, nickname, ownerName, category, riskLevel, popularityLevel
-        case winRate, totalEarnings, averageReturn, maxDrawdown, sharpeRatio
-        case averageRating, followerCount, tradesExecuted
-        case isAvailable, hiringFee, dailyRate, minimumHiringPeriod
-        case createdAt, lastActiveAt
-        case description, specialAbilities, tradingPairs, verified
+        case name, tagline, creatorUsername, category, rarity, tier
+        case availability, verificationStatus, stats, averageRating, totalReviews
+        case price, isFreeTrial, createdAt, lastUpdated
+        case description, features, supportedPairs
+    }
+    
+    // MARK: - Sample Data
+    static var sampleBots: [MarketplaceBotModel] {
+        return [
+            MarketplaceBotModel(
+                name: "Gold Rush Pro",
+                tagline: "Elite scalping bot for gold markets",
+                creatorUsername: "TradingMaster",
+                category: .scalper,
+                rarity: .legendary,
+                tier: .master,
+                availability: .available,
+                verificationStatus: .elite,
+                stats: BotStats(
+                    totalReturn: 245.7,
+                    winRate: 89.2,
+                    maxDrawdown: 8.3,
+                    sharpeRatio: 2.4,
+                    totalTrades: 1250,
+                    totalUsers: 456,
+                    averageDailyReturn: 2.1
+                ),
+                averageRating: 4.8,
+                totalReviews: 234,
+                price: 499,
+                isFreeTrial: true,
+                createdAt: Date().addingTimeInterval(-86400 * 30),
+                lastUpdated: Date().addingTimeInterval(-3600),
+                description: "Professional-grade scalping bot with advanced ML algorithms",
+                features: ["AI Pattern Recognition", "Risk Management", "Real-time Analysis"],
+                supportedPairs: ["XAUUSD", "XAUEUR"]
+            ),
+            
+            MarketplaceBotModel(
+                name: "Swing Master",
+                tagline: "Consistent swing trading profits",
+                creatorUsername: "SwingKing",
+                category: .swing,
+                rarity: .rare,
+                tier: .gold,
+                availability: .available,
+                verificationStatus: .verified,
+                stats: BotStats(
+                    totalReturn: 156.3,
+                    winRate: 76.8,
+                    maxDrawdown: 12.1,
+                    sharpeRatio: 1.8,
+                    totalTrades: 890,
+                    totalUsers: 234,
+                    averageDailyReturn: 1.2
+                ),
+                averageRating: 4.5,
+                totalReviews: 128,
+                price: 199,
+                isFreeTrial: false,
+                createdAt: Date().addingTimeInterval(-86400 * 60),
+                lastUpdated: Date().addingTimeInterval(-7200),
+                description: "Reliable swing trading bot for medium-term positions",
+                features: ["Trend Following", "Support/Resistance", "Position Management"],
+                supportedPairs: ["XAUUSD", "EURUSD"]
+            ),
+            
+            MarketplaceBotModel(
+                name: "News Ninja",
+                tagline: "Lightning-fast news trading",
+                creatorUsername: "NewsTrader",
+                category: .news,
+                rarity: .epic,
+                tier: .diamond,
+                availability: .busy,
+                verificationStatus: .premium,
+                stats: BotStats(
+                    totalReturn: 320.4,
+                    winRate: 92.1,
+                    maxDrawdown: 15.7,
+                    sharpeRatio: 2.8,
+                    totalTrades: 567,
+                    totalUsers: 89,
+                    averageDailyReturn: 3.2
+                ),
+                averageRating: 4.9,
+                totalReviews: 67,
+                price: 799,
+                isFreeTrial: true,
+                createdAt: Date().addingTimeInterval(-86400 * 15),
+                lastUpdated: Date().addingTimeInterval(-1800),
+                description: "Ultra-fast news reaction bot with millisecond execution",
+                features: ["News Analysis", "Event Detection", "Speed Execution"],
+                supportedPairs: ["XAUUSD", "GBPUSD", "USDJPY"]
+            ),
+            
+            MarketplaceBotModel(
+                name: "Beginner Bot",
+                tagline: "Perfect for new traders",
+                creatorUsername: "EasyTrader",
+                category: .technical,
+                rarity: .common,
+                tier: .bronze,
+                availability: .available,
+                verificationStatus: .verified,
+                stats: BotStats(
+                    totalReturn: 45.2,
+                    winRate: 68.5,
+                    maxDrawdown: 5.1,
+                    sharpeRatio: 1.2,
+                    totalTrades: 345,
+                    totalUsers: 1200,
+                    averageDailyReturn: 0.5
+                ),
+                averageRating: 4.1,
+                totalReviews: 890,
+                price: 0,
+                isFreeTrial: false,
+                createdAt: Date().addingTimeInterval(-86400 * 90),
+                lastUpdated: Date().addingTimeInterval(-86400),
+                description: "Safe and simple bot for learning traders",
+                features: ["Low Risk", "Educational", "Simple Strategy"],
+                supportedPairs: ["XAUUSD"]
+            )
+        ]
     }
 }
 
-// MARK: - Computed Properties
-extension MarketplaceBotModel {
-    var formattedEarnings: String {
-        if totalEarnings >= 1_000_000 {
-            return String(format: "$%.1fM", totalEarnings / 1_000_000)
-        } else if totalEarnings >= 1_000 {
-            return String(format: "$%.1fK", totalEarnings / 1_000)
-        } else {
-            return String(format: "$%.0f", totalEarnings)
-        }
-    }
+// MARK: - Bot Stats
+struct BotStats: Codable {
+    let totalReturn: Double
+    let winRate: Double
+    let maxDrawdown: Double
+    let sharpeRatio: Double
+    let totalTrades: Int
+    let totalUsers: Int
+    let averageDailyReturn: Double
     
-    var performanceGrade: String {
-        let score = (winRate * 0.4) + (averageReturn * 0.3) + (sharpeRatio * 10 * 0.3)
-        
-        switch score {
-        case 90...: return "S+"
-        case 85..<90: return "S"
-        case 80..<85: return "A+"
-        case 75..<80: return "A"
-        case 70..<75: return "B+"
-        case 65..<70: return "B"
-        case 60..<65: return "C+"
-        case 55..<60: return "C"
-        default: return "D"
-        }
-    }
-    
-    var gradeColor: Color {
-        switch performanceGrade {
-        case "S+", "S": return .purple
-        case "A+", "A": return Color.yellow
-        case "B+", "B": return .green
-        case "C+", "C": return .orange
-        default: return .red
-        }
-    }
-    
-    var statusEmoji: String {
-        if !isAvailable {
-            return "💼"
-        }
-        
-        switch riskLevel {
-        case .low: return "🛡️"
-        case .medium: return "⚖️"
-        case .high: return "⚔️"
-        case .extreme: return "🔥"
-        }
-    }
-    
-    var experienceLevel: String {
-        switch tradesExecuted {
-        case 0..<100: return "Rookie"
-        case 100..<500: return "Trader"
-        case 500..<1000: return "Veteran"
-        case 1000..<5000: return "Expert"
-        case 5000..<10000: return "Master"
-        default: return "Legend"
-        }
+    var formattedTotalReturn: String {
+        let sign = totalReturn >= 0 ? "+" : ""
+        return "\(sign)\(String(format: "%.1f", totalReturn))%"
     }
 }
 
-// MARK: - Sample Data
-extension MarketplaceBotModel {
-    static let sampleBots: [MarketplaceBotModel] = [
-        MarketplaceBotModel(
-            name: "GoldRush Alpha",
-            nickname: "The Midas Touch",
-            ownerName: "TradingKing_2024",
-            category: .scalper,
-            riskLevel: .medium,
-            popularityLevel: .viral,
-            winRate: 92.5,
-            totalEarnings: 2_847_230,
-            averageReturn: 15.8,
-            maxDrawdown: 8.2,
-            sharpeRatio: 2.3,
-            averageRating: 4.8,
-            followerCount: 12_450,
-            tradesExecuted: 3_847,
-            isAvailable: true,
-            hiringFee: 5_000,
-            dailyRate: 750,
-            minimumHiringPeriod: 7,
-            createdAt: Date().addingTimeInterval(-86400 * 120),
-            lastActiveAt: Date().addingTimeInterval(-300),
-            description: "Elite scalping bot specialized in gold market micro-movements. Uses advanced ML algorithms to predict price action with 92.5% accuracy.",
-            specialAbilities: ["News-Based Trading", "Risk Management", "Sentiment Analysis"],
-            tradingPairs: ["XAUUSD", "XAUEUR", "Gold Futures"],
-            verified: true
-        ),
-        
-        MarketplaceBotModel(
-            name: "Zeus Thunder",
-            nickname: "Lightning Strike",
-            ownerName: "ProTrader_Elite",
-            category: .news,
-            riskLevel: .high,
-            popularityLevel: .legendary,
-            winRate: 89.3,
-            totalEarnings: 4_127_890,
-            averageReturn: 28.4,
-            maxDrawdown: 12.7,
-            sharpeRatio: 2.1,
-            averageRating: 4.9,
-            followerCount: 28_750,
-            tradesExecuted: 2_156,
-            isAvailable: false,
-            hiringFee: 12_500,
-            dailyRate: 1_200,
-            minimumHiringPeriod: 14,
-            createdAt: Date().addingTimeInterval(-86400 * 200),
-            lastActiveAt: Date().addingTimeInterval(-120),
-            description: "Legendary news-driven trading bot that capitalizes on market-moving events. Fastest reaction times in the marketplace.",
-            specialAbilities: ["News Lightning", "Event Prediction", "Volatility Trading"],
-            tradingPairs: ["XAUUSD", "EURUSD", "GBPUSD"],
-            verified: true
-        ),
-        
-        MarketplaceBotModel(
-            name: "Steady Eddie",
-            nickname: "The Rock",
-            ownerName: "SafeTrader_99",
-            category: .swing,
-            riskLevel: .low,
-            popularityLevel: .popular,
-            winRate: 78.9,
-            totalEarnings: 892_340,
-            averageReturn: 8.2,
-            maxDrawdown: 3.1,
-            sharpeRatio: 1.8,
-            averageRating: 4.6,
-            followerCount: 8_230,
-            tradesExecuted: 1_234,
-            isAvailable: true,
-            hiringFee: 2_500,
-            dailyRate: 300,
-            minimumHiringPeriod: 5,
-            createdAt: Date().addingTimeInterval(-86400 * 90),
-            lastActiveAt: Date().addingTimeInterval(-600),
-            description: "Conservative swing trading bot focused on consistent, low-risk profits. Perfect for beginners.",
-            specialAbilities: ["Risk Control", "Steady Growth", "Low Drawdown"],
-            tradingPairs: ["XAUUSD"],
-            verified: true
-        ),
-        
-        MarketplaceBotModel(
-            name: "Quantum Leap",
-            nickname: "The Future",
-            ownerName: "QuantTrader_AI",
-            category: .technical,
-            riskLevel: .extreme,
-            popularityLevel: .rising,
-            winRate: 95.2,
-            totalEarnings: 6_789_012,
-            averageReturn: 42.7,
-            maxDrawdown: 18.9,
-            sharpeRatio: 2.8,
-            averageRating: 4.7,
-            followerCount: 5_670,
-            tradesExecuted: 892,
-            isAvailable: true,
-            hiringFee: 25_000,
-            dailyRate: 2_500,
-            minimumHiringPeriod: 30,
-            createdAt: Date().addingTimeInterval(-86400 * 45),
-            lastActiveAt: Date().addingTimeInterval(-60),
-            description: "Experimental quantum computing-enhanced trading bot. Highest returns but extreme risk. Only for advanced traders.",
-            specialAbilities: ["Quantum Analysis", "Pattern Recognition", "Future Prediction"],
-            tradingPairs: ["XAUUSD", "BTCUSD", "ETHUSD"],
-            verified: false
-        ),
-        
-        MarketplaceBotModel(
-            name: "Day Warrior",
-            nickname: "Battle Tested",
-            ownerName: "DayTrader_Pro",
-            category: .dayTrader,
-            riskLevel: .medium,
-            popularityLevel: .popular,
-            winRate: 85.7,
-            totalEarnings: 1_456_780,
-            averageReturn: 18.3,
-            maxDrawdown: 7.4,
-            sharpeRatio: 2.0,
-            averageRating: 4.5,
-            followerCount: 11_890,
-            tradesExecuted: 2_678,
-            isAvailable: true,
-            hiringFee: 3_750,
-            dailyRate: 500,
-            minimumHiringPeriod: 3,
-            createdAt: Date().addingTimeInterval(-86400 * 75),
-            lastActiveAt: Date().addingTimeInterval(-180),
-            description: "Battle-tested day trading bot with consistent performance across all market conditions.",
-            specialAbilities: ["Intraday Mastery", "Scalp & Hold", "Market Timing"],
-            tradingPairs: ["XAUUSD", "XAGUSD"],
-            verified: true
-        )
-    ]
-}
-
-// MARK: - Bot Store Service (Singleton)
+// MARK: - Bot Store Service Enhanced
 class BotStoreService: ObservableObject {
     static let shared = BotStoreService()
     
-    @Published var marketplaceBots: [MarketplaceBotModel] = MarketplaceBotModel.sampleBots
+    enum BotStoreCategory: String, CaseIterable {
+        case all = "All Bots"
+        case featured = "Featured"
+        case scalping = "Scalping"
+        case swing = "Swing"
+        case news = "News"
+        case technical = "Technical"
+        case grid = "Grid"
+        
+        var icon: String {
+            switch self {
+            case .all: return "square.grid.2x2"
+            case .featured: return "star.fill"
+            case .scalping: return "bolt.fill"
+            case .swing: return "wave.3.right"
+            case .news: return "newspaper"
+            case .technical: return "chart.xyaxis.line"
+            case .grid: return "grid"
+            }
+        }
+    }
+    
+    @Published var allBots: [MarketplaceBotModel] = []
     @Published var featuredBots: [MarketplaceBotModel] = []
+    @Published var selectedCategory: BotStoreCategory = .all
+    @Published var searchText: String = ""
+    @Published var selectedRarity: BotRarity?
+    @Published var selectedTier: BotTier?
+    @Published var isLoading: Bool = false
     
     private init() {
-        featuredBots = Array(marketplaceBots.prefix(2))
+        loadSampleData()
     }
     
-    func getBot(by id: UUID) -> MarketplaceBotModel? {
-        return marketplaceBots.first { $0.id == id }
+    func filteredBots() -> [MarketplaceBotModel] {
+        var filtered = allBots
+        
+        // Filter by category
+        if selectedCategory != .all && selectedCategory != .featured {
+            filtered = filtered.filter { bot in
+                switch selectedCategory {
+                case .scalping: return bot.category == .scalper
+                case .swing: return bot.category == .swing
+                case .news: return bot.category == .news
+                case .technical: return bot.category == .technical
+                case .grid: return bot.category == .grid
+                default: return true
+                }
+            }
+        }
+        
+        // Filter by search text
+        if !searchText.isEmpty {
+            filtered = filtered.filter { bot in
+                bot.name.localizedCaseInsensitiveContains(searchText) ||
+                bot.tagline.localizedCaseInsensitiveContains(searchText) ||
+                bot.creatorUsername.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        
+        // Filter by rarity
+        if let rarity = selectedRarity {
+            filtered = filtered.filter { $0.rarity == rarity }
+        }
+        
+        // Filter by tier
+        if let tier = selectedTier {
+            filtered = filtered.filter { $0.tier == tier }
+        }
+        
+        return filtered.sorted { $0.averageRating > $1.averageRating }
     }
     
-    func getFeaturedBots() -> [MarketplaceBotModel] {
-        return featuredBots
+    func refreshData() {
+        isLoading = true
+        // Simulate network call
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.loadSampleData()
+            self.isLoading = false
+        }
     }
     
-    func getTopPerformers(limit: Int = 5) -> [MarketplaceBotModel] {
-        return marketplaceBots
-            .sorted { $0.winRate > $1.winRate }
-            .prefix(limit)
-            .map { $0 }
+    func clearFilters() {
+        selectedRarity = nil
+        selectedTier = nil
+        searchText = ""
+        selectedCategory = .all
+    }
+    
+    private func loadSampleData() {
+        allBots = MarketplaceBotModel.sampleBots
+        featuredBots = Array(allBots.filter { $0.rarity == .legendary || $0.rarity == .epic }.prefix(3))
     }
 }

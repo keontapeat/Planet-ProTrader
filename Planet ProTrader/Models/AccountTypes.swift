@@ -16,7 +16,7 @@ struct ProfessionalTradingAccount: Identifiable, Codable {
     let accountName: String
     let login: String
     let server: String
-    let brokerType: SharedTypes.BrokerType
+    let brokerType: BrokerType
     let balance: Double
     let equity: Double
     let todaysPnL: Double
@@ -28,7 +28,7 @@ struct ProfessionalTradingAccount: Identifiable, Codable {
         accountName: String,
         login: String,
         server: String,
-        brokerType: SharedTypes.BrokerType,
+        brokerType: BrokerType,
         balance: Double,
         equity: Double,
         todaysPnL: Double,
@@ -102,9 +102,9 @@ class MultiAccountManager: ObservableObject {
     
     // Performance metrics
     var overallWinRate: Double = 0.85
-    var winRateTrend: TrendDirection = .up
+    var winRateTrend: TrendDirection = .bullish
     var profitFactor: Double = 2.35
-    var profitFactorTrend: TrendDirection = .up
+    var profitFactorTrend: TrendDirection = .bullish
     var recoveryFactor: Double = 1.85
     var recoveryFactorTrend: TrendDirection = .sideways
     var monthlyReturn: Double = 12.5
@@ -207,4 +207,19 @@ class MultiAccountManager: ObservableObject {
     func removeAccount(_ account: ProfessionalTradingAccount) {
         accounts.removeAll { $0.id == account.id }
     }
+}
+
+#Preview {
+    VStack {
+        Text("🚀 Account Types Fixed")
+            .font(.title.bold())
+            .foregroundColor(.blue)
+        
+        Text("Professional Trading Account types updated")
+            .font(.caption)
+            .foregroundColor(.secondary)
+    }
+    .padding()
+    .background(Color(.systemGroupedBackground))
+    .cornerRadius(12)
 }

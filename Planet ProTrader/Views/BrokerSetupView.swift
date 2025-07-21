@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct BrokerSetupView: View {
-    @StateObject private var manager = AutoTradingManager()
+    @EnvironmentObject var autoTradingManager: AutoTradingManager
     @Environment(\.dismiss) private var dismiss
     
     @State private var selectedBroker: SharedTypes.BrokerType = .tradeLocker

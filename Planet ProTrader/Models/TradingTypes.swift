@@ -13,7 +13,7 @@ enum TradingTypes {
     
     // MARK: - Market Data Types
     struct GoldMarketData {
-        let trend: SharedTypes.TrendDirection
+        let trend: TrendDirection
         let volume: Double
         let supportLevel: Double
         let resistanceLevel: Double
@@ -129,8 +129,8 @@ enum TradingTypes {
         let id: String
         let flipId: String
         let accountId: String
-        let signal: SharedTypes.AutoTradingSignal
-        let tradeResult: SharedTypes.SharedTradeResult
+        let signal: AutoTradingSignal
+        let tradeResult: SharedTradeResult
         let timestamp: Date
     }
 }

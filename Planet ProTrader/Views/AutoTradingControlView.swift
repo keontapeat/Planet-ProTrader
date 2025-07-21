@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AutoTradingControlView: View {
-    @StateObject private var autoTradingManager = AutoTradingManager()
+    @EnvironmentObject var autoTradingManager: AutoTradingManager
     @StateObject private var vpsManager = VPSManager()
     @StateObject private var aiHuntingEngine = AIHuntingEngine()
     

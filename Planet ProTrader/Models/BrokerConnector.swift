@@ -1,8 +1,8 @@
 //
 //  BrokerConnector.swift
-//  GOLDEX AI
+//  Planet ProTrader
 //
-//  Created by AI Assistant on 7/13/25.
+//  Created by Senior iOS Engineer on 1/25/25.
 //
 
 import SwiftUI
@@ -10,174 +10,270 @@ import Combine
 
 @MainActor
 class BrokerConnector: ObservableObject {
-    @Published var isConnected: Bool = false
-    @Published var connectionStatus: String = "Disconnected"
-    @Published var brokerName: String = "Coinexx"
-    @Published var accountNumber: String = "845060"
-    @Published var currentAccount: SharedTypes.MT5Account?
-    @Published var activeTrades: [SharedTypes.MT5Trade] = []
-    @Published var currentSymbol: SharedTypes.MT5Symbol?
-    @Published var lastError: String = ""
-    @Published var subject = PassthroughSubject<String, Never>()
+    @Published var isConnected = false
+    @Published var connectionStatus = "Disconnected"
+    @Published var brokerName = ""
+    @Published var serverName = ""
+    @Published var connectionQuality: ConnectionQuality = .poor
+    @Published var lastPing: Double = 0.0
+    @Published var reconnectAttempts = 0
+    @Published var maxReconnectAttempts = 5
+    @Published var autoReconnect = true
+    @Published var connectionErrors: [ConnectionError] = []
     
-    struct RealAccountInfo {
-        let balance: Double
-        let equity: Double
-        let margin: Double
-        let freeMargin: Double
-        let profit: Double
-        let accountNumber: String
-        let leverage: String
-        let currency: String
+    enum ConnectionQuality: String, CaseIterable {
+        case excellent = "Excellent"
+        case good = "Good" 
+        case fair = "Fair"
+        case poor = "Poor"
+        case critical = "Critical"
+        
+        var color: Color {
+            switch self {
+            case .excellent: return .green
+            case .good: return .mint
+            case .fair: return .yellow
+            case .poor: return .orange
+            case .critical: return .red
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .excellent: return "wifi"
+            case .good: return "wifi"
+            case .fair: return "wifi.slash"
+            case .poor: return "wifi.exclamationmark"
+            case .critical: return "wifi.slash"
+            }
+        }
     }
     
-    func connect() {
+    struct ConnectionError: Identifiable {
+        let id = UUID()
+        let message: String
+        let timestamp: Date
+        let errorCode: Int
+    }
+    
+    enum BrokerType: String, CaseIterable {
+        case mt5 = "MetaTrader 5"
+        case mt4 = "MetaTrader 4"
+        case coinexx = "Coinexx"
+        case tradeLocker = "TradeLocker"
+        case custom = "Custom"
+    }
+    
+    @Published var currentBroker: BrokerType = .coinexx
+    @Published var accountNumber = ""
+    @Published var isDemo = true
+    
+    private var connectionTimer: Timer?
+    private var pingTimer: Timer?
+    
+    init() {
+        setupDefaultConnection()
+        startConnectionMonitoring()
+    }
+    
+    deinit {
+        connectionTimer?.invalidate()
+        pingTimer?.invalidate()
+    }
+    
+    private func setupDefaultConnection() {
+        // Simulate default Coinexx connection
+        brokerName = "Coinexx"
+        serverName = "Coinexx-Demo"
+        accountNumber = "845638"
         isConnected = true
         connectionStatus = "Connected"
-        loadRealAccountData()
+        connectionQuality = .good
+        lastPing = 45.2
+    }
+    
+    private func startConnectionMonitoring() {
+        // Monitor connection every 10 seconds
+        connectionTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { _ in
+            Task { @MainActor in
+                await self.updateConnectionStatus()
+            }
+        }
+        
+        // Update ping every 5 seconds
+        pingTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
+            Task { @MainActor in
+                self.updatePingStatus()
+            }
+        }
+    }
+    
+    private func updateConnectionStatus() async {
+        // Simulate connection status updates
+        if isConnected {
+            let randomQuality = ConnectionQuality.allCases.randomElement() ?? .good
+            connectionQuality = randomQuality
+            
+            if connectionQuality == .critical || connectionQuality == .poor {
+                // Simulate occasional disconnection
+                if Bool.random() && Double.random(in: 0...1) < 0.1 {
+                    await disconnect()
+                }
+            }
+        }
+    }
+    
+    private func updatePingStatus() {
+        if isConnected {
+            switch connectionQuality {
+            case .excellent:
+                lastPing = Double.random(in: 20...40)
+            case .good:
+                lastPing = Double.random(in: 40...80)
+            case .fair:
+                lastPing = Double.random(in: 80...150)
+            case .poor:
+                lastPing = Double.random(in: 150...300)
+            case .critical:
+                lastPing = Double.random(in: 300...1000)
+            }
+        } else {
+            lastPing = 0.0
+        }
+    }
+    
+    func connect(broker: BrokerType, server: String, account: String, isDemo: Bool = true) async {
+        self.currentBroker = broker
+        self.brokerName = broker.rawValue
+        self.serverName = server
+        self.accountNumber = account
+        self.isDemo = isDemo
+        
+        connectionStatus = "Connecting..."
+        
+        // Simulate connection delay
+        try? await Task.sleep(nanoseconds: 2_000_000_000)
+        
+        // Simulate connection success/failure
+        if Bool.random() || Double.random(in: 0...1) > 0.1 { // 90% success rate
+            isConnected = true
+            connectionStatus = "Connected"
+            connectionQuality = .good
+            reconnectAttempts = 0
+        } else {
+            await handleConnectionError("Failed to connect to \(broker.rawValue)")
+        }
     }
     
     func disconnect() async {
         isConnected = false
         connectionStatus = "Disconnected"
-        currentAccount = nil
-        lastError = ""
+        connectionQuality = .poor
+        reconnectAttempts = 0
     }
     
-    func connect(brokerType: SharedTypes.BrokerType, credentials: SharedTypes.BrokerCredentials, isDemo: Bool) async throws -> Bool {
-        // Simulate connection attempt
-        try await Task.sleep(nanoseconds: 1_000_000_000)
+    func reconnect() async {
+        guard !isConnected && reconnectAttempts < maxReconnectAttempts else { return }
         
-        if credentials.login.isEmpty {
-            lastError = "Invalid credentials"
-            return false
+        reconnectAttempts += 1
+        connectionStatus = "Reconnecting... (\(reconnectAttempts)/\(maxReconnectAttempts))"
+        
+        await connect(
+            broker: currentBroker,
+            server: serverName,
+            account: accountNumber,
+            isDemo: isDemo
+        )
+    }
+    
+    private func handleConnectionError(_ message: String) async {
+        let error = ConnectionError(
+            message: message,
+            timestamp: Date(),
+            errorCode: 1001
+        )
+        
+        connectionErrors.append(error)
+        connectionStatus = "Connection Error"
+        isConnected = false
+        
+        // Auto-reconnect if enabled
+        if autoReconnect && reconnectAttempts < maxReconnectAttempts {
+            try? await Task.sleep(nanoseconds: 3_000_000_000) // Wait 3 seconds
+            await reconnect()
         }
-        
-        isConnected = true
-        connectionStatus = "Connected"
-        brokerName = brokerType.rawValue
-        accountNumber = credentials.login
-        lastError = ""
-        
-        loadRealAccountData()
-        return true
     }
     
-    func executeTrade(symbol: String, direction: SharedTypes.TradeDirection, lotSize: Double, entryPrice: Double, stopLoss: Double, takeProfit: Double) async throws -> (success: Bool, tradeId: String) {
-        // Simulate trade execution
-        try await Task.sleep(nanoseconds: 500_000_000)
-        
-        let tradeId = UUID().uuidString
-        let trade = SharedTypes.MT5Trade(
-            ticket: tradeId,
-            symbol: symbol,
-            direction: direction,
-            volume: lotSize,
-            openPrice: entryPrice,
-            currentPrice: entryPrice,
-            profit: 0.0,
-            openTime: Date(),
-            stopLoss: stopLoss,
-            takeProfit: takeProfit,
-            comment: "Auto trade"
-        )
-        
-        activeTrades.append(trade)
-        
-        return (success: true, tradeId: tradeId)
-    }
-    
-    func closePosition(ticket: String) async throws -> Bool {
-        // Simulate closing position
-        try await Task.sleep(nanoseconds: 500_000_000)
-        
-        activeTrades.removeAll { $0.ticket == ticket }
-        return true
-    }
-    
-    func addDemoAccount(login: String, password: String, server: String, company: String) {
-        // Simulate adding demo account
-        let account = SharedTypes.MT5Account(
-            login: login,
-            password: password,
-            server: server,
-            company: company,
-            balance: 10000.0,
-            equity: 10000.0,
-            margin: 0.0,
-            freeMargin: 10000.0,
-            currency: "USD",
-            leverage: 500,
-            isConnected: false
-        )
-        currentAccount = account
-    }
-    
-    func refreshStatus() {
-        // Simulate status refresh
-        isConnected = Bool.random()
-        connectionStatus = isConnected ? "Connected" : "Disconnected"
+    var connectionStatusColor: Color {
         if isConnected {
-            loadRealAccountData()
+            return .green
+        } else if connectionStatus.contains("Connecting") || connectionStatus.contains("Reconnecting") {
+            return .orange
+        } else {
+            return .red
         }
     }
     
-    func loadRealTradesFromMT5() async {
-        // Simulate loading trades from MT5
-        subject.send("Trades loaded from MT5")
-    }
-    
-    func updateRealTimeBalance() async {
-        // Simulate real-time balance updates
-        if isConnected {
-            loadRealAccountData()
+    var formattedPing: String {
+        if lastPing == 0 {
+            return "-- ms"
         }
+        return "\(Int(lastPing)) ms"
     }
     
-    private func loadRealAccountData() {
-        // Simulate loading real account data
-        currentAccount = SharedTypes.MT5Account(
-            login: accountNumber,
-            password: "demo_password",
-            server: "Coinexx-Demo",
-            company: "Coinexx",
-            balance: Double.random(in: 5000...15000),
-            equity: Double.random(in: 5000...15000),
-            margin: Double.random(in: 100...1000),
-            freeMargin: Double.random(in: 4000...14000),
-            currency: "USD",
-            leverage: 500,
-            isConnected: true
-        )
-        
-        // Load some sample trades
-        activeTrades = [
-            SharedTypes.MT5Trade(
-                ticket: "123456",
-                symbol: "XAUUSD",
-                direction: .buy,
-                volume: 0.1,
-                openPrice: 2374.50,
-                currentPrice: 2376.20,
-                profit: 17.0,
-                openTime: Date().addingTimeInterval(-3600),
-                stopLoss: 2370.0,
-                takeProfit: 2380.0,
-                comment: "Auto Trade"
-            )
-        ]
-        
-        // Set current symbol
-        currentSymbol = SharedTypes.MT5Symbol(
-            name: "XAUUSD",
-            description: "Gold vs US Dollar",
-            bid: 2374.50,
-            ask: 2375.10,
-            spread: 0.60
-        )
+    var connectionStrength: Double {
+        switch connectionQuality {
+        case .excellent: return 1.0
+        case .good: return 0.8
+        case .fair: return 0.6
+        case .poor: return 0.4
+        case .critical: return 0.2
+        }
     }
 }
 
 #Preview {
-    Text("Broker Connector")
+    VStack(spacing: 16) {
+        Text("Broker Connector")
+            .font(.title)
+            .fontWeight(.bold)
+        
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Status:")
+                    .fontWeight(.semibold)
+                Spacer()
+                Text("Connected")
+                    .foregroundColor(.green)
+            }
+            
+            HStack {
+                Text("Broker:")
+                    .fontWeight(.semibold)
+                Spacer()
+                Text("Coinexx")
+            }
+            
+            HStack {
+                Text("Quality:")
+                    .fontWeight(.semibold)
+                Spacer()
+                Text("Good")
+                    .foregroundColor(.mint)
+            }
+            
+            HStack {
+                Text("Ping:")
+                    .fontWeight(.semibold)
+                Spacer()
+                Text("45 ms")
+                    .foregroundColor(.green)
+            }
+        }
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(10)
+    }
+    .padding()
+    .environmentObject(BrokerConnector())
 }

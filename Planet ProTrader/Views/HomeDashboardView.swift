@@ -9,16 +9,14 @@ import SwiftUI
 import Combine
 
 struct HomeDashboardView: View {
-    // MARK: - Environment Objects
+    // MARK: - Environment Objects (FIXED: Receive instead of create)
     @EnvironmentObject var tradingViewModel: TradingViewModel
     @EnvironmentObject var realTimeAccountManager: RealTimeAccountManager
+    @EnvironmentObject var autoTradingManager: AutoTradingManager
+    @EnvironmentObject var brokerConnector: BrokerConnector
+    @EnvironmentObject var realDataManager: RealDataManager
     
-    // MARK: - State Objects
-    @StateObject private var autoTradingManager = AutoTradingManager()
-    @StateObject private var brokerConnector = BrokerConnector()
-    @StateObject private var realDataManager = RealDataManager()
-    
-    // MARK: - UI State
+    // MARK: - UI State (Only UI-specific state here)
     @State private var selectedAccount = 0
     @State private var showingAccountSwitcher = false
     @State private var showingAddAccount = false
@@ -65,7 +63,6 @@ struct HomeDashboardView: View {
                     await refreshAllData()
                 }
             }
-            .navigationTitle("")
             .navigationBarHidden(true)
             .onAppear {
                 startRealTimeUpdates()
@@ -695,4 +692,37 @@ struct AddNewAccountView: View {
     HomeDashboardView()
         .environmentObject(TradingViewModel())
         .environmentObject(RealTimeAccountManager())
+        .environmentObject(AutoTradingManager())
+        .environmentObject(BrokerConnector())
+        .environmentObject(RealDataManager())
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark Mode") {
+    HomeDashboardView()
+        .environmentObject(TradingViewModel())
+        .environmentObject(RealTimeAccountManager())
+        .environmentObject(AutoTradingManager())
+        .environmentObject(BrokerConnector())
+        .environmentObject(RealDataManager())
+        .preferredColorScheme(.dark)
+}
+
+#Preview("With Demo Data") {
+    let tradingVM = TradingViewModel()
+    let accountManager = RealTimeAccountManager()
+    
+    return HomeDashboardView()
+        .environmentObject(tradingVM)
+        .environmentObject(accountManager)
+        .environmentObject(AutoTradingManager())
+        .environmentObject(BrokerConnector())
+        .environmentObject(RealDataManager())
+        .onAppear {
+            // Setup demo data
+            tradingVM.startAutoTrading()
+            Task {
+                await accountManager.refreshAccountData()
+            }
+        }
 }

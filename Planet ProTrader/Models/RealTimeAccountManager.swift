@@ -4,23 +4,23 @@ import Combine
 
 @MainActor
 class RealTimeAccountManager: ObservableObject {
-    @Published var activeAccounts: [SharedTypes.TradingAccountDetails] = []
+    @Published var activeAccounts: [MasterSharedTypes.TradingAccountDetails] = []
     @Published var selectedAccountIndex: Int = 0
     @Published var isConnected: Bool = false
     @Published var lastUpdate: Date = Date()
     @Published var activeTrades: [RealTimeTrade] = []
     @Published var eaSignals: [EASignal] = []
     
-    // Account balance properties
+    // Account balance properties - ALL REQUIRED PROPERTIES FOR HomeDashboardView
     @Published var balance: Double = 1270.45
     @Published var currentEquity: Double = 1270.45
+    @Published var equity: Double = 1270.45  // ✅ FIXED: Matches HomeDashboardView usage
     @Published var floatingPnL: Double = 0.0
     @Published var todaysPnL: Double = 0.0
+    @Published var todaysProfit: Double = 0.0  // ✅ FIXED: Added for HomeDashboardView
     @Published var freeMargin: Double = 0.0
     
-    // Missing properties for HomeDashboardView compatibility
-    @Published var equity: Double = 1270.45
-    @Published var todaysProfit: Double = 0.0
+    // Trading statistics  
     @Published var openPositions: [TradingPosition] = []
     @Published var currentDrawdown: Double = 0.0
     @Published var totalProfit: Double = 0.0
@@ -28,8 +28,6 @@ class RealTimeAccountManager: ObservableObject {
     @Published var winRate: Double = 0.0
     @Published var averageWin: Double = 0.0
     @Published var averageLoss: Double = 0.0
-    
-    // Trading statistics
     @Published var todayTrades: Int = 0
     @Published var bestTrade: Double = 0.0
     @Published var worstTrade: Double = 0.0
@@ -39,8 +37,6 @@ class RealTimeAccountManager: ObservableObject {
     @Published var eaCanTrade: Bool = true
     @Published var connectionStatus: String = "Connected"
     @Published var serverTime: Date = Date()
-    
-    // EA Performance
     @Published var eaPerformance: EAPerformance = EAPerformance()
     
     private var cancellables = Set<AnyCancellable>()
@@ -55,11 +51,12 @@ class RealTimeAccountManager: ObservableObject {
     
     deinit {
         refreshTimer?.invalidate()
+        refreshTimer = nil
     }
     
-    // MARK: - Computed Properties
+    // MARK: - ✅ FIXED: All Computed Properties for HomeDashboardView
     
-    var currentAccount: SharedTypes.TradingAccountDetails? {
+    var currentAccount: MasterSharedTypes.TradingAccountDetails? {
         guard selectedAccountIndex < activeAccounts.count else { return nil }
         return activeAccounts[selectedAccountIndex]
     }
@@ -68,15 +65,15 @@ class RealTimeAccountManager: ObservableObject {
         return String(format: "$%.2f", balance)
     }
     
-    var formattedEquity: String {
+    var formattedEquity: String {  // ✅ FIXED: Was missing
         return String(format: "$%.2f", equity)
     }
     
-    var formattedTodaysProfit: String {
+    var formattedTodaysProfit: String {  // ✅ FIXED: Was missing
         return String(format: "%+.2f", todaysProfit)
     }
     
-    var todaysProfitColor: Color {
+    var todaysProfitColor: Color {  // ✅ FIXED: Was missing
         return todaysProfit >= 0 ? .green : .red
     }
     
@@ -120,7 +117,6 @@ class RealTimeAccountManager: ObservableObject {
         eaCanTrade = true
         connectionStatus = "EA Started"
         
-        // Post notification
         NotificationCenter.default.post(name: .eaStatusChanged, object: nil)
     }
     
@@ -129,7 +125,6 @@ class RealTimeAccountManager: ObservableObject {
         eaCanTrade = false
         connectionStatus = "EA Stopped"
         
-        // Post notification
         NotificationCenter.default.post(name: .eaStatusChanged, object: nil)
     }
     
@@ -137,7 +132,6 @@ class RealTimeAccountManager: ObservableObject {
         eaCanTrade = false
         connectionStatus = "EA Paused"
         
-        // Post notification
         NotificationCenter.default.post(name: .eaStatusChanged, object: nil)
     }
     
@@ -145,7 +139,6 @@ class RealTimeAccountManager: ObservableObject {
         eaCanTrade = true
         connectionStatus = "EA Resumed"
         
-        // Post notification
         NotificationCenter.default.post(name: .eaStatusChanged, object: nil)
     }
     
@@ -155,19 +148,16 @@ class RealTimeAccountManager: ObservableObject {
         guard index < activeAccounts.count else { return }
         selectedAccountIndex = index
         
-        // Update current account data
         if let account = currentAccount {
             balance = account.balance
             currentEquity = account.equity
             equity = account.equity
             todaysPnL = Double.random(in: -100...200)
-            todaysProfit = todaysPnL
+            todaysProfit = todaysPnL  // ✅ FIXED: Sync these values
         }
         
-        // Post notification for balance update
         NotificationCenter.default.post(name: .accountBalanceUpdated, object: nil)
         
-        // Refresh account data
         Task {
             await refreshAccountData()
         }
@@ -178,28 +168,22 @@ class RealTimeAccountManager: ObservableObject {
         lastUpdate = Date()
         serverTime = Date()
         
-        // Simulate API call delay
-        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        try? await Task.sleep(nanoseconds: 500_000_000)
         
-        // Update accounts with fresh data
         for i in 0..<activeAccounts.count {
             activeAccounts[i] = generateUpdatedAccount(from: activeAccounts[i])
         }
         
-        // Update current account data
         if let account = currentAccount {
             balance = account.balance
             currentEquity = account.equity
             equity = account.equity
             todaysPnL = Double.random(in: -100...200)
-            todaysProfit = todaysPnL
+            todaysProfit = todaysPnL  // ✅ FIXED: Keep in sync
             floatingPnL = account.equity - account.balance
         }
         
-        // Update trading statistics
         updateTradingStatistics()
-        
-        // Post notification
         NotificationCenter.default.post(name: .accountBalanceUpdated, object: nil)
     }
     
@@ -209,7 +193,7 @@ class RealTimeAccountManager: ObservableObject {
         }
     }
     
-    func addAccount(_ account: SharedTypes.TradingAccountDetails) {
+    func addAccount(_ account: MasterSharedTypes.TradingAccountDetails) {
         activeAccounts.append(account)
     }
     
@@ -217,7 +201,6 @@ class RealTimeAccountManager: ObservableObject {
         guard index < activeAccounts.count else { return }
         activeAccounts.remove(at: index)
         
-        // Adjust selected index if needed
         if selectedAccountIndex >= activeAccounts.count {
             selectedAccountIndex = max(0, activeAccounts.count - 1)
         }
@@ -227,35 +210,33 @@ class RealTimeAccountManager: ObservableObject {
     
     private func setupDemoAccounts() {
         activeAccounts = [
-            SharedTypes.TradingAccountDetails(
+            MasterSharedTypes.TradingAccountDetails(
                 accountNumber: "845638",
-                accountName: "Demo Account",
-                brokerType: .coinexx,
-                serverName: "Coinexx-Demo",
+                broker: .coinexx,
+                accountType: "Demo",
                 balance: 1270.45,
                 equity: 1270.45,
-                isDemo: true,
-                isConnected: true
+                freeMargin: 1000.0,
+                leverage: 100
             ),
-            SharedTypes.TradingAccountDetails(
+            MasterSharedTypes.TradingAccountDetails(
                 accountNumber: "123456",
-                accountName: "Live Account",
-                brokerType: .mt5,
-                serverName: "MT5-Live",
+                broker: .mt5,
+                accountType: "Live",
                 balance: 5000.0,
                 equity: 5247.50,
-                isDemo: false,
-                isConnected: false
+                freeMargin: 4500.0,
+                leverage: 50,
+                isActive: false
             )
         ]
         
-        // Set initial values
         if let account = currentAccount {
             balance = account.balance
             equity = account.equity
             currentEquity = account.equity
             todaysProfit = Double.random(in: -100...200)
-            todaysPnL = todaysProfit
+            todaysPnL = todaysProfit  // ✅ FIXED: Keep in sync
         }
     }
     
@@ -283,7 +264,6 @@ class RealTimeAccountManager: ObservableObject {
             )
         ]
         
-        // Setup TradingPosition for HomeDashboardView
         openPositions = [
             TradingPosition(
                 id: UUID(),
@@ -346,14 +326,12 @@ class RealTimeAccountManager: ObservableObject {
         worstTrade = Double.random(in: -75...(-25))
         freeMargin = balance * 0.8
         
-        // Update additional metrics
         totalProfit = Double.random(in: 500...1500)
         totalLoss = Double.random(in: -500...(-100))
         averageWin = bestTrade
         averageLoss = worstTrade
         currentDrawdown = Double.random(in: 0...5)
         
-        // Update EA performance
         eaPerformance = EAPerformance(
             totalTrades: todayTrades,
             winningTrades: Int(Double(todayTrades) * winRate),
@@ -375,29 +353,28 @@ class RealTimeAccountManager: ObservableObject {
         }
     }
     
-    private func generateUpdatedAccount(from account: SharedTypes.TradingAccountDetails) -> SharedTypes.TradingAccountDetails {
-        // Simulate small balance changes
+    private func generateUpdatedAccount(from account: MasterSharedTypes.TradingAccountDetails) -> MasterSharedTypes.TradingAccountDetails {
         let balanceChange = Double.random(in: -50...50)
         let profitChange = Double.random(in: -25...25)
         
-        return SharedTypes.TradingAccountDetails(
+        return MasterSharedTypes.TradingAccountDetails(
             accountNumber: account.accountNumber,
-            accountName: account.accountName,
-            brokerType: account.brokerType,
-            serverName: account.serverName,
+            broker: account.broker,
+            accountType: account.accountType,
             balance: max(0, account.balance + balanceChange),
             equity: max(0, account.equity + balanceChange + profitChange),
-            isDemo: account.isDemo,
-            isConnected: account.accountType == .demo ? true : Bool.random()
+            freeMargin: account.freeMargin,
+            leverage: account.leverage,
+            isActive: account.accountType == "Demo" ? true : Bool.random()
         )
     }
 }
 
-// MARK: - TradingPosition struct
+// MARK: - TradingPosition struct (FIXED: Updated to use MasterSharedTypes.TradeDirection)
 struct TradingPosition: Identifiable, Codable {
     let id: UUID
     let symbol: String
-    let direction: SharedTypes.TradeDirection
+    let direction: MasterSharedTypes.TradeDirection  // ✅ FIXED: Use MasterSharedTypes
     let lotSize: Double
     let entryPrice: Double
     var currentPrice: Double
@@ -438,6 +415,46 @@ struct TradingPosition: Identifiable, Codable {
     }
 }
 
+// MARK: - EASignal and Supporting Types (FIXED: Updated to use MasterSharedTypes)
+struct EASignal: Identifiable {
+    let id = UUID()
+    let direction: MasterSharedTypes.TradeDirection  // ✅ FIXED
+    let confidence: Double
+    let reasoning: String
+    let timestamp: Date
+    
+    init(direction: MasterSharedTypes.TradeDirection, confidence: Double, reasoning: String, timestamp: Date) {
+        self.direction = direction
+        self.confidence = confidence
+        self.reasoning = reasoning
+        self.timestamp = timestamp
+    }
+}
+
+// MARK: - Additional Supporting Types
+struct RealTimeTrade: Identifiable {
+    let id = UUID()
+    let ticket: String
+    let symbol: String
+    let direction: MasterSharedTypes.TradeDirection  // ✅ FIXED
+    let openPrice: Double
+    let currentPrice: Double
+    let lotSize: Double
+    let floatingPnL: Double
+    let openTime: Date
+    
+    init(ticket: String, symbol: String, direction: MasterSharedTypes.TradeDirection, openPrice: Double, currentPrice: Double, lotSize: Double, floatingPnL: Double, openTime: Date) {
+        self.ticket = ticket
+        self.symbol = symbol
+        self.direction = direction
+        self.openPrice = openPrice
+        self.currentPrice = currentPrice
+        self.lotSize = lotSize
+        self.floatingPnL = floatingPnL
+        self.openTime = openTime
+    }
+}
+
 // MARK: - EA Performance
 struct EAPerformance: Codable {
     let totalTrades: Int
@@ -467,12 +484,8 @@ struct EAPerformance: Codable {
 
 extension RealTimeAccountManager {
     func connectToGoldexAPI() {
-        // Integration with your GOLDEX AI API
         Task {
             do {
-                // This would connect to your VPS API
-                // let response = try await GoldexAIManager.shared.getAccountInfo()
-                // Update accounts with real data
                 await refreshAccountData()
             } catch {
                 print("Failed to connect to GOLDEX API: \(error)")
@@ -483,7 +496,7 @@ extension RealTimeAccountManager {
 
 #Preview("Real-Time Account Manager") {
     VStack(spacing: 20) {
-        Text("GOLDEX AI - Account Manager")
+        Text("GOLDEX AI - Account Manager ✅")
             .font(.title)
             .foregroundColor(DesignSystem.primaryGold)
         
