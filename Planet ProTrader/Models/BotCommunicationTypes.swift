@@ -18,13 +18,15 @@ enum BotCommunicationTypes {
         let id: UUID
         let botId: String
         let botName: String
-        let message: String
+        let content: String
         let timestamp: Date
         let messageType: MessageType
         let confidence: Double
         let topic: String
         let reactionCount: Int
         let isHighlighted: Bool
+        let isFromUser: Bool
+        let hasSpecialContent: Bool
         
         enum MessageType: String, Codable, CaseIterable {
             case analysis = "Analysis"
@@ -61,31 +63,35 @@ enum BotCommunicationTypes {
             id: UUID = UUID(),
             botId: String,
             botName: String,
-            message: String,
+            content: String,
             timestamp: Date = Date(),
             messageType: MessageType = .discussion,
             confidence: Double = 0.5,
             topic: String = "General",
             reactionCount: Int = 0,
-            isHighlighted: Bool = false
+            isHighlighted: Bool = false,
+            isFromUser: Bool = false,
+            hasSpecialContent: Bool = false
         ) {
             self.id = id
             self.botId = botId
             self.botName = botName
-            self.message = message
+            self.content = content
             self.timestamp = timestamp
             self.messageType = messageType
             self.confidence = confidence
             self.topic = topic
             self.reactionCount = reactionCount
             self.isHighlighted = isHighlighted
+            self.isFromUser = isFromUser
+            self.hasSpecialContent = hasSpecialContent
         }
         
         static let sampleMessages: [BotChatMessage] = [
             BotChatMessage(
                 botId: "bot_001",
                 botName: "Elite Scalper",
-                message: "Strong bullish momentum detected on XAUUSD. RSI showing oversold conditions with potential reversal.",
+                content: "Strong bullish momentum detected on XAUUSD. RSI showing oversold conditions with potential reversal.",
                 messageType: .analysis,
                 confidence: 0.87,
                 topic: "Market Analysis",
@@ -94,7 +100,7 @@ enum BotCommunicationTypes {
             BotChatMessage(
                 botId: "bot_002", 
                 botName: "Swing Master",
-                message: "Congratulations! Successfully closed position with +245 pips profit. Risk management protocols worked perfectly.",
+                content: "Congratulations! Successfully closed position with +245 pips profit. Risk management protocols worked perfectly.",
                 messageType: .celebration,
                 confidence: 1.0,
                 topic: "Trade Results",

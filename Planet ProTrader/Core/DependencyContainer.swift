@@ -49,8 +49,10 @@ class DependencyContainer: ObservableObject {
         // This is where you'd wire up complex dependency relationships
     }
     
-    // MARK: - Configuration Methods
-    
+    extension DependencyContainer {
+        
+        // MARK: - Configuration Methods
+        
     func configureForTesting() {
         // Override with mock services for testing
         // Example: authService = MockAuthenticationManager()
@@ -63,6 +65,19 @@ class DependencyContainer: ObservableObject {
             tradingViewModel.startAutoTrading()
         }
     }
+    
+    // ✅ ADDED: Production configuration
+    func configureForProduction() async throws {
+        // Initialize all services for production use
+        await realTimeAccountManager.refreshAccountData()
+        
+        // Start performance monitoring
+        performanceMonitor.startMonitoring()
+        
+        // Initialize bot manager
+        await tradingBotManager.refreshBots()
+    }
+
 }
 
 // MARK: - ✅ AutoDebugSystem Stub (Referenced but may be missing)

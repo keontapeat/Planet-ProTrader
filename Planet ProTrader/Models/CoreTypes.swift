@@ -2,7 +2,7 @@
 //  CoreTypes.swift  
 //  Planet ProTrader
 //
-//  ✅ SINGLE SOURCE OF TRUTH for all types
+//  SINGLE SOURCE OF TRUTH for all types
 //  Replaces SharedTypes.swift and MasterSharedTypes.swift conflicts
 //
 
@@ -208,7 +208,6 @@ struct TradingBot: Identifiable, Codable {
     let performance: Double
     let lastUpdate: Date
     
-    // ✅ ADDED: Missing properties referenced in HomeDashboardView
     let status: BotStatus
     let profit: Double
     let icon: String
@@ -480,12 +479,35 @@ struct FlipGoal: Identifiable, Codable {
     }
 }
 
+// MARK: - Connected Account (Referenced in TradingViewModel)
+struct ConnectedAccount: Identifiable, Codable {
+    let id = UUID()
+    let name: String
+    let balance: String
+    let brokerType: BrokerType
+    let isConnected: Bool
+    let lastUpdate: Date
+    
+    init(name: String, balance: String, brokerType: BrokerType, isConnected: Bool, lastUpdate: Date = Date()) {
+        self.name = name
+        self.balance = balance
+        self.brokerType = brokerType
+        self.isConnected = isConnected
+        self.lastUpdate = lastUpdate
+    }
+}
+
 // MARK: - Repository Protocol
 
 protocol TradingRepositoryProtocol {
     func subscribeToRealTimeData(for symbol: String) -> AnyPublisher<Double, Never>
     func getCurrentPrice(for symbol: String) async -> Double?
     func getHistoricalData(for symbol: String, timeframe: String) async -> [GoldSignal]
+}
+
+// MARK: - Trading Repository Protocol Implementation
+extension TradingRepositoryProtocol {
+    // Additional methods can be added here if needed
 }
 
 // MARK: - Sample Data (Separated from Production Code)
@@ -539,7 +561,7 @@ extension TradingBot {
 
 #Preview {
     VStack(spacing: 20) {
-        Text("✅ Core Types - Single Source of Truth")
+        Text(" Core Types - Single Source of Truth")
             .font(.title.bold())
             .foregroundColor(.green)
         
@@ -552,12 +574,12 @@ extension TradingBot {
                 .font(.headline)
             
             Group {
-                Text("• TradeDirection ✅")
-                Text("• TradingBot (with missing properties) ✅")
-                Text("• GoldSignal ✅")
-                Text("• MarketData ✅")
-                Text("• TradingAccountDetails ✅")
-                Text("• All required enums ✅")
+                Text("• TradeDirection ")
+                Text("• TradingBot (with missing properties) ")
+                Text("• GoldSignal ")
+                Text("• MarketData ")
+                Text("• TradingAccountDetails ")
+                Text("• All required enums ")
             }
             .font(.caption)
             .foregroundColor(.green)

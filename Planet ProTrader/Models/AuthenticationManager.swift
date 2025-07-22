@@ -122,6 +122,11 @@ final class AuthenticationManager: ObservableObject {
         isLoading = false
     }
     
+    // ✅ ADDED: Method to clear error messages
+    func clearError() {
+        errorMessage = ""
+    }
+
     // MARK: - Private Methods
     
     private func createUserProfile(user: FirebaseAuth.User, username: String) async throws {

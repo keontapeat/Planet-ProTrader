@@ -2,7 +2,7 @@
 //  RealTimeAccountManager.swift
 //  Planet ProTrader
 //
-//  ✅ FIXED: Complete real-time account management
+//  ✅ FIXED: Updated to use CoreTypes - Complete real-time account management
 //  Created by AI Assistant on 1/25/25.
 //
 
@@ -13,7 +13,7 @@ import Foundation
 @MainActor
 class RealTimeAccountManager: ObservableObject {
     // MARK: - Published Properties
-    @Published var activeAccounts: [SharedTypes.TradingAccountDetails] = []
+    @Published var activeAccounts: [CoreTypes.TradingAccountDetails] = []
     @Published var selectedAccountIndex: Int = 0
     @Published var totalBalance: Double = 10000.0
     @Published var equity: Double = 10000.0
@@ -58,28 +58,7 @@ class RealTimeAccountManager: ObservableObject {
     
     // MARK: - Account Management
     private func setupInitialAccounts() {
-        activeAccounts = [
-            SharedTypes.TradingAccountDetails(
-                accountNumber: "1234567",
-                broker: .mt5,
-                accountType: "Demo",
-                balance: 10000.0,
-                equity: 10000.0,
-                freeMargin: 9500.0,
-                leverage: 500,
-                isActive: true
-            ),
-            SharedTypes.TradingAccountDetails(
-                accountNumber: "7654321",
-                broker: .coinexx,
-                accountType: "Live",
-                balance: 5000.0,
-                equity: 5125.50,
-                freeMargin: 4800.0,
-                leverage: 100,
-                isActive: false
-            )
-        ]
+        activeAccounts = SampleData.sampleTradingAccounts
         
         // Set initial values from selected account
         if !activeAccounts.isEmpty {
@@ -92,8 +71,7 @@ class RealTimeAccountManager: ObservableObject {
         
         // Deactivate current account
         if activeAccounts.indices.contains(selectedAccountIndex) {
-            activeAccounts[selectedAccountIndex] = SharedTypes.TradingAccountDetails(
-                id: activeAccounts[selectedAccountIndex].id,
+            activeAccounts[selectedAccountIndex] = CoreTypes.TradingAccountDetails(
                 accountNumber: activeAccounts[selectedAccountIndex].accountNumber,
                 broker: activeAccounts[selectedAccountIndex].broker,
                 accountType: activeAccounts[selectedAccountIndex].accountType,
@@ -107,8 +85,7 @@ class RealTimeAccountManager: ObservableObject {
         
         // Activate new account
         selectedAccountIndex = index
-        activeAccounts[index] = SharedTypes.TradingAccountDetails(
-            id: activeAccounts[index].id,
+        activeAccounts[index] = CoreTypes.TradingAccountDetails(
             accountNumber: activeAccounts[index].accountNumber,
             broker: activeAccounts[index].broker,
             accountType: activeAccounts[index].accountType,
@@ -124,7 +101,7 @@ class RealTimeAccountManager: ObservableObject {
         HapticFeedbackManager.shared.selection()
         
         // Notify of account change
-        NotificationCenter.default.post(name: .accountBalanceUpdated, object: selectedAccount)
+        NotificationCenter.default.post(name: NSNotification.Name.accountBalanceUpdated, object: selectedAccount)
     }
     
     private func updateFromSelectedAccount() {
@@ -173,8 +150,7 @@ class RealTimeAccountManager: ObservableObject {
         
         // Update selected account
         if activeAccounts.indices.contains(selectedAccountIndex) {
-            activeAccounts[selectedAccountIndex] = SharedTypes.TradingAccountDetails(
-                id: activeAccounts[selectedAccountIndex].id,
+            activeAccounts[selectedAccountIndex] = CoreTypes.TradingAccountDetails(
                 accountNumber: activeAccounts[selectedAccountIndex].accountNumber,
                 broker: activeAccounts[selectedAccountIndex].broker,
                 accountType: activeAccounts[selectedAccountIndex].accountType,
@@ -204,7 +180,7 @@ class RealTimeAccountManager: ObservableObject {
     }
     
     // MARK: - Account Operations
-    func addAccount(_ account: SharedTypes.TradingAccountDetails) {
+    func addAccount(_ account: CoreTypes.TradingAccountDetails) {
         activeAccounts.append(account)
         
         // If this is the first account, make it active
@@ -228,7 +204,7 @@ class RealTimeAccountManager: ObservableObject {
     }
     
     // MARK: - Computed Properties
-    var selectedAccount: SharedTypes.TradingAccountDetails? {
+    var selectedAccount: CoreTypes.TradingAccountDetails? {
         guard activeAccounts.indices.contains(selectedAccountIndex) else { return nil }
         return activeAccounts[selectedAccountIndex]
     }
@@ -295,9 +271,14 @@ class RealTimeAccountManager: ObservableObject {
     }
 }
 
-// MARK: - Extensions for TradingAccountDetails
+// MARK: - Alias for TradingAccountDetails
+extension RealTimeAccountManager {
+    // MARK: - Missing TradingAccount Alias
+    typealias TradingAccount = CoreTypes.TradingAccountDetails
+}
 
-extension SharedTypes.TradingAccountDetails {
+extension CoreTypes.TradingAccountDetails {
+    // MARK: - Additional Required Properties for HomeDashboardView
     var name: String {
         return "\(broker.displayName) \(accountType)"
     }
@@ -314,6 +295,10 @@ extension SharedTypes.TradingAccountDetails {
     
     var isDemo: Bool {
         return accountType.lowercased().contains("demo")
+    }
+    
+    var displayName: String {
+        return name
     }
     
     var accountTypeText: String {
@@ -343,7 +328,7 @@ extension SharedTypes.TradingAccountDetails {
 
 #Preview {
     VStack(spacing: 20) {
-        Text("✅ Real-Time Account Manager")
+        Text(" Real-Time Account Manager")
             .font(.title.bold())
             .foregroundColor(.green)
         
@@ -356,11 +341,11 @@ extension SharedTypes.TradingAccountDetails {
                 .font(.headline)
             
             Group {
-                Text("• Real-time balance updates ✅")
-                Text("• Multi-account support ✅")
-                Text("• Live P&L tracking ✅")
-                Text("• Connection monitoring ✅")
-                Text("• Professional formatting ✅")
+                Text("• Real-time balance updates ")
+                Text("• Multi-account support ")
+                Text("• Live P&L tracking ")
+                Text("• Connection monitoring ")
+                Text("• Professional formatting ")
             }
             .font(.caption)
             .foregroundColor(.green)

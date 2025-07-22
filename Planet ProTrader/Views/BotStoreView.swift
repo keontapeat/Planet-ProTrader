@@ -1,11 +1,12 @@
 //
 //  BotStoreView.swift
-//  GOLDEX AI
+//  Planet ProTrader
 //
 //  Created by AI Assistant on 7/18/25.
 //
 
 import SwiftUI
+import Foundation
 
 struct BotStoreView: View {
     @StateObject private var storeService = BotStoreService.shared
@@ -31,16 +32,16 @@ struct BotStoreView: View {
                 
                 // Store content
                 ScrollView {
-                    VStack(spacing: 20) {
-                        // Featured section (if showing all or featured)
-                        if storeService.selectedCategory == .all || storeService.selectedCategory == .featured {
-                            featuredBotsSection
-                        }
-                        
-                        // Main bot grid
-                        botGridSection
+                    if storeService.isLoading {
+                        loadingView
+                    } else if let errorMessage = storeService.errorMessage {
+                        errorView(errorMessage)
+                    } else {
+                        mainContentView
                     }
-                    .padding()
+                }
+                .refreshable {
+                    await storeService.refreshData()
                 }
             }
             .navigationTitle("🛒 Bot Store")
@@ -65,6 +66,60 @@ struct BotStoreView: View {
         .sheet(isPresented: $showingFilters) {
             BotStoreFiltersView()
         }
+    }
+    
+    // MARK: - Main Content Views
+    
+    private var mainContentView: some View {
+        VStack(spacing: 20) {
+            // Featured section (if showing all or featured)
+            if storeService.selectedCategory == .all || storeService.selectedCategory == .featured {
+                featuredBotsSection
+            }
+            
+            // Main bot grid
+            botGridSection
+        }
+        .padding()
+    }
+    
+    private var loadingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.5)
+            
+            Text("Loading bots...")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, 100)
+    }
+    
+    private func errorView(_ message: String) -> some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 48))
+                .foregroundColor(.orange)
+            
+            Text("Error")
+                .font(.headline)
+                .foregroundColor(.primary)
+            
+            Text(message)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+            
+            Button("Try Again") {
+                Task {
+                    await storeService.refreshData()
+                }
+            }
+            .foregroundColor(DesignSystem.primaryGold)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, 100)
     }
     
     // MARK: - Search and Filters Header
@@ -202,13 +257,21 @@ struct BotStoreView: View {
                     .cornerRadius(8)
             }
             
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(storeService.featuredBots) { bot in
-                        featuredBotCard(bot: bot)
+            if storeService.featuredBots.isEmpty {
+                Text("No featured bots available")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 20)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 16) {
+                        ForEach(storeService.featuredBots) { bot in
+                            featuredBotCard(bot: bot)
+                        }
                     }
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
             }
         }
     }
@@ -472,10 +535,7 @@ struct BotStoreView: View {
                 .multilineTextAlignment(.center)
             
             Button("Clear Filters") {
-                storeService.selectedRarity = nil
-                storeService.selectedTier = nil
-                storeService.searchText = ""
-                storeService.selectedCategory = .all
+                storeService.clearFilters()
             }
             .foregroundColor(DesignSystem.primaryGold)
         }
@@ -635,7 +695,7 @@ struct BotStoreFiltersView: View {
     
     private func priceRangeButton(title: String, range: ClosedRange<Double>?) -> some View {
         Button(action: {
-            // Handle price range selection
+            // Handle price range selection - implement if needed
         }) {
             HStack {
                 Text(title)
@@ -671,7 +731,7 @@ struct BotStoreFiltersView: View {
     
     private func availabilityButton(availability: BotAvailability) -> some View {
         Button(action: {
-            // Handle availability selection
+            // Handle availability selection - implement if needed
         }) {
             HStack(spacing: 12) {
                 Image(systemName: availability.icon)
@@ -691,14 +751,11 @@ struct BotStoreFiltersView: View {
     }
     
     private func resetFilters() {
-        storeService.selectedRarity = nil
-        storeService.selectedTier = nil
-        storeService.searchText = ""
-        storeService.selectedCategory = .all
+        storeService.clearFilters()
     }
 }
 
-// MARK: - Preview
+// MARK: - ✅ FIXED PREVIEW
 
 #Preview {
     BotStoreView()

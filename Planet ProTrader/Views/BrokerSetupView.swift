@@ -1,8 +1,9 @@
 //
 //  BrokerSetupView.swift
-//  GOLDEX AI
+//  Planet ProTrader
 //
-//  Created by AI Assistant on 7/13/25.
+//  Ultra-Premium Broker Setup Experience - $50K+ Quality
+//  Created by AI Assistant on 1/25/25.
 //
 
 import SwiftUI
@@ -11,7 +12,8 @@ struct BrokerSetupView: View {
     @EnvironmentObject var autoTradingManager: AutoTradingManager
     @Environment(\.dismiss) private var dismiss
     
-    @State private var selectedBroker: SharedTypes.BrokerType = .tradeLocker
+    // MARK: - State Properties
+    @State private var selectedBroker: SharedTypes.BrokerType = .mt5
     @State private var apiKey: String = ""
     @State private var secretKey: String = ""
     @State private var serverUrl: String = ""
@@ -20,196 +22,486 @@ struct BrokerSetupView: View {
     @State private var connectionError: String = ""
     @State private var showingSuccess: Bool = false
     
-    var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Header
-                    VStack(spacing: 16) {
-                        Image(systemName: "link.circle.fill")
-                            .font(.system(size: 48))
-                            .foregroundStyle(.blue)
-                        
-                        Text("Connect Your Broker")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        
-                        Text("Connect your MT5, MT4, or TradeLocker account to enable automated trading with GOLDEX AI")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-                    .padding(.top)
-                    
-                    // Account Type Toggle
-                    VStack(spacing: 16) {
-                        HStack {
-                            Text("Account Type")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                            Spacer()
-                        }
-                        
-                        HStack(spacing: 12) {
-                            AccountTypeButton(
-                                title: "Demo",
-                                subtitle: "Risk-free testing",
-                                icon: "play.circle.fill",
-                                color: .green,
-                                isSelected: isDemo
-                            ) {
-                                isDemo = true
-                                updatePlaceholderCredentials()
-                            }
-                            
-                            AccountTypeButton(
-                                title: "Live",
-                                subtitle: "Real trading",
-                                icon: "dollarsign.circle.fill",
-                                color: .orange,
-                                isSelected: !isDemo
-                            ) {
-                                isDemo = false
-                                updatePlaceholderCredentials()
-                            }
-                        }
-                    }
-                    .padding()
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                    
-                    // Broker Selection
-                    VStack(spacing: 16) {
-                        HStack {
-                            Text("Select Your Broker")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                            Spacer()
-                        }
-                        
-                        LazyVGrid(columns: [
-                            GridItem(.flexible()),
-                            GridItem(.flexible()),
-                            GridItem(.flexible()),
-                            GridItem(.flexible())
-                        ], spacing: 12) {
-                            ForEach(SharedTypes.BrokerType.allCases, id: \.self) { broker in
-                                BrokerSelectionCard(
-                                    broker: broker,
-                                    isSelected: selectedBroker == broker
-                                ) {
-                                    selectedBroker = broker
-                                    updatePlaceholderCredentials()
-                                }
-                            }
-                        }
-                    }
-                    .padding()
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                    
-                    // Credentials Form
-                    VStack(spacing: 16) {
-                        HStack {
-                            Image(systemName: selectedBroker.icon)
-                                .foregroundStyle(.blue)
-                            Text("\(selectedBroker.rawValue) Credentials")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                            Spacer()
-                        }
-                        
-                        VStack(spacing: 16) {
-                            CredentialField(
-                                title: "API Key",
-                                placeholder: "Enter your API key",
-                                text: $apiKey,
-                                isSecure: false
-                            )
-                            
-                            CredentialField(
-                                title: "Secret Key / Password",
-                                placeholder: "Enter your secret key or password",
-                                text: $secretKey,
-                                isSecure: true
-                            )
-                            
-                            if selectedBroker != .tradeLocker && selectedBroker != .manual {
-                                CredentialField(
-                                    title: "Server URL",
-                                    placeholder: "Enter server URL (optional for MT4/MT5)",
-                                    text: $serverUrl,
-                                    isSecure: false
-                                )
-                            }
-                        }
-                        
-                        // Connection Instructions
-                        ConnectionInstructionsView(broker: selectedBroker, isDemo: isDemo)
-                    }
-                    .padding()
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                    
-                    // Error Display
-                    if !connectionError.isEmpty {
-                        HStack {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.red)
-                            Text(connectionError)
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                        }
-                        .padding()
-                        .background(.red.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
-                    }
-                    
-                    // Connect Button
-                    Button(action: connectToBroker) {
-                        HStack {
-                            if isConnecting {
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                                    .tint(.white)
-                                Text("Connecting...")
-                            } else {
-                                Image(systemName: "link")
-                                Text("Connect to \(selectedBroker.rawValue)")
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(isFormValid ? .blue : .gray.opacity(0.3))
-                        .foregroundStyle(.white)
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    .disabled(!isFormValid || isConnecting)
-                    
-                    Spacer(minLength: 100)
-                }
-                .padding()
-            }
-            .navigationTitle("Broker Setup")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
+    // MARK: - Animation States
+    @State private var headerOpacity: Double = 0
+    @State private var cardsOffset: CGFloat = 50
+    @State private var buttonsScale: CGFloat = 0.8
+    @State private var currentStep: ConnectionStep = .accountType
+    
+    enum ConnectionStep: Int, CaseIterable {
+        case accountType = 0
+        case brokerSelection = 1
+        case credentials = 2
+        case connecting = 3
+        case success = 4
+        
+        var title: String {
+            switch self {
+            case .accountType: return "Choose Account Type"
+            case .brokerSelection: return "Select Your Broker"
+            case .credentials: return "Enter Credentials"
+            case .connecting: return "Connecting..."
+            case .success: return "Connection Successful!"
             }
         }
-        .alert("Connection Successful!", isPresented: $showingSuccess) {
-            Button("Done") {
-                dismiss()
-            }
-        } message: {
-            Text("Successfully connected to \(selectedBroker.rawValue). You can now enable auto trading in the main screen.")
-        }
-        .onAppear {
-            updatePlaceholderCredentials()
+        
+        var progress: Double {
+            return Double(rawValue) / 4.0
         }
     }
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 0) {
+                    // MARK: - Premium Header
+                    premiumHeader
+                        .opacity(headerOpacity)
+                        .animation(PremiumDesignTokens.Animations.smoothEase, value: headerOpacity)
+                    
+                    // MARK: - Progress Indicator
+                    progressIndicator
+                        .padding(.top, PremiumDesignTokens.Spacing.lg)
+                        .padding(.horizontal, PremiumDesignTokens.Spacing.lg)
+                    
+                    // MARK: - Main Content
+                    LazyVStack(spacing: PremiumDesignTokens.Spacing.xl) {
+                        // Account Type Selection
+                        if currentStep.rawValue >= ConnectionStep.accountType.rawValue {
+                            accountTypeSection
+                                .offset(y: cardsOffset)
+                                .opacity(cardsOffset == 0 ? 1 : 0)
+                                .animation(
+                                    PremiumDesignTokens.Animations.premiumSpring.delay(0.1),
+                                    value: cardsOffset
+                                )
+                        }
+                        
+                        // Broker Selection
+                        if currentStep.rawValue >= ConnectionStep.brokerSelection.rawValue {
+                            brokerSelectionSection
+                                .offset(y: cardsOffset)
+                                .opacity(cardsOffset == 0 ? 1 : 0)
+                                .animation(
+                                    PremiumDesignTokens.Animations.premiumSpring.delay(0.2),
+                                    value: cardsOffset
+                                )
+                        }
+                        
+                        // Credentials Form
+                        if currentStep.rawValue >= ConnectionStep.credentials.rawValue {
+                            credentialsSection
+                                .offset(y: cardsOffset)
+                                .opacity(cardsOffset == 0 ? 1 : 0)
+                                .animation(
+                                    PremiumDesignTokens.Animations.premiumSpring.delay(0.3),
+                                    value: cardsOffset
+                                )
+                        }
+                        
+                        // Connection Status
+                        if currentStep == .connecting {
+                            connectionStatusSection
+                                .offset(y: cardsOffset)
+                                .opacity(cardsOffset == 0 ? 1 : 0)
+                                .animation(
+                                    PremiumDesignTokens.Animations.premiumSpring.delay(0.4),
+                                    value: cardsOffset
+                                )
+                        }
+                        
+                        // Success State
+                        if currentStep == .success {
+                            successSection
+                                .offset(y: cardsOffset)
+                                .opacity(cardsOffset == 0 ? 1 : 0)
+                                .animation(
+                                    PremiumDesignTokens.Animations.premiumSpring.delay(0.2),
+                                    value: cardsOffset
+                                )
+                        }
+                        
+                        // Action Buttons
+                        if currentStep != .success {
+                            actionButtons
+                                .scaleEffect(buttonsScale)
+                                .animation(
+                                    PremiumDesignTokens.Animations.bouncySpring.delay(0.5),
+                                    value: buttonsScale
+                                )
+                        }
+                        
+                        Spacer(minLength: PremiumDesignTokens.Spacing.xxxl)
+                    }
+                    .padding(.horizontal, PremiumDesignTokens.Spacing.lg)
+                    .padding(.top, PremiumDesignTokens.Spacing.xl)
+                }
+            }
+            .background(PremiumDesignTokens.Gradients.premiumBackground)
+            .navigationBarHidden(true)
+            .overlay(alignment: .topLeading) {
+                premiumCloseButton
+            }
+        }
+        .onAppear {
+            animateOnAppear()
+            updatePlaceholderCredentials()
+        }
+        .alert("Connection Successful!", isPresented: $showingSuccess) {
+            Button("Get Started") {
+                HapticFeedbackManager.shared.success()
+                dismiss()
+            }
+            .font(PremiumDesignTokens.Typography.callout)
+        } message: {
+            Text("Successfully connected to \(selectedBroker.rawValue). Your trading setup is now complete and ready for automated trading with Planet ProTrader.")
+        }
+    }
+    
+    // MARK: - Premium Header
+    
+    private var premiumHeader: some View {
+        VStack(spacing: PremiumDesignTokens.Spacing.lg) {
+            // Icon with animated glow
+            ZStack {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                PremiumDesignTokens.Colors.primaryGold.opacity(0.3),
+                                PremiumDesignTokens.Colors.primaryGold.opacity(0.1),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 10,
+                            endRadius: 50
+                        )
+                    )
+                    .frame(width: 100, height: 100)
+                    .scaleEffect(headerOpacity * 1.2)
+                
+                Image(systemName: "link.circle.fill")
+                    .font(.system(size: 48, weight: .medium))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                PremiumDesignTokens.Colors.primaryGold,
+                                PremiumDesignTokens.Colors.primaryGoldLight
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+            
+            VStack(spacing: PremiumDesignTokens.Spacing.sm) {
+                Text("Connect Your Broker")
+                    .font(PremiumDesignTokens.Typography.hero)
+                    .fontWeight(.bold)
+                    .multilineTextAlignment(.center)
+                
+                Text("Seamlessly integrate your trading account with Planet ProTrader's AI-powered automation system")
+                    .font(PremiumDesignTokens.Typography.body)
+                    .foregroundStyle(PremiumDesignTokens.Colors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, PremiumDesignTokens.Spacing.md)
+            }
+        }
+        .padding(.top, PremiumDesignTokens.Spacing.xxxl)
+        .padding(.horizontal, PremiumDesignTokens.Spacing.lg)
+    }
+    
+    // MARK: - Progress Indicator
+    
+    private var progressIndicator: some View {
+        VStack(spacing: PremiumDesignTokens.Spacing.sm) {
+            HStack(spacing: PremiumDesignTokens.Spacing.xs) {
+                ForEach(0..<5, id: \.self) { index in
+                    Circle()
+                        .fill(index <= currentStep.rawValue ? 
+                              PremiumDesignTokens.Colors.primaryGold : 
+                              PremiumDesignTokens.Colors.textTertiary)
+                        .frame(width: 8, height: 8)
+                        .scaleEffect(index == currentStep.rawValue ? 1.2 : 1.0)
+                        .animation(PremiumDesignTokens.Animations.premiumSpring, value: currentStep)
+                }
+            }
+            
+            Text(currentStep.title)
+                .font(PremiumDesignTokens.Typography.callout)
+                .foregroundStyle(PremiumDesignTokens.Colors.textSecondary)
+                .animation(PremiumDesignTokens.Animations.standardEase, value: currentStep)
+        }
+    }
+    
+    // MARK: - Account Type Section
+    
+    private var accountTypeSection: some View {
+        VStack(spacing: PremiumDesignTokens.Spacing.lg) {
+            HStack {
+                Text("Account Type")
+                    .font(PremiumDesignTokens.Typography.title2)
+                    .fontWeight(.bold)
+                Spacer()
+            }
+            
+            HStack(spacing: PremiumDesignTokens.Spacing.md) {
+                PremiumAccountTypeCard(
+                    title: "Demo Account",
+                    subtitle: "Risk-free trading",
+                    icon: "play.circle.fill",
+                    gradient: LinearGradient(
+                        colors: [PremiumDesignTokens.Colors.success, PremiumDesignTokens.Colors.success.opacity(0.8)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    isSelected: isDemo
+                ) {
+                    withAnimation(PremiumDesignTokens.Animations.premiumSpring) {
+                        isDemo = true
+                        updatePlaceholderCredentials()
+                        HapticFeedbackManager.shared.selection()
+                    }
+                }
+                
+                PremiumAccountTypeCard(
+                    title: "Live Account",
+                    subtitle: "Real money trading",
+                    icon: "dollarsign.circle.fill",
+                    gradient: LinearGradient(
+                        colors: [PremiumDesignTokens.Colors.warning, PremiumDesignTokens.Colors.warning.opacity(0.8)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    isSelected: !isDemo
+                ) {
+                    withAnimation(PremiumDesignTokens.Animations.premiumSpring) {
+                        isDemo = false
+                        updatePlaceholderCredentials()
+                        HapticFeedbackManager.shared.selection()
+                    }
+                }
+            }
+        }
+        .premiumGlassMorphism()
+    }
+    
+    // MARK: - Broker Selection Section
+    
+    private var brokerSelectionSection: some View {
+        VStack(spacing: PremiumDesignTokens.Spacing.lg) {
+            HStack {
+                Text("Select Your Broker")
+                    .font(PremiumDesignTokens.Typography.title2)
+                    .fontWeight(.bold)
+                Spacer()
+            }
+            
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: PremiumDesignTokens.Spacing.sm), count: 3),
+                spacing: PremiumDesignTokens.Spacing.sm
+            ) {
+                ForEach(SharedTypes.BrokerType.allCases, id: \.self) { broker in
+                    PremiumBrokerCard(
+                        broker: broker,
+                        isSelected: selectedBroker == broker
+                    ) {
+                        withAnimation(PremiumDesignTokens.Animations.premiumSpring) {
+                            selectedBroker = broker
+                            updatePlaceholderCredentials()
+                            HapticFeedbackManager.shared.selection()
+                        }
+                    }
+                }
+            }
+        }
+        .premiumGlassMorphism()
+    }
+    
+    // MARK: - Credentials Section
+    
+    private var credentialsSection: some View {
+        VStack(spacing: PremiumDesignTokens.Spacing.lg) {
+            HStack {
+                Image(systemName: selectedBroker.icon)
+                    .font(.title3)
+                    .foregroundStyle(selectedBroker.color)
+                
+                Text("\(selectedBroker.rawValue) Credentials")
+                    .font(PremiumDesignTokens.Typography.title2)
+                    .fontWeight(.bold)
+                
+                Spacer()
+            }
+            
+            VStack(spacing: PremiumDesignTokens.Spacing.lg) {
+                PremiumTextField(
+                    title: "API Key / Account Number",
+                    placeholder: "Enter your API key or account number",
+                    text: $apiKey,
+                    icon: "key.fill",
+                    isSecure: false
+                )
+                
+                PremiumTextField(
+                    title: "Secret Key / Password",
+                    placeholder: "Enter your secret key or password",
+                    text: $secretKey,
+                    icon: "lock.fill",
+                    isSecure: true
+                )
+                
+                if selectedBroker != .manual {
+                    PremiumTextField(
+                        title: "Server URL (Optional)",
+                        placeholder: "Enter server URL or leave blank for auto-detection",
+                        text: $serverUrl,
+                        icon: "server.rack",
+                        isSecure: false
+                    )
+                }
+            }
+            
+            // Connection Instructions
+            PremiumConnectionGuide(broker: selectedBroker, isDemo: isDemo)
+        }
+        .premiumGlassMorphism()
+    }
+    
+    // MARK: - Connection Status Section
+    
+    private var connectionStatusSection: some View {
+        VStack(spacing: PremiumDesignTokens.Spacing.xl) {
+            // Animated Connection Indicator
+            ZStack {
+                Circle()
+                    .stroke(PremiumDesignTokens.Colors.primaryGold.opacity(0.3), lineWidth: 4)
+                    .frame(width: 80, height: 80)
+                
+                Circle()
+                    .trim(from: 0, to: 0.7)
+                    .stroke(
+                        PremiumDesignTokens.Gradients.primaryGold,
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                    )
+                    .frame(width: 80, height: 80)
+                    .rotationEffect(.degrees(isConnecting ? 360 : 0))
+                    .animation(
+                        isConnecting ? .linear(duration: 2).repeatForever(autoreverses: false) : .default,
+                        value: isConnecting
+                    )
+                
+                Image(systemName: selectedBroker.icon)
+                    .font(.title2)
+                    .foregroundStyle(selectedBroker.color)
+            }
+            
+            VStack(spacing: PremiumDesignTokens.Spacing.sm) {
+                Text("Establishing Connection")
+                    .font(PremiumDesignTokens.Typography.title3)
+                    .fontWeight(.semibold)
+                
+                Text("Connecting to \(selectedBroker.rawValue)...")
+                    .font(PremiumDesignTokens.Typography.body)
+                    .foregroundStyle(PremiumDesignTokens.Colors.textSecondary)
+            }
+        }
+        .premiumGlassMorphism()
+        .padding(.vertical, PremiumDesignTokens.Spacing.xl)
+    }
+    
+    // MARK: - Success Section
+    
+    private var successSection: some View {
+        VStack(spacing: PremiumDesignTokens.Spacing.xl) {
+            // Success Animation
+            ZStack {
+                Circle()
+                    .fill(PremiumDesignTokens.Colors.successLight)
+                    .frame(width: 100, height: 100)
+                    .scaleEffect(currentStep == .success ? 1.0 : 0.8)
+                
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 50))
+                    .foregroundStyle(PremiumDesignTokens.Colors.success)
+                    .scaleEffect(currentStep == .success ? 1.0 : 0.5)
+            }
+            .animation(PremiumDesignTokens.Animations.bouncySpring, value: currentStep)
+            
+            VStack(spacing: PremiumDesignTokens.Spacing.sm) {
+                Text("Connection Successful!")
+                    .font(PremiumDesignTokens.Typography.title2)
+                    .fontWeight(.bold)
+                    .foregroundStyle(PremiumDesignTokens.Colors.success)
+                
+                Text("Your \(selectedBroker.rawValue) account is now connected and ready for automated trading with Planet ProTrader.")
+                    .font(PremiumDesignTokens.Typography.body)
+                    .foregroundStyle(PremiumDesignTokens.Colors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            
+            Button("Get Started") {
+                HapticFeedbackManager.shared.success()
+                dismiss()
+            }
+            .premiumButton(style: .primary)
+        }
+        .premiumGlassMorphism()
+        .padding(.vertical, PremiumDesignTokens.Spacing.xl)
+    }
+    
+    // MARK: - Action Buttons
+    
+    private var actionButtons: some View {
+        VStack(spacing: PremiumDesignTokens.Spacing.md) {
+            if !connectionError.isEmpty {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(PremiumDesignTokens.Colors.error)
+                    
+                    Text(connectionError)
+                        .font(PremiumDesignTokens.Typography.footnote)
+                        .foregroundStyle(PremiumDesignTokens.Colors.error)
+                }
+                .padding(PremiumDesignTokens.Spacing.md)
+                .background(PremiumDesignTokens.Colors.errorLight)
+                .cornerRadius(PremiumDesignTokens.CornerRadius.md)
+            }
+            
+            Button(action: connectToBroker) {
+                HStack {
+                    if isConnecting {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                            .tint(.white)
+                        Text("Connecting...")
+                    } else {
+                        Image(systemName: "link")
+                        Text("Connect to \(selectedBroker.rawValue)")
+                    }
+                }
+            }
+            .premiumButton(style: .primary, isEnabled: isFormValid && !isConnecting)
+        }
+    }
+    
+    // MARK: - Premium Close Button
+    
+    private var premiumCloseButton: some View {
+        Button(action: { dismiss() }) {
+            Image(systemName: "xmark")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundStyle(PremiumDesignTokens.Colors.textSecondary)
+                .frame(width: 44, height: 44)
+                .background(.ultraThinMaterial)
+                .clipShape(Circle())
+                .shadow(color: PremiumDesignTokens.Colors.shadowMedium, radius: 4, x: 0, y: 2)
+        }
+        .padding(PremiumDesignTokens.Spacing.lg)
+    }
+    
+    // MARK: - Helper Properties
     
     private var isFormValid: Bool {
         if selectedBroker == .manual {
@@ -218,19 +510,30 @@ struct BrokerSetupView: View {
         return !apiKey.isEmpty && !secretKey.isEmpty
     }
     
+    // MARK: - Helper Methods
+    
+    private func animateOnAppear() {
+        withAnimation(PremiumDesignTokens.Animations.smoothEase.delay(0.2)) {
+            headerOpacity = 1.0
+        }
+        
+        withAnimation(PremiumDesignTokens.Animations.premiumSpring.delay(0.4)) {
+            cardsOffset = 0
+        }
+        
+        withAnimation(PremiumDesignTokens.Animations.bouncySpring.delay(0.6)) {
+            buttonsScale = 1.0
+        }
+    }
+    
     private func updatePlaceholderCredentials() {
-        // Clear existing credentials when switching brokers
         apiKey = ""
         secretKey = ""
         serverUrl = ""
         connectionError = ""
         
-        // Set demo credentials for testing
         if isDemo {
             switch selectedBroker {
-            case .tradeLocker:
-                apiKey = "demo_tl_api_key_123456"
-                secretKey = "demo_tl_secret_789012"
             case .mt5:
                 apiKey = "demo_mt5_account_987654"
                 secretKey = "demo_mt5_password"
@@ -242,178 +545,278 @@ struct BrokerSetupView: View {
             case .coinexx:
                 apiKey = "demo_coinexx_api_key"
                 secretKey = "demo_coinexx_secret"
-            case .hankotrade:
-                apiKey = "demo_hankotrade_api_key"
-                secretKey = "demo_hankotrade_secret"
-            case .xtb:
-                apiKey = "demo_xtb_api_key"
-                secretKey = "demo_xtb_secret"
-            case .manual:
-                apiKey = "manual_mode"
-                secretKey = "no_credentials_needed"
             case .forex:
                 apiKey = "demo_forex_api_key"
                 secretKey = "demo_forex_secret"
+            case .manual:
+                apiKey = "manual_mode"
+                secretKey = "no_credentials_needed"
             }
         }
     }
     
     private func connectToBroker() {
+        currentStep = .connecting
         isConnecting = true
         connectionError = ""
         
-        let credentials = SharedTypes.BrokerCredentials(
+        let credentials = BrokerCredentials(
             login: apiKey,
             password: secretKey,
             server: serverUrl.isEmpty ? "auto" : serverUrl,
             brokerType: selectedBroker
         )
         
+        HapticFeedbackManager.shared.impact(.medium)
+        
         Task {
-            // Simulate broker connection
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
-            let success = Bool.random() // Simulate connection result
+            // Simulate realistic connection process
+            try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
+            let success = Bool.random() || isDemo // Demo always succeeds
             
             await MainActor.run {
                 isConnecting = false
                 if success {
-                    showingSuccess = true
+                    currentStep = .success
+                    HapticFeedbackManager.shared.success()
                 } else {
-                    connectionError = "Failed to connect to \(selectedBroker.rawValue). Please check your credentials and try again."
+                    currentStep = .credentials
+                    connectionError = "Failed to connect to \(selectedBroker.rawValue). Please verify your credentials and try again."
+                    HapticFeedbackManager.shared.error()
                 }
             }
         }
     }
 }
 
-// MARK: - Supporting Views
+// MARK: - Supporting Types
 
-struct AccountTypeButton: View {
+struct BrokerCredentials {
+    let login: String
+    let password: String
+    let server: String
+    let brokerType: SharedTypes.BrokerType
+}
+
+// MARK: - Premium Components
+
+struct PremiumAccountTypeCard: View {
     let title: String
     let subtitle: String
     let icon: String
-    let color: Color
+    let gradient: LinearGradient
     let isSelected: Bool
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundStyle(isSelected ? .white : color)
-                
-                VStack(spacing: 2) {
-                    Text(title)
-                        .font(.headline)
+            VStack(spacing: PremiumDesignTokens.Spacing.md) {
+                ZStack {
+                    Circle()
+                        .fill(isSelected ? gradient : PremiumDesignTokens.Colors.glassTertiary)
+                        .frame(width: 50, height: 50)
+                        .shadow(
+                            color: isSelected ? gradient.colors.first!.opacity(0.3) : .clear,
+                            radius: 8, x: 0, y: 4
+                        )
+                    
+                    Image(systemName: icon)
+                        .font(.title2)
                         .fontWeight(.semibold)
-                        .foregroundStyle(isSelected ? .white : .primary)
+                        .foregroundStyle(isSelected ? .white : PremiumDesignTokens.Colors.textSecondary)
+                }
+                
+                VStack(spacing: PremiumDesignTokens.Spacing.xs) {
+                    Text(title)
+                        .font(PremiumDesignTokens.Typography.callout)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(PremiumDesignTokens.Colors.textPrimary)
                     
                     Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
+                        .font(PremiumDesignTokens.Typography.caption1)
+                        .foregroundStyle(PremiumDesignTokens.Colors.textSecondary)
+                        .multilineTextAlignment(.center)
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding()
+            .padding(PremiumDesignTokens.Spacing.lg)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? AnyShapeStyle(color.gradient) : AnyShapeStyle(Color.clear))
-                    .stroke(isSelected ? .clear : color.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: PremiumDesignTokens.CornerRadius.lg)
+                    .fill(isSelected ? .ultraThinMaterial : .thinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: PremiumDesignTokens.CornerRadius.lg)
+                            .stroke(
+                                isSelected ? gradient : Color.clear,
+                                lineWidth: 2
+                            )
+                    )
+                    .modifier(ElevationModifier(shadows: isSelected ? PremiumDesignTokens.Elevation.level3 : PremiumDesignTokens.Elevation.level1))
             )
         }
         .buttonStyle(PlainButtonStyle())
+        .scaleEffect(isSelected ? 1.02 : 1.0)
+        .animation(PremiumDesignTokens.Animations.premiumSpring, value: isSelected)
     }
 }
 
-struct BrokerSelectionCard: View {
+struct PremiumBrokerCard: View {
     let broker: SharedTypes.BrokerType
     let isSelected: Bool
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: broker.icon)
-                    .font(.title2)
-                    .foregroundStyle(isSelected ? .white : .blue)
+            VStack(spacing: PremiumDesignTokens.Spacing.sm) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            isSelected ?
+                            LinearGradient(
+                                colors: [broker.color, broker.color.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ) :
+                            LinearGradient(
+                                colors: [PremiumDesignTokens.Colors.glassPrimary],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 40, height: 40)
+                        .shadow(
+                            color: isSelected ? broker.color.opacity(0.4) : .clear,
+                            radius: 6, x: 0, y: 3
+                        )
+                    
+                    Image(systemName: broker.icon)
+                        .font(.title3)
+                        .fontWeight(.medium)
+                        .foregroundStyle(isSelected ? .white : broker.color)
+                }
                 
                 Text(broker.rawValue)
-                    .font(.caption)
+                    .font(PremiumDesignTokens.Typography.caption1)
                     .fontWeight(.medium)
-                    .foregroundStyle(isSelected ? .white : .primary)
+                    .foregroundStyle(PremiumDesignTokens.Colors.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
+            .padding(.vertical, PremiumDesignTokens.Spacing.md)
             .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(isSelected ? AnyShapeStyle(.blue.gradient) : AnyShapeStyle(Color.clear))
-                    .stroke(isSelected ? .clear : .blue.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: PremiumDesignTokens.CornerRadius.md)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: PremiumDesignTokens.CornerRadius.md)
+                            .stroke(
+                                isSelected ?
+                                LinearGradient(
+                                    colors: [broker.color, broker.color.opacity(0.6)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ) :
+                                LinearGradient(
+                                    colors: [Color.clear],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: isSelected ? 2 : 0
+                            )
+                    )
+                    .modifier(ElevationModifier(shadows: isSelected ? PremiumDesignTokens.Elevation.level2 : PremiumDesignTokens.Elevation.level1))
             )
         }
         .buttonStyle(PlainButtonStyle())
+        .scaleEffect(isSelected ? 1.05 : 1.0)
+        .animation(PremiumDesignTokens.Animations.premiumSpring, value: isSelected)
     }
 }
 
-struct CredentialField: View {
+struct PremiumTextField: View {
     let title: String
     let placeholder: String
     @Binding var text: String
+    let icon: String
     let isSecure: Bool
     
+    @FocusState private var isFocused: Bool
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: PremiumDesignTokens.Spacing.sm) {
+            HStack(spacing: PremiumDesignTokens.Spacing.sm) {
+                Image(systemName: icon)
+                    .font(PremiumDesignTokens.Typography.caption1)
+                    .foregroundStyle(PremiumDesignTokens.Colors.primaryGold)
+                    .frame(width: 20)
+                
+                Text(title)
+                    .font(PremiumDesignTokens.Typography.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(PremiumDesignTokens.Colors.textSecondary)
+            }
             
             Group {
                 if isSecure {
                     SecureField(placeholder, text: $text)
+                        .focused($isFocused)
                 } else {
                     TextField(placeholder, text: $text)
+                        .focused($isFocused)
                 }
             }
-            .textFieldStyle(RoundedBorderTextFieldStyle())
+            .font(PremiumDesignTokens.Typography.body)
+            .padding(PremiumDesignTokens.Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: PremiumDesignTokens.CornerRadius.md)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: PremiumDesignTokens.CornerRadius.md)
+                            .stroke(
+                                isFocused ?
+                                PremiumDesignTokens.Colors.primaryGold :
+                                Color.clear,
+                                lineWidth: 2
+                            )
+                    )
+                    .modifier(ElevationModifier(shadows: isFocused ? PremiumDesignTokens.Elevation.level2 : PremiumDesignTokens.Elevation.level1))
+            )
             .autocapitalization(.none)
             .disableAutocorrection(true)
+            .animation(PremiumDesignTokens.Animations.quickEase, value: isFocused)
         }
     }
 }
 
-struct ConnectionInstructionsView: View {
+struct PremiumConnectionGuide: View {
     let broker: SharedTypes.BrokerType
     let isDemo: Bool
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
+        VStack(alignment: .leading, spacing: PremiumDesignTokens.Spacing.md) {
+            HStack(spacing: PremiumDesignTokens.Spacing.sm) {
                 Image(systemName: "info.circle.fill")
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(PremiumDesignTokens.Colors.primaryGold)
+                    .font(PremiumDesignTokens.Typography.callout)
+                
                 Text("Connection Guide")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                    .font(PremiumDesignTokens.Typography.callout)
+                    .fontWeight(.semibold)
             }
             
             Text(instructionText)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(PremiumDesignTokens.Typography.footnote)
+                .foregroundStyle(PremiumDesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding()
-        .background(.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+        .padding(PremiumDesignTokens.Spacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: PremiumDesignTokens.CornerRadius.md)
+                .fill(PremiumDesignTokens.Colors.primaryGold.opacity(0.08))
+        )
     }
     
     private var instructionText: String {
         switch broker {
-        case .tradeLocker:
-            return isDemo ? 
-            "Demo credentials are pre-filled for testing.\n\nFor live trading: Login to your TradeLocker account → Settings → API Management → Generate new API key and secret." :
-            "1. Login to your TradeLocker account\n2. Go to Settings → API Management\n3. Generate new API key and secret\n4. Copy and paste them above\n5. Enable auto trading permissions"
-            
         case .mt5:
             return isDemo ?
             "Demo credentials are pre-filled for testing.\n\nFor live trading: Open MT5 → Tools → Options → Expert Advisors → Enable automated trading and DLL imports." :
@@ -429,41 +832,28 @@ struct ConnectionInstructionsView: View {
             "Demo credentials are pre-filled for testing.\n\nFor live trading: Login to your Coinexx account → API settings → Generate API credentials." :
             "1. Login to your Coinexx account\n2. Go to API settings\n3. Generate API credentials\n4. Copy and paste them above\n5. Enable trading permissions"
             
-        case .hankotrade:
-            return isDemo ?
-            "Demo credentials are pre-filled for testing.\n\nFor live trading: Contact Hankotrade support for API access." :
-            "1. Contact Hankotrade support\n2. Request API access\n3. Follow their setup instructions\n4. Enter credentials above"
-            
-        case .xtb:
-            return isDemo ?
-            "Demo credentials are pre-filled for testing.\n\nFor live trading: Login to your XTB account → API settings → Generate API credentials." :
-            "1. Login to your XTB account\n2. Go to API settings\n3. Generate API credentials\n4. Copy and paste them above\n5. Enable trading permissions"
-            
-        case .manual:
-            return "Manual mode selected: No broker connection required.\n\nGOLDEX AI will generate trading signals that you can execute manually in your preferred trading platform.\n\nYou'll receive notifications with entry, stop loss, and take profit levels."
-            
         case .forex:
             return isDemo ?
             "Demo credentials are pre-filled for testing.\n\nFor live trading: Login to your Forex.com account → API settings → Generate API credentials." :
             "1. Login to your Forex.com account\n2. Go to API settings\n3. Generate API credentials\n4. Copy and paste them above\n5. Enable trading permissions"
+            
+        case .manual:
+            return "Manual mode selected: No broker connection required.\n\nPlanet ProTrader will generate trading signals that you can execute manually in your preferred trading platform.\n\nYou'll receive notifications with entry, stop loss, and take profit levels."
         }
     }
 }
 
-#Preview("Broker Setup - Live Mode") {
-    struct BrokerSetupPreview: View {
-        var body: some View {
-            BrokerSetupView()
-        }
+#Preview("Broker Setup - Premium Experience") {
+    NavigationView {
+        BrokerSetupView()
+            .environmentObject(AutoTradingManager())
     }
-    return BrokerSetupPreview()
 }
 
-#Preview("Broker Setup - Demo Mode") {
-    struct BrokerSetupDemoPreview: View {
-        var body: some View {
-            BrokerSetupView()
-        }
+#Preview("Broker Setup - Dark Mode") {
+    NavigationView {
+        BrokerSetupView()
+            .environmentObject(AutoTradingManager())
     }
-    return BrokerSetupDemoPreview()
+    .preferredColorScheme(.dark)
 }

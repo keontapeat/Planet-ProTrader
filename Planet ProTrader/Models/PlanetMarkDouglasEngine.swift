@@ -33,6 +33,10 @@ class PlanetMarkDouglasEngine: ObservableObject {
     @Published var recentPsychologyEvents: [PsychologyEvent] = []
     @Published var dailyMindsetReport: DailyMindsetReport = DailyMindsetReport.sample
     
+    // MARK: - ✅ ADDED: Missing Properties for PlaybookView
+    @Published var riskAcceptance: Double = 0.85
+    @Published var consistencyLevel: Double = 0.88
+    
     private var psychologyTimer: Timer?
     
     init() {
@@ -459,6 +463,32 @@ class PlanetMarkDouglasEngine: ObservableObject {
             "Predefine your risk before you put on a trade."
         ]
         return quotes.randomElement()!
+    }
+    
+    // MARK: - ✅ ADDED: Missing Methods for PlaybookView
+    
+    func getMarkDouglasInsight() -> String {
+        let insights = [
+            "Your probabilistic thinking is strong at \(Int(probabilisticThinking * 100))%. This is the foundation of consistent trading success.",
+            "Discipline score of \(Int(disciplineScore * 100))% shows excellent self-control. Mark Douglas would be impressed with your consistency.",
+            "Current emotional state '\(currentEmotionalState.rawValue.lowercased())' indicates optimal trading psychology. Maintain this mindset.",
+            "Fear level at \(Int(fearLevel * 100))% and greed at \(Int(greedLevel * 100))% - excellent emotional balance for decision making.",
+            "Your risk acceptance of \(Int(riskAcceptance * 100))% aligns with professional trading psychology principles."
+        ]
+        return insights.randomElement() ?? insights[0]
+    }
+    
+    func getFundamental() -> String {
+        let fundamentals = [
+            "Anything can happen in the markets - accept uncertainty as the only certainty.",
+            "You don't need to know what's going to happen next to make money consistently.",
+            "There is a random distribution between wins and losses for any given set of variables.",
+            "An edge is nothing more than an indication of a higher probability of one outcome over another.",
+            "Every moment in the market is unique, even though patterns may repeat.",
+            "The consistency you seek is in your mind, not in the markets.",
+            "Trading is a probability game, and you are the house if you think like one."
+        ]
+        return fundamentals.randomElement() ?? fundamentals[0]
     }
     
     // MARK: - Public Interface Methods

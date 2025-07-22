@@ -137,7 +137,7 @@ enum BotVerificationStatus: String, CaseIterable, Codable {
         case .unverified: return .gray
         case .verified: return .blue
         case .premium: return .purple
-        case .elite: return .gold
+        case .elite: return DesignSystem.primaryGold
         }
     }
     
@@ -151,8 +151,24 @@ enum BotVerificationStatus: String, CaseIterable, Codable {
     }
 }
 
-// MARK: - Enhanced Marketplace Bot Model for Store
-struct MarketplaceBotModel: Identifiable, Codable {
+// MARK: - Bot Stats
+struct BotStats: Codable {
+    let totalReturn: Double
+    let winRate: Double
+    let maxDrawdown: Double
+    let sharpeRatio: Double
+    let totalTrades: Int
+    let totalUsers: Int
+    let averageDailyReturn: Double
+    
+    var formattedTotalReturn: String {
+        let sign = totalReturn >= 0 ? "+" : ""
+        return "\(sign)\(String(format: "%.1f", totalReturn))%"
+    }
+}
+
+// MARK: - ✅ UNIFIED Marketplace Bot Model (SINGLE SOURCE OF TRUTH)
+struct MarketplaceBotModel: Identifiable, Codable, Hashable {
     let id = UUID()
     let name: String
     let tagline: String
@@ -181,7 +197,7 @@ struct MarketplaceBotModel: Identifiable, Codable {
     let features: [String]
     let supportedPairs: [String]
     
-    // MARK: - Computed Properties for Compatibility
+    // MARK: - Computed Properties for Backward Compatibility
     
     /// Alias for name property (backward compatibility)
     var nickname: String { name }
@@ -200,6 +216,10 @@ struct MarketplaceBotModel: Identifiable, Codable {
     var winRate: Double { stats.winRate }
     var totalEarnings: Double { stats.totalReturn }
     
+    /// Legacy properties for SharedTypes compatibility
+    var rating: Double { averageRating }
+    var downloads: Int { stats.totalUsers }
+    
     var formattedPrice: String {
         if price == 0 {
             return "FREE"
@@ -210,6 +230,15 @@ struct MarketplaceBotModel: Identifiable, Codable {
         }
     }
     
+    // MARK: - Hashable Conformance
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: MarketplaceBotModel, rhs: MarketplaceBotModel) -> Bool {
+        lhs.id == rhs.id
+    }
+    
     enum CodingKeys: String, CodingKey {
         case name, tagline, creatorUsername, category, rarity, tier
         case availability, verificationStatus, stats, averageRating, totalReviews
@@ -217,7 +246,7 @@ struct MarketplaceBotModel: Identifiable, Codable {
         case description, features, supportedPairs
     }
     
-    // MARK: - Sample Data
+    // MARK: - Sample Data Generation
     static var sampleBots: [MarketplaceBotModel] {
         return [
             MarketplaceBotModel(
@@ -244,9 +273,9 @@ struct MarketplaceBotModel: Identifiable, Codable {
                 isFreeTrial: true,
                 createdAt: Date().addingTimeInterval(-86400 * 30),
                 lastUpdated: Date().addingTimeInterval(-3600),
-                description: "Professional-grade scalping bot with advanced ML algorithms",
-                features: ["AI Pattern Recognition", "Risk Management", "Real-time Analysis"],
-                supportedPairs: ["XAUUSD", "XAUEUR"]
+                description: "Professional-grade scalping bot with advanced ML algorithms for gold trading. Uses proprietary pattern recognition to identify micro-movements in the market.",
+                features: ["AI Pattern Recognition", "Risk Management", "Real-time Analysis", "Stop Loss Protection", "Multi-timeframe Support"],
+                supportedPairs: ["XAUUSD", "XAUEUR", "XAUGBP"]
             ),
             
             MarketplaceBotModel(
@@ -273,9 +302,9 @@ struct MarketplaceBotModel: Identifiable, Codable {
                 isFreeTrial: false,
                 createdAt: Date().addingTimeInterval(-86400 * 60),
                 lastUpdated: Date().addingTimeInterval(-7200),
-                description: "Reliable swing trading bot for medium-term positions",
-                features: ["Trend Following", "Support/Resistance", "Position Management"],
-                supportedPairs: ["XAUUSD", "EURUSD"]
+                description: "Reliable swing trading bot for medium-term positions. Specializes in trend following and momentum strategies with excellent risk-adjusted returns.",
+                features: ["Trend Following", "Support/Resistance", "Position Management", "Dynamic Sizing", "Market Volatility Adjustment"],
+                supportedPairs: ["XAUUSD", "EURUSD", "GBPUSD"]
             ),
             
             MarketplaceBotModel(
@@ -302,9 +331,9 @@ struct MarketplaceBotModel: Identifiable, Codable {
                 isFreeTrial: true,
                 createdAt: Date().addingTimeInterval(-86400 * 15),
                 lastUpdated: Date().addingTimeInterval(-1800),
-                description: "Ultra-fast news reaction bot with millisecond execution",
-                features: ["News Analysis", "Event Detection", "Speed Execution"],
-                supportedPairs: ["XAUUSD", "GBPUSD", "USDJPY"]
+                description: "Ultra-fast news reaction bot with millisecond execution. Monitors economic calendars and news feeds to capitalize on market-moving events instantly.",
+                features: ["News Analysis", "Event Detection", "Speed Execution", "Calendar Integration", "Sentiment Analysis"],
+                supportedPairs: ["XAUUSD", "GBPUSD", "USDJPY", "EURUSD"]
             ),
             
             MarketplaceBotModel(
@@ -331,31 +360,104 @@ struct MarketplaceBotModel: Identifiable, Codable {
                 isFreeTrial: false,
                 createdAt: Date().addingTimeInterval(-86400 * 90),
                 lastUpdated: Date().addingTimeInterval(-86400),
-                description: "Safe and simple bot for learning traders",
-                features: ["Low Risk", "Educational", "Simple Strategy"],
+                description: "Safe and simple bot designed specifically for learning traders. Low risk approach with educational features to help understand market dynamics.",
+                features: ["Low Risk", "Educational", "Simple Strategy", "Learning Mode", "Basic Indicators"],
                 supportedPairs: ["XAUUSD"]
+            ),
+            
+            MarketplaceBotModel(
+                name: "Grid Master",
+                tagline: "Automated grid trading system",
+                creatorUsername: "GridExpert",
+                category: .grid,
+                rarity: .uncommon,
+                tier: .silver,
+                availability: .available,
+                verificationStatus: .verified,
+                stats: BotStats(
+                    totalReturn: 89.5,
+                    winRate: 71.3,
+                    maxDrawdown: 9.2,
+                    sharpeRatio: 1.6,
+                    totalTrades: 2340,
+                    totalUsers: 167,
+                    averageDailyReturn: 0.8
+                ),
+                averageRating: 4.2,
+                totalReviews: 95,
+                price: 149,
+                isFreeTrial: true,
+                createdAt: Date().addingTimeInterval(-86400 * 45),
+                lastUpdated: Date().addingTimeInterval(-10800),
+                description: "Sophisticated grid trading system that places buy and sell orders at predetermined intervals. Excellent for ranging markets and consistent profits.",
+                features: ["Grid Strategy", "Range Trading", "Automated Orders", "Profit Taking", "Risk Control"],
+                supportedPairs: ["XAUUSD", "EURUSD"]
+            ),
+            
+            MarketplaceBotModel(
+                name: "Arbitrage Alpha",
+                tagline: "Cross-market arbitrage specialist",
+                creatorUsername: "ArbitrageKing",
+                category: .arbitrage,
+                rarity: .mythic,
+                tier: .master,
+                availability: .maintenance,
+                verificationStatus: .elite,
+                stats: BotStats(
+                    totalReturn: 456.8,
+                    winRate: 95.4,
+                    maxDrawdown: 3.1,
+                    sharpeRatio: 4.2,
+                    totalTrades: 156,
+                    totalUsers: 23,
+                    averageDailyReturn: 5.7
+                ),
+                averageRating: 5.0,
+                totalReviews: 21,
+                price: 1299,
+                isFreeTrial: false,
+                createdAt: Date().addingTimeInterval(-86400 * 7),
+                lastUpdated: Date().addingTimeInterval(-900),
+                description: "Elite arbitrage bot that exploits price differences across multiple exchanges and brokers. Requires significant capital but offers exceptional risk-adjusted returns.",
+                features: ["Cross-Exchange Analysis", "Latency Optimization", "Risk-Free Profits", "Multi-Broker Support", "Advanced Algorithms"],
+                supportedPairs: ["XAUUSD", "XAUEUR", "XAUGBP", "XAUJPY"]
             )
         ]
     }
-}
-
-// MARK: - Bot Stats
-struct BotStats: Codable {
-    let totalReturn: Double
-    let winRate: Double
-    let maxDrawdown: Double
-    let sharpeRatio: Double
-    let totalTrades: Int
-    let totalUsers: Int
-    let averageDailyReturn: Double
     
-    var formattedTotalReturn: String {
-        let sign = totalReturn >= 0 ? "+" : ""
-        return "\(sign)\(String(format: "%.1f", totalReturn))%"
-    }
+    // MARK: - Legacy sample for SharedTypes compatibility
+    static let sample = MarketplaceBotModel(
+        name: "Gold Master Pro",
+        tagline: "Advanced gold trading algorithm with 90% win rate",
+        creatorUsername: "ProTrader",
+        category: .technical,
+        rarity: .legendary,
+        tier: .master,
+        availability: .available,
+        verificationStatus: .elite,
+        stats: BotStats(
+            totalReturn: 187.5,
+            winRate: 89.7,
+            maxDrawdown: 7.2,
+            sharpeRatio: 2.1,
+            totalTrades: 1250,
+            totalUsers: 567,
+            averageDailyReturn: 1.8
+        ),
+        averageRating: 4.8,
+        totalReviews: 234,
+        price: 99.99,
+        isFreeTrial: true,
+        createdAt: Date().addingTimeInterval(-86400 * 30),
+        lastUpdated: Date().addingTimeInterval(-3600),
+        description: "Advanced gold trading algorithm with 90% win rate and sophisticated risk management",
+        features: ["Auto Trading", "Risk Management", "Real-time Signals"],
+        supportedPairs: ["XAUUSD"]
+    )
 }
 
 // MARK: - Bot Store Service Enhanced
+@MainActor
 class BotStoreService: ObservableObject {
     static let shared = BotStoreService()
     
@@ -367,6 +469,7 @@ class BotStoreService: ObservableObject {
         case news = "News"
         case technical = "Technical"
         case grid = "Grid"
+        case arbitrage = "Arbitrage"
         
         var icon: String {
             switch self {
@@ -377,6 +480,7 @@ class BotStoreService: ObservableObject {
             case .news: return "newspaper"
             case .technical: return "chart.xyaxis.line"
             case .grid: return "grid"
+            case .arbitrage: return "arrow.triangle.swap"
             }
         }
     }
@@ -388,6 +492,7 @@ class BotStoreService: ObservableObject {
     @Published var selectedRarity: BotRarity?
     @Published var selectedTier: BotTier?
     @Published var isLoading: Bool = false
+    @Published var errorMessage: String?
     
     private init() {
         loadSampleData()
@@ -405,6 +510,7 @@ class BotStoreService: ObservableObject {
                 case .news: return bot.category == .news
                 case .technical: return bot.category == .technical
                 case .grid: return bot.category == .grid
+                case .arbitrage: return bot.category == .arbitrage
                 default: return true
                 }
             }
@@ -415,7 +521,8 @@ class BotStoreService: ObservableObject {
             filtered = filtered.filter { bot in
                 bot.name.localizedCaseInsensitiveContains(searchText) ||
                 bot.tagline.localizedCaseInsensitiveContains(searchText) ||
-                bot.creatorUsername.localizedCaseInsensitiveContains(searchText)
+                bot.creatorUsername.localizedCaseInsensitiveContains(searchText) ||
+                bot.description.localizedCaseInsensitiveContains(searchText)
             }
         }
         
@@ -432,13 +539,19 @@ class BotStoreService: ObservableObject {
         return filtered.sorted { $0.averageRating > $1.averageRating }
     }
     
-    func refreshData() {
+    func refreshData() async {
         isLoading = true
-        // Simulate network call
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.loadSampleData()
-            self.isLoading = false
+        errorMessage = nil
+        
+        do {
+            // Simulate network call with error handling
+            try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            loadSampleData()
+        } catch {
+            errorMessage = "Failed to load bots: \(error.localizedDescription)"
         }
+        
+        isLoading = false
     }
     
     func clearFilters() {
@@ -450,6 +563,8 @@ class BotStoreService: ObservableObject {
     
     private func loadSampleData() {
         allBots = MarketplaceBotModel.sampleBots
-        featuredBots = Array(allBots.filter { $0.rarity == .legendary || $0.rarity == .epic }.prefix(3))
+        featuredBots = Array(allBots.filter { 
+            $0.rarity == .legendary || $0.rarity == .epic || $0.rarity == .mythic 
+        }.prefix(4))
     }
 }

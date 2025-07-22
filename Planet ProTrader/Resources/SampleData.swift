@@ -2,7 +2,7 @@
 //  SampleData.swift
 //  Planet ProTrader
 //
-//  ✅ SAMPLE DATA SEPARATED FROM PRODUCTION CODE
+//  ✅ SAMPLE DATA UPDATED FOR CORETYPES COMPATIBILITY
 //  Created by Senior iOS Engineer
 //
 
@@ -12,8 +12,8 @@ import Foundation
 struct SampleData {
     
     // MARK: - Trading Bot Sample Data
-    static let sampleBots: [TradingBot] = [
-        TradingBot(
+    static let sampleBots: [CoreTypes.TradingBot] = [
+        CoreTypes.TradingBot(
             name: "Gold Hunter AI",
             strategy: .scalping,
             riskLevel: .medium,
@@ -27,7 +27,7 @@ struct SampleData {
             primaryColor: "#FFD700",
             secondaryColor: "#FFA500"
         ),
-        TradingBot(
+        CoreTypes.TradingBot(
             name: "Momentum Master",
             strategy: .swing,
             riskLevel: .low,
@@ -41,7 +41,7 @@ struct SampleData {
             primaryColor: "#00CED1",
             secondaryColor: "#4682B4"
         ),
-        TradingBot(
+        CoreTypes.TradingBot(
             name: "Risk Sentinel",
             strategy: .dayTrading,
             riskLevel: .low,
@@ -55,7 +55,7 @@ struct SampleData {
             primaryColor: "#32CD32",
             secondaryColor: "#228B22"
         ),
-        TradingBot(
+        CoreTypes.TradingBot(
             name: "News Reactor",
             strategy: .news,
             riskLevel: .high,
@@ -69,7 +69,7 @@ struct SampleData {
             primaryColor: "#FF6347",
             secondaryColor: "#DC143C"
         ),
-        TradingBot(
+        CoreTypes.TradingBot(
             name: "Pattern Prophet",
             strategy: .momentum,
             riskLevel: .medium,
@@ -86,8 +86,8 @@ struct SampleData {
     ]
     
     // MARK: - Gold Signal Sample Data
-    static let sampleGoldSignals: [GoldSignal] = [
-        GoldSignal(
+    static let sampleGoldSignals: [CoreTypes.GoldSignal] = [
+        CoreTypes.GoldSignal(
             timestamp: Date(),
             type: .buy,
             entryPrice: 2374.50,
@@ -99,7 +99,7 @@ struct SampleData {
             status: .pending,
             accuracy: nil
         ),
-        GoldSignal(
+        CoreTypes.GoldSignal(
             timestamp: Date().addingTimeInterval(-3600),
             type: .sell,
             entryPrice: 2380.25,
@@ -111,7 +111,7 @@ struct SampleData {
             status: .filled,
             accuracy: 0.92
         ),
-        GoldSignal(
+        CoreTypes.GoldSignal(
             timestamp: Date().addingTimeInterval(-7200),
             type: .buy,
             entryPrice: 2365.75,
@@ -126,7 +126,7 @@ struct SampleData {
     ]
     
     // MARK: - Market Data Sample
-    static let sampleMarketData = MarketData(
+    static let sampleMarketData = CoreTypes.MarketData(
         currentPrice: 2374.50,
         change24h: 15.25,
         changePercentage: 0.65,
@@ -137,8 +137,8 @@ struct SampleData {
     )
     
     // MARK: - Trading Account Sample Data
-    static let sampleTradingAccounts: [TradingAccountDetails] = [
-        TradingAccountDetails(
+    static let sampleTradingAccounts: [CoreTypes.TradingAccountDetails] = [
+        CoreTypes.TradingAccountDetails(
             accountNumber: "1234567",
             broker: .mt5,
             accountType: "Demo",
@@ -148,7 +148,7 @@ struct SampleData {
             leverage: 500,
             isActive: true
         ),
-        TradingAccountDetails(
+        CoreTypes.TradingAccountDetails(
             accountNumber: "7654321",
             broker: .coinexx,
             accountType: "Live",
@@ -158,7 +158,7 @@ struct SampleData {
             leverage: 100,
             isActive: false
         ),
-        TradingAccountDetails(
+        CoreTypes.TradingAccountDetails(
             accountNumber: "9876543",
             broker: .forex,
             accountType: "Demo",
@@ -171,8 +171,8 @@ struct SampleData {
     ]
     
     // MARK: - Flip Goal Sample Data
-    static let sampleFlipGoals: [FlipGoal] = [
-        FlipGoal(
+    static let sampleFlipGoals: [CoreTypes.FlipGoal] = [
+        CoreTypes.FlipGoal(
             startAmount: 100.0,
             targetAmount: 200.0,
             timeLimit: 86400, // 1 day
@@ -180,7 +180,7 @@ struct SampleData {
             status: .active,
             symbol: "XAUUSD"
         ),
-        FlipGoal(
+        CoreTypes.FlipGoal(
             startAmount: 500.0,
             targetAmount: 1000.0,
             timeLimit: 604800, // 1 week
@@ -188,7 +188,7 @@ struct SampleData {
             status: .completed,
             symbol: "EURUSD"
         ),
-        FlipGoal(
+        CoreTypes.FlipGoal(
             startAmount: 250.0,
             targetAmount: 500.0,
             timeLimit: 259200, // 3 days
@@ -199,32 +199,32 @@ struct SampleData {
     ]
     
     // MARK: - Helper Methods for Views
-    static func randomBot() -> TradingBot {
+    static func randomBot() -> CoreTypes.TradingBot {
         sampleBots.randomElement() ?? sampleBots[0]
     }
     
-    static func randomSignal() -> GoldSignal {
+    static func randomSignal() -> CoreTypes.GoldSignal {
         sampleGoldSignals.randomElement() ?? sampleGoldSignals[0]
     }
     
-    static func randomAccount() -> TradingAccountDetails {
+    static func randomAccount() -> CoreTypes.TradingAccountDetails {
         sampleTradingAccounts.randomElement() ?? sampleTradingAccounts[0]
     }
 }
 
-// MARK: - Extension to TradingBot for Sample Data
-extension TradingBot {
+// MARK: - Extension to CoreTypes.TradingBot for Sample Data
+extension CoreTypes.TradingBot {
     static let sampleBots = SampleData.sampleBots
-    static let empty: [TradingBot] = []
+    static let empty: [CoreTypes.TradingBot] = []
 }
 
-// MARK: - Extension to GoldSignal for Sample Data  
-extension GoldSignal {
+// MARK: - Extension to CoreTypes.GoldSignal for Sample Data  
+extension CoreTypes.GoldSignal {
     static let sampleSignals = SampleData.sampleGoldSignals
 }
 
-// MARK: - Extension to TradingAccountDetails for Sample Data
-extension TradingAccountDetails {
+// MARK: - Extension to CoreTypes.TradingAccountDetails for Sample Data
+extension CoreTypes.TradingAccountDetails {
     static let sampleAccounts = SampleData.sampleTradingAccounts
 }
 

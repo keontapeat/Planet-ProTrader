@@ -7,6 +7,13 @@
 
 import Foundation
 
+// MARK: - ✅ UPDATED: Legacy compatibility layer for existing code
+extension SharedTypes {
+    
+    /// Legacy simple model - now uses the main MarketplaceBotModel
+    typealias MarketplaceBotModel = ::MarketplaceBotModel
+}
+
 // Marketplace bot models for the ProTrader bot store
 extension SharedTypes {
     

@@ -2,7 +2,7 @@
 //  HapticFeedbackManager.swift
 //  Planet ProTrader
 //
-//  ✅ FIXED: Professional haptic feedback system
+//  FIXED: Professional haptic feedback system
 //  Created by AI Assistant on 1/25/25.
 //
 
@@ -98,6 +98,12 @@ class HapticFeedbackManager {
             self.heavyImpact()
         }
     }
+    
+    // MARK: - Additional Feedback Methods
+    
+    func selectionChanged() {
+        selection()
+    }
 }
 
 // MARK: - SwiftUI View Extension
@@ -124,7 +130,7 @@ extension View {
 
 #Preview {
     VStack(spacing: 20) {
-        Text("✅ Haptic Feedback Manager")
+        Text(" Haptic Feedback Manager")
             .font(.title.bold())
             .foregroundColor(.green)
         

@@ -2,7 +2,8 @@
 //  PremiumDesignTokens.swift
 //  Planet ProTrader
 //
-//  Ultra-Premium Design System for $50K+ App Quality
+//  ✅ FIXED: Complete Premium Design System
+//  Ultra-Premium Design Tokens for $50K+ App Quality
 //  Created by AI Assistant on 1/25/25.
 //
 
@@ -10,45 +11,40 @@ import SwiftUI
 
 struct PremiumDesignTokens {
     
-    // MARK: - Premium Color Palette
-    
+    // MARK: - Colors
     struct Colors {
-        // Primary Brand Colors
+        // Primary Colors
         static let primaryGold = Color(red: 1.0, green: 0.84, blue: 0.0)
         static let primaryGoldLight = Color(red: 1.0, green: 0.92, blue: 0.4)
         static let primaryGoldDark = Color(red: 0.8, green: 0.67, blue: 0.0)
         
-        // Semantic Colors
-        static let success = Color(red: 0.2, green: 0.78, blue: 0.35)
-        static let successLight = Color(red: 0.2, green: 0.78, blue: 0.35).opacity(0.1)
-        static let warning = Color(red: 1.0, green: 0.58, blue: 0.0)
-        static let warningLight = Color(red: 1.0, green: 0.58, blue: 0.0).opacity(0.1)
-        static let error = Color(red: 1.0, green: 0.23, blue: 0.19)
-        static let errorLight = Color(red: 1.0, green: 0.23, blue: 0.19).opacity(0.1)
-        
-        // Neutral Colors
+        // Text Colors
         static let textPrimary = Color.primary
         static let textSecondary = Color.secondary
-        static let textTertiary = Color.secondary.opacity(0.6)
+        static let textTertiary = Color.secondary.opacity(0.7)
         
-        // Surface Colors
-        static let surfacePrimary = Color(.systemBackground)
-        static let surfaceSecondary = Color(.secondarySystemBackground)
-        static let surfaceTertiary = Color(.tertiarySystemBackground)
+        // Semantic Colors
+        static let success = Color.green
+        static let successLight = Color.green.opacity(0.1)
+        static let warning = Color.orange
+        static let warningLight = Color.orange.opacity(0.1)
+        static let error = Color.red
+        static let errorLight = Color.red.opacity(0.1)
+        static let info = Color.blue
+        static let infoLight = Color.blue.opacity(0.1)
         
-        // Premium Glass Effect Colors
-        static let glassPrimary = Color.white.opacity(0.85)
-        static let glassSecondary = Color.white.opacity(0.65)
-        static let glassTertiary = Color.white.opacity(0.45)
+        // Glass Morphism Colors
+        static let glassPrimary = Color.white.opacity(0.1)
+        static let glassSecondary = Color.white.opacity(0.05)
+        static let glassTertiary = Color.black.opacity(0.05)
         
         // Shadow Colors
         static let shadowLight = Color.black.opacity(0.05)
         static let shadowMedium = Color.black.opacity(0.1)
-        static let shadowDark = Color.black.opacity(0.2)
+        static let shadowHeavy = Color.black.opacity(0.2)
     }
     
-    // MARK: - Premium Gradients
-    
+    // MARK: - Gradients
     struct Gradients {
         static let primaryGold = LinearGradient(
             colors: [Colors.primaryGold, Colors.primaryGoldLight],
@@ -58,40 +54,28 @@ struct PremiumDesignTokens {
         
         static let premiumBackground = LinearGradient(
             colors: [
-                Color(red: 0.98, green: 0.98, blue: 1.0),
-                Color(red: 0.95, green: 0.97, blue: 0.99),
-                Color(red: 0.96, green: 0.96, blue: 0.98)
+                Color(.systemBackground),
+                Colors.primaryGold.opacity(0.02),
+                Color(.systemBackground).opacity(0.95)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
         
-        static let glassMorphism = LinearGradient(
+        static let cardGradient = LinearGradient(
             colors: [
-                Colors.glassPrimary,
-                Colors.glassSecondary,
-                Colors.glassTertiary
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        
-        static let premiumCard = LinearGradient(
-            colors: [
-                Color.white.opacity(0.95),
-                Color.white.opacity(0.85),
-                Color.white.opacity(0.75)
+                Color.white.opacity(0.1),
+                Color.white.opacity(0.05)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
     }
     
-    // MARK: - Typography Scale
-    
+    // MARK: - Typography
     struct Typography {
         static let hero = Font.system(size: 34, weight: .bold, design: .default)
-        static let title1 = Font.system(size: 28, weight: .bold, design: .default)
+        static let title = Font.system(size: 28, weight: .bold, design: .default)
         static let title2 = Font.system(size: 22, weight: .bold, design: .default)
         static let title3 = Font.system(size: 20, weight: .semibold, design: .default)
         static let headline = Font.system(size: 17, weight: .semibold, design: .default)
@@ -103,8 +87,7 @@ struct PremiumDesignTokens {
         static let caption2 = Font.system(size: 11, weight: .medium, design: .default)
     }
     
-    // MARK: - Spacing Scale
-    
+    // MARK: - Spacing
     struct Spacing {
         static let xs: CGFloat = 4
         static let sm: CGFloat = 8
@@ -116,56 +99,35 @@ struct PremiumDesignTokens {
     }
     
     // MARK: - Corner Radius
-    
     struct CornerRadius {
-        static let xs: CGFloat = 6
+        static let xs: CGFloat = 4
         static let sm: CGFloat = 8
         static let md: CGFloat = 12
         static let lg: CGFloat = 16
         static let xl: CGFloat = 20
-        static let xxl: CGFloat = 28
-        static let circular: CGFloat = 50
-    }
-    
-    // MARK: - Elevation (Shadow Layers)
-    
-    struct Elevation {
-        static let level0: [Shadow] = []
-        
-        static let level1: [Shadow] = [
-            Shadow(color: Colors.shadowLight, radius: 2, x: 0, y: 1)
-        ]
-        
-        static let level2: [Shadow] = [
-            Shadow(color: Colors.shadowLight, radius: 4, x: 0, y: 2),
-            Shadow(color: Colors.shadowMedium, radius: 1, x: 0, y: 1)
-        ]
-        
-        static let level3: [Shadow] = [
-            Shadow(color: Colors.shadowMedium, radius: 8, x: 0, y: 4),
-            Shadow(color: Colors.shadowLight, radius: 2, x: 0, y: 2)
-        ]
-        
-        static let level4: [Shadow] = [
-            Shadow(color: Colors.shadowDark, radius: 16, x: 0, y: 8),
-            Shadow(color: Colors.shadowMedium, radius: 4, x: 0, y: 4)
-        ]
+        static let xxl: CGFloat = 24
     }
     
     // MARK: - Animations
-    
     struct Animations {
         static let quickEase = Animation.easeInOut(duration: 0.2)
         static let standardEase = Animation.easeInOut(duration: 0.3)
         static let smoothEase = Animation.easeInOut(duration: 0.5)
         static let premiumSpring = Animation.spring(response: 0.6, dampingFraction: 0.8)
         static let bouncySpring = Animation.spring(response: 0.8, dampingFraction: 0.6)
-        static let gentleSpring = Animation.spring(response: 1.0, dampingFraction: 0.9)
+    }
+    
+    // MARK: - Elevation (Shadows)
+    struct Elevation {
+        static let level1 = [Shadow(color: Colors.shadowLight, radius: 2, x: 0, y: 1)]
+        static let level2 = [Shadow(color: Colors.shadowLight, radius: 4, x: 0, y: 2)]
+        static let level3 = [Shadow(color: Colors.shadowMedium, radius: 8, x: 0, y: 4)]
+        static let level4 = [Shadow(color: Colors.shadowMedium, radius: 16, x: 0, y: 8)]
+        static let level5 = [Shadow(color: Colors.shadowHeavy, radius: 24, x: 0, y: 12)]
     }
 }
 
 // MARK: - Shadow Helper
-
 struct Shadow {
     let color: Color
     let radius: CGFloat
@@ -173,209 +135,138 @@ struct Shadow {
     let y: CGFloat
 }
 
-// MARK: - Premium View Modifiers
+// MARK: - View Extensions
 
-struct PremiumGlassMorphismModifier: ViewModifier {
-    let cornerRadius: CGFloat
-    let elevation: [Shadow]
+extension View {
+    func premiumGlassMorphism() -> some View {
+        self
+            .background(.ultraThinMaterial)
+            .cornerRadius(PremiumDesignTokens.CornerRadius.lg)
+            .modifier(ElevationModifier(shadows: PremiumDesignTokens.Elevation.level2))
+    }
     
-    func body(content: Content) -> some View {
-        content
-            .background(
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: cornerRadius)
-                            .fill(PremiumDesignTokens.Gradients.glassMorphism)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: cornerRadius)
-                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                    )
-                    .modifier(ElevationModifier(shadows: elevation))
-            )
+    func premiumButton(style: PremiumButtonStyle, isEnabled: Bool = true) -> some View {
+        self
+            .font(PremiumDesignTokens.Typography.callout)
+            .fontWeight(.semibold)
+            .foregroundColor(style.foregroundColor(isEnabled))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, PremiumDesignTokens.Spacing.md)
+            .background(style.backgroundColor(isEnabled))
+            .cornerRadius(PremiumDesignTokens.CornerRadius.md)
+            .modifier(ElevationModifier(shadows: isEnabled ? style.shadows : []))
+            .disabled(!isEnabled)
+            .scaleEffect(isEnabled ? 1.0 : 0.95)
+            .animation(PremiumDesignTokens.Animations.quickEase, value: isEnabled)
     }
 }
 
+// MARK: - Premium Button Styles
+enum PremiumButtonStyle {
+    case primary
+    case secondary
+    case destructive
+    
+    func backgroundColor(_ isEnabled: Bool) -> some View {
+        Group {
+            if isEnabled {
+                switch self {
+                case .primary:
+                    PremiumDesignTokens.Gradients.primaryGold
+                case .secondary:
+                    Color.clear
+                case .destructive:
+                    LinearGradient(colors: [.red, .red.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                }
+            } else {
+                Color.gray.opacity(0.3)
+            }
+        }
+    }
+    
+    func foregroundColor(_ isEnabled: Bool) -> Color {
+        if !isEnabled { return .secondary }
+        
+        switch self {
+        case .primary: return .white
+        case .secondary: return PremiumDesignTokens.Colors.primaryGold
+        case .destructive: return .white
+        }
+    }
+    
+    var shadows: [Shadow] {
+        switch self {
+        case .primary: return PremiumDesignTokens.Elevation.level2
+        case .secondary: return []
+        case .destructive: return PremiumDesignTokens.Elevation.level2
+        }
+    }
+}
+
+// MARK: - Elevation Modifier
 struct ElevationModifier: ViewModifier {
     let shadows: [Shadow]
     
     func body(content: Content) -> some View {
-        shadows.reduce(content) { view, shadow in
-            view.shadow(color: shadow.color, radius: shadow.radius, x: shadow.x, y: shadow.y)
+        var modifiedContent = AnyView(content)
+        
+        for shadow in shadows {
+            modifiedContent = AnyView(
+                modifiedContent.shadow(
+                    color: shadow.color,
+                    radius: shadow.radius,
+                    x: shadow.x,
+                    y: shadow.y
+                )
+            )
         }
+        
+        return modifiedContent
     }
 }
 
-struct PremiumButtonModifier: ViewModifier {
-    let isEnabled: Bool
-    let style: ButtonStyle
-    
-    enum ButtonStyle {
-        case primary
-        case secondary
-        case tertiary
-        case destructive
-    }
-    
-    func body(content: Content) -> some View {
-        content
-            .font(PremiumDesignTokens.Typography.callout)
-            .fontWeight(.semibold)
-            .foregroundStyle(foregroundColor)
-            .padding(.horizontal, PremiumDesignTokens.Spacing.lg)
-            .padding(.vertical, PremiumDesignTokens.Spacing.md)
-            .frame(maxWidth: .infinity)
-            .background(backgroundView)
-            .opacity(isEnabled ? 1.0 : 0.6)
-            .scaleEffect(isEnabled ? 1.0 : 0.98)
-            .animation(PremiumDesignTokens.Animations.premiumSpring, value: isEnabled)
-    }
-    
-    private var foregroundColor: Color {
-        switch style {
-        case .primary:
-            return .white
-        case .secondary:
-            return PremiumDesignTokens.Colors.primaryGold
-        case .tertiary:
-            return PremiumDesignTokens.Colors.textPrimary
-        case .destructive:
-            return .white
-        }
-    }
-    
-    @ViewBuilder
-    private var backgroundView: some View {
-        RoundedRectangle(cornerRadius: PremiumDesignTokens.CornerRadius.md)
-            .fill(backgroundGradient)
-            .modifier(ElevationModifier(shadows: PremiumDesignTokens.Elevation.level2))
-            .overlay(strokeOverlay)
-    }
-    
-    private var backgroundGradient: LinearGradient {
-        switch style {
-        case .primary:
-            return PremiumDesignTokens.Gradients.primaryGold
-        case .secondary:
-            return LinearGradient(
-                colors: [Color.clear],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .tertiary:
-            return LinearGradient(
-                colors: [
-                    PremiumDesignTokens.Colors.glassPrimary,
-                    PremiumDesignTokens.Colors.glassSecondary
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .destructive:
-            return LinearGradient(
-                colors: [PremiumDesignTokens.Colors.error, PremiumDesignTokens.Colors.error.opacity(0.8)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        }
-    }
-    
-    @ViewBuilder
-    private var strokeOverlay: some View {
-        switch style {
-        case .primary, .destructive:
-            EmptyView()
-        case .secondary:
-            RoundedRectangle(cornerRadius: PremiumDesignTokens.CornerRadius.md)
-                .stroke(PremiumDesignTokens.Colors.primaryGold, lineWidth: 2)
-        case .tertiary:
-            RoundedRectangle(cornerRadius: PremiumDesignTokens.CornerRadius.md)
-                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-        }
-    }
-}
-
-// MARK: - View Extensions
-
-extension View {
-    func premiumGlassMorphism(
-        cornerRadius: CGFloat = PremiumDesignTokens.CornerRadius.lg,
-        elevation: [Shadow] = PremiumDesignTokens.Elevation.level2
-    ) -> some View {
-        modifier(PremiumGlassMorphismModifier(cornerRadius: cornerRadius, elevation: elevation))
-    }
-    
-    func premiumButton(
-        style: PremiumButtonModifier.ButtonStyle = .primary,
-        isEnabled: Bool = true
-    ) -> some View {
-        modifier(PremiumButtonModifier(isEnabled: isEnabled, style: style))
-    }
-    
-    func premiumCard(
-        cornerRadius: CGFloat = PremiumDesignTokens.CornerRadius.lg,
-        elevation: [Shadow] = PremiumDesignTokens.Elevation.level2
-    ) -> some View {
-        self
-            .padding(PremiumDesignTokens.Spacing.lg)
-            .background(
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(PremiumDesignTokens.Gradients.premiumCard)
-                    .modifier(ElevationModifier(shadows: elevation))
-            )
-    }
-}
-
+// MARK: - Preview
 #Preview {
     ScrollView {
-        VStack(spacing: PremiumDesignTokens.Spacing.lg) {
-            // Typography Preview
-            VStack(alignment: .leading, spacing: PremiumDesignTokens.Spacing.sm) {
-                Text("Premium Design Tokens")
-                    .font(PremiumDesignTokens.Typography.hero)
-                Text("Ultra-premium design system for $50K+ quality")
-                    .font(PremiumDesignTokens.Typography.title3)
-                    .foregroundStyle(PremiumDesignTokens.Colors.textSecondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(spacing: 24) {
+            Text("Premium Design System")
+                .font(PremiumDesignTokens.Typography.hero)
+                .foregroundStyle(PremiumDesignTokens.Gradients.primaryGold)
             
-            // Glass Morphism Card
-            VStack(spacing: PremiumDesignTokens.Spacing.md) {
-                Text("Glass Morphism Effect")
-                    .font(PremiumDesignTokens.Typography.headline)
-                Text("Ultra-premium glassmorphism with multi-layer shadows")
-                    .font(PremiumDesignTokens.Typography.body)
-                    .foregroundStyle(PremiumDesignTokens.Colors.textSecondary)
-            }
-            .premiumGlassMorphism()
-            
-            // Button Styles
-            VStack(spacing: PremiumDesignTokens.Spacing.md) {
-                Button("Primary Button") {}
+            VStack(spacing: 16) {
+                Button("Primary Button") { }
                     .premiumButton(style: .primary)
                 
-                Button("Secondary Button") {}
+                Button("Secondary Button") { }
                     .premiumButton(style: .secondary)
                 
-                Button("Tertiary Button") {}
-                    .premiumButton(style: .tertiary)
-                
-                Button("Destructive Button") {}
+                Button("Destructive Button") { }
                     .premiumButton(style: .destructive)
+                
+                Button("Disabled Button") { }
+                    .premiumButton(style: .primary, isEnabled: false)
             }
             
-            // Premium Card
-            VStack(spacing: PremiumDesignTokens.Spacing.sm) {
-                Text("Premium Card")
-                    .font(PremiumDesignTokens.Typography.headline)
-                Text("Multi-layer card with premium gradients")
-                    .font(PremiumDesignTokens.Typography.body)
-                    .foregroundStyle(PremiumDesignTokens.Colors.textSecondary)
+            VStack(spacing: 16) {
+                Text("Glass Morphism Cards")
+                    .font(PremiumDesignTokens.Typography.title2)
+                
+                Text("This is a premium glass morphism card with elevation and styling")
+                    .padding()
+                    .premiumGlassMorphism()
+                
+                HStack(spacing: 16) {
+                    Text("Card 1")
+                        .padding()
+                        .premiumGlassMorphism()
+                    
+                    Text("Card 2")
+                        .padding()
+                        .premiumGlassMorphism()
+                }
             }
-            .premiumCard()
         }
-        .padding(PremiumDesignTokens.Spacing.lg)
+        .padding()
     }
     .background(PremiumDesignTokens.Gradients.premiumBackground)
 }

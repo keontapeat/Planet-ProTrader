@@ -69,13 +69,7 @@ struct GameControllerView: View {
         }
         .onAppear {
             setupInitialState()
-            // Start the timer manually
-            gameTimer = Timer.publish(every: 1, on: .main, in: .common)
-                .autoconnect()
-                .sink { _ in
-                    updateTimer()
-                    updateMood()
-                }
+            startGameTimer()
             startAnimations()
         }
         .sheet(isPresented: $showVoiceNotes) {
@@ -137,7 +131,7 @@ struct GameControllerView: View {
                         .font(.headline.bold())
                         .foregroundColor(.white)
                     
-                    Text(formatTimeRemaining(game.maxTime - game.elapsedTime))
+                    Text(formatTimeRemaining(game.timeRemaining))
                         .font(.subheadline.bold())
                         .foregroundColor(.orange)
                 }
@@ -171,7 +165,7 @@ struct GameControllerView: View {
                         
                         Spacer()
                         
-                        Text("\(Int((game.currentBalance / game.targetProfit) * 100))%")
+                        Text("\(Int(game.progressToTarget * 100))%")
                             .font(.subheadline.bold())
                             .foregroundColor(.green)
                     }
@@ -191,7 +185,7 @@ struct GameControllerView: View {
                                     )
                                 )
                                 .frame(
-                                    width: proxy.size.width * (game.currentBalance / game.targetProfit),
+                                    width: proxy.size.width * game.progressToTarget,
                                     height: 8
                                 )
                                 .glow(color: .green, radius: glowEffect ? 4 : 0)
@@ -581,7 +575,7 @@ struct GameControllerView: View {
         latestVoiceNote = BotVoiceNote(
             botId: "game-coach",
             botName: "Game Coach",
-            content: "Welcome to \(game.name)! Let's make some profit! ",
+            content: "Welcome to \(game.name)! Let's make some profit!",
             category: .celebration
         )
         
@@ -589,18 +583,30 @@ struct GameControllerView: View {
         priceHistory = [currentPrice]
     }
     
+    private func startGameTimer() {
+        gameTimer = Timer.publish(every: 1, on: .main, in: .common)
+            .autoconnect()
+            .sink { _ in
+                updateTimer()
+                updateMood()
+            }
+    }
+    
     private func updateTimer() {
         guard !game.isCompleted else { return }
         
-        game.elapsedTime += 1
+        var updatedGame = game
+        updatedGame.elapsedTime += 1
         
-        if game.elapsedTime >= game.maxTime {
-            var updatedGame = game
+        if updatedGame.elapsedTime >= updatedGame.maxTime {
             updatedGame.isCompleted = true
             updatedGame.isWon = updatedGame.currentBalance >= updatedGame.targetProfit
+            updatedGame.status = .completed
             game = updatedGame
             gameTimer?.cancel()
             gameTimer = nil
+        } else {
+            game = updatedGame
         }
     }
     
@@ -613,7 +619,7 @@ struct GameControllerView: View {
             latestVoiceNote = BotVoiceNote(
                 botId: "game-coach",
                 botName: "Game Coach",
-                content: "Time is running out! Make your choice now! ",
+                content: "Time is running out! Make your moves count!",
                 category: .warning
             )
         }
@@ -622,17 +628,20 @@ struct GameControllerView: View {
     private func executeQuickTrade(_ action: TradeAction) {
         let tradeResult = Double.random(in: -10.0...15.0)
         
-        // Update game balance directly
-        game.currentBalance = max(0, game.currentBalance + tradeResult)
+        var updatedGame = game
+        updatedGame.currentBalance = max(0, updatedGame.currentBalance + tradeResult)
         
-        // Check win/lose conditions
-        if game.currentBalance >= game.targetProfit {
-            game.isCompleted = true
-            game.isWon = true
-        } else if game.currentBalance <= game.maxLoss {
-            game.isCompleted = true
-            game.isWon = false
+        if updatedGame.currentBalance >= updatedGame.targetProfit {
+            updatedGame.isCompleted = true
+            updatedGame.isWon = true
+            updatedGame.status = .completed
+        } else if updatedGame.currentBalance <= updatedGame.maxLoss {
+            updatedGame.isCompleted = true
+            updatedGame.isWon = false
+            updatedGame.status = .failed
         }
+        
+        game = updatedGame
         
         executeTrade(withResult: tradeResult)
         
@@ -647,7 +656,7 @@ struct GameControllerView: View {
         latestVoiceNote = BotVoiceNote(
             botId: "game-coach",
             botName: "Game Coach",
-            content: result > 0 ? "Excellent trade! You made \(String(format: "%.2f", result))! " : "Don't worry, next trade will be better! Keep learning! ",
+            content: result > 0 ? "Excellent trade! You made \(String(format: "%.2f", result))!" : "Don't worry, next trade will be better! Keep learning!",
             category: result > 0 ? .celebration : .performance
         )
         
@@ -667,8 +676,11 @@ struct GameControllerView: View {
     }
     
     private func pauseGame() {
-        game.isCompleted = true
-        game.isWon = game.currentBalance >= game.targetProfit
+        var updatedGame = game
+        updatedGame.isCompleted = true
+        updatedGame.isWon = updatedGame.currentBalance >= updatedGame.targetProfit
+        updatedGame.status = .completed
+        game = updatedGame
         
         gameTimer?.cancel()
         gameTimer = nil
@@ -688,7 +700,9 @@ struct GameControllerView: View {
         }
         
         let balanceChange = Double.random(in: -2.0...3.0)
-        game.currentBalance = max(0, game.currentBalance + balanceChange)
+        var updatedGame = game
+        updatedGame.currentBalance = max(0, updatedGame.currentBalance + balanceChange)
+        game = updatedGame
     }
     
     private func formatTimeRemaining(_ time: TimeInterval) -> String {
@@ -774,23 +788,25 @@ struct BotVoiceNoteSheet: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            Text(voiceNote.botName)
-            
-            VStack(spacing: 8) {
+            HStack {
+                Text(voiceNote.priority.systemImage)
+                    .font(.title)
+                    .foregroundColor(voiceNote.priority.color)
+                
                 Text(voiceNote.botName)
                     .font(.title.bold())
                 
-                Text(voiceNote.content)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                Spacer()
             }
             
-            Text(voiceNote.content)
-                .font(.headline)
-                .multilineTextAlignment(.center)
-                .padding()
-                .background(.ultraThinMaterial)
-                .cornerRadius(15)
+            VStack(spacing: 8) {
+                Text(voiceNote.content)
+                    .font(.headline)
+                    .multilineTextAlignment(.center)
+                    .padding()
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(15)
+            }
             
             Button(action: { isPlaying.toggle() }) {
                 HStack(spacing: 8) {
@@ -822,9 +838,9 @@ extension View {
     }
 }
 
-//Preview {
-    //GameControllerView(
-        //game: MicroFlipGame.sampleGames[0],
-        //onGameUpdate: { _ in }
-    //)
-//}
+#Preview {
+    GameControllerView(
+        game: MicroFlipGame.sampleGames[0],
+        onGameUpdate: { _ in }
+    )
+}

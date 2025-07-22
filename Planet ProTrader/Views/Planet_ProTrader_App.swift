@@ -30,6 +30,8 @@ struct Planet_ProTrader_App: App {
 }
 
 #Preview {
-    // Provide a safe fallback preview to avoid build errors:
-    SplashScreenView()
+    // ✅ FIXED: Use proper preview content
+    ContentView()
+        .withCompleteEnvironment()
+        .preferredColorScheme(.light)
 }

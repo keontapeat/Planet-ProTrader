@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Foundation
 import Combine
 
 @MainActor
@@ -15,60 +16,60 @@ class LegendaryPlaybookEngine: ObservableObject {
     @Published var isAutoLogging = true
     @Published var isLoading = false
     @Published var errorMessage: String?
-    
+
     init() {
         loadSampleData()
     }
-    
+
     // MARK: - Computed Statistics (Safe)
-    
+
     var winRate: Double {
         guard !trades.isEmpty else { return 0.0 }
         let wins = trades.filter { $0.result == .win }.count
         return Double(wins) / Double(trades.count)
     }
-    
+
     var profitFactor: Double {
         let grossProfit = trades.filter { $0.result == .win }.reduce(0) { $0 + $1.pnl }
         let grossLoss = abs(trades.filter { $0.result == .loss }.reduce(0) { $0 + $1.pnl })
         return grossLoss == 0 ? (grossProfit > 0 ? Double.infinity : 0) : grossProfit / grossLoss
     }
-    
+
     var averageRMultiple: Double {
         guard !trades.isEmpty else { return 0.0 }
         return trades.reduce(0) { $0 + $1.rMultiple } / Double(trades.count)
     }
-    
+
     var eliteTrades: Int {
         return trades.filter { $0.grade == .elite }.count
     }
-    
+
     // MARK: - Trade Management (Safe)
-    
+
     func addTrade(_ trade: PlaybookTrade) {
         trades.append(trade)
-        
+
         if isAutoLogging {
             generateJournalEntry(for: trade)
         }
-        
+
         // Trigger haptic feedback for user confirmation
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
     }
-    
+
     func updateTrade(_ trade: PlaybookTrade) {
         guard let index = trades.firstIndex(where: { $0.id == trade.id }) else { return }
         trades[index] = trade
     }
-    
+
     func deleteTrade(_ trade: PlaybookTrade) {
         trades.removeAll { $0.id == trade.id }
         journalEntries.removeAll { $0.title.contains(trade.symbol) }
     }
-    
+
     // MARK: - Journal Management
-    
+
     private func generateJournalEntry(for trade: PlaybookTrade) {
         let entry = JournalEntry(
             id: UUID().uuidString,
@@ -81,25 +82,25 @@ class LegendaryPlaybookEngine: ObservableObject {
         )
         journalEntries.append(entry)
     }
-    
+
     private func generateAutoAnalysis(for trade: PlaybookTrade) -> String {
         let outcome = trade.result == .win ? "successful" : "unsuccessful"
         return """
         Trade Analysis - \(trade.symbol):
-        
+
         Setup: \(trade.setupDescription)
         Entry: \(String(format: "%.2f", trade.entryPrice))
         Exit: \(trade.exitPrice.map { String(format: "%.2f", $0) } ?? "N/A")
         Result: \(outcome) (\(String(format: "%.1fR", trade.rMultiple)))
-        
+
         What went right: \(trade.result == .win ? "Proper execution of setup" : "Followed risk management rules")
         What could improve: \(generateImprovementSuggestion(for: trade))
-        
+
         Emotional state: \(trade.emotionalState)
         Grade: \(trade.grade.rawValue)
         """
     }
-    
+
     private func generateMarkDouglasLesson(for trade: PlaybookTrade) -> String {
         let lessons = [
             "Every trade outcome is independent - this doesn't predict the next trade",
@@ -111,7 +112,7 @@ class LegendaryPlaybookEngine: ObservableObject {
         // Safe random selection
         return lessons.randomElement() ?? lessons[0]
     }
-    
+
     private func generateImprovementSuggestion(for trade: PlaybookTrade) -> String {
         switch trade.grade {
         case .elite:
@@ -126,12 +127,12 @@ class LegendaryPlaybookEngine: ObservableObject {
             return "Continue learning and developing skills"
         }
     }
-    
+
     // MARK: - Data Loading
-    
+
     private func loadSampleData() {
         isLoading = true
-        
+
         // Simulate data loading delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.trades = [
@@ -170,21 +171,75 @@ class LegendaryPlaybookEngine: ObservableObject {
                     emotionalState: "Patient and disciplined",
                     timestamp: Date().addingTimeInterval(-7200),
                     emotionalRating: 4
+                ),
+                PlaybookTrade(
+                    id: UUID().uuidString,
+                    symbol: "XAUUSD",
+                    direction: .buy,
+                    entryPrice: 2672.00,
+                    exitPrice: 2669.50,
+                    stopLoss: 2665.00,
+                    takeProfit: 2685.00,
+                    lotSize: 0.01,
+                    pnl: -25.00,
+                    rMultiple: -0.36,
+                    result: .loss,
+                    grade: .average,
+                    setupDescription: "False breakout - market structure analysis needed",
+                    emotionalState: "Disappointed but controlled",
+                    timestamp: Date().addingTimeInterval(-14400),
+                    emotionalRating: 3
+                ),
+                PlaybookTrade(
+                    id: UUID().uuidString,
+                    symbol: "XAUUSD",
+                    direction: .sell,
+                    entryPrice: 2678.75,
+                    exitPrice: nil,
+                    stopLoss: 2684.00,
+                    takeProfit: 2665.00,
+                    lotSize: 0.01,
+                    pnl: 0.0,
+                    rMultiple: 0.0,
+                    result: .running,
+                    grade: .good,
+                    setupDescription: "Current running trade - nice rejection at resistance",
+                    emotionalState: "Confident and patient",
+                    timestamp: Date().addingTimeInterval(-1800),
+                    emotionalRating: 4
                 )
             ]
-            
+
             self.journalEntries = [
                 JournalEntry(
                     id: UUID().uuidString,
                     timestamp: Date(),
                     type: .dailyReview,
                     title: "Daily Review - Excellent Progress",
-                    content: "Today I executed two high-quality setups with perfect discipline. The Mark Douglas principles are becoming second nature.",
+                    content: "Today I executed high-quality setups with excellent discipline. The Mark Douglas principles are becoming second nature. Need to continue focusing on process over outcomes.",
                     emotionalRating: 5,
                     markDouglasLesson: "Consistency comes from within, not from the markets"
+                ),
+                JournalEntry(
+                    id: UUID().uuidString,
+                    timestamp: Date().addingTimeInterval(-3600),
+                    type: .tradeAnalysis,
+                    title: "XAUUSD Trade Analysis",
+                    content: "Perfect execution on the London open setup. Entry was precise, risk management followed exactly as planned. This is the standard I need to maintain.",
+                    emotionalRating: 5,
+                    markDouglasLesson: "Trust your edge and execute consistently"
+                ),
+                JournalEntry(
+                    id: UUID().uuidString,
+                    timestamp: Date().addingTimeInterval(-14400),
+                    type: .psychologyNote,
+                    title: "Learning from Loss",
+                    content: "The false breakout loss was handled well emotionally. No revenge trading, stuck to the plan. This shows psychological progress and maturity in my approach.",
+                    emotionalRating: 4,
+                    markDouglasLesson: "Every trade outcome is independent - this doesn't predict the next trade"
                 )
             ]
-            
+
             self.isLoading = false
         }
     }
